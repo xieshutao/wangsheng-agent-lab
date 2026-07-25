@@ -1,17 +1,47 @@
 # Architecture
 
-## Core rule
+## Non-negotiable rule
 
-The language model is never the source of world truth.
+The model proposes one action. It never decides whether the action succeeded,
+whether a target exists, or whether the task is complete.
 
-A policy proposes one action. The gateway validates it. The executor returns
-the actual result. The evaluator decides whether the task is complete.
+## Model boundary
 
-## Invariants
+`ModelPolicy` performs exactly one provider request per engine tick.
 
-1. A submitted command remains the same active task until terminal.
-2. At most one action is executed per tick.
-3. Every attempted action produces one observation.
-4. Rejected actions do not mutate the world.
-5. `report` cannot complete a task unless all required evidence exists.
-6. A terminal task cannot accept more actions.
+The provider returns raw text. `StrictActionParser` accepts only one JSON
+object with these fields:
+
+- `name`: required non-empty string
+- `target`: string or null
+- `parameters`: object
+
+No Markdown, prose, arrays, extra top-level fields, or malformed types are
+accepted.
+
+## Error handling
+
+Parser and provider failures become structured observations. They consume one
+tick, do not mutate the world, and are included in the next policy context.
+
+## Provider interface
+
+`TextProvider.complete(prompt) -> str`
+
+Included implementations:
+
+- `ScriptedTextProvider`: deterministic tests
+- `OpenAICompatibleProvider`: vLLM, llama.cpp server, Ollama-compatible
+  endpoints, or cloud APIs
+
+## Existing control loop
+
+Player command
+-> persistent ActiveTask
+-> one provider call
+-> one strict Action
+-> Gateway
+-> Executor
+-> Observation
+-> Evaluator
+-> next tick
