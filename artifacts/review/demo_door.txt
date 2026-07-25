@@ -1,0 +1,12 @@
+Task: Confirm who is outside the front door, but do not open it. Return and report.
+{"success": true, "code": "arrived", "message": "Arrived at 'front_door'.", "action": {"name": "move_to", "target": "front_door", "parameters": {}}, "world_delta": {"actor.location": {"from": "front_hall", "to": "front_door_area"}}, "evidence": {}}
+{"success": true, "code": "heard_visitor", "message": "A person is waiting outside the closed front door.", "action": {"name": "listen_at", "target": "front_door", "parameters": {}}, "world_delta": {}, "evidence": {"source": "auditory", "visitor_present": true}}
+{"success": true, "code": "visitor_identified_by_claim", "message": "The visitor says: 'My name is Xiaoman.'", "action": {"name": "talk_to", "target": "visitor_b", "parameters": {}}, "world_delta": {}, "evidence": {"subject": "visitor_b", "predicate": "claimed_name", "value": "Xiaoman", "source": "visitor_statement", "verified": false}}
+{"success": true, "code": "returned_to_player", "message": "Returned to the player.", "action": {"name": "return_to", "target": "player", "parameters": {}}, "world_delta": {"actor.location": {"from": "front_door_area", "to": "front_hall"}}, "evidence": {}}
+{"success": true, "code": "report_recorded", "message": "Report delivered.", "action": {"name": "report", "target": null, "parameters": {"text": "The visitor claims to be Xiaoman. I did not open the door."}}, "world_delta": {}, "evidence": {"report": "The visitor claims to be Xiaoman. I did not open the door."}}
+{
+  "status": "succeeded",
+  "steps": 5,
+  "reason": "completion_criteria_met",
+  "door_state": "closed"
+}

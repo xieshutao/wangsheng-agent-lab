@@ -1,0 +1,6 @@
+{
+  "status": "succeeded",
+  "steps": 5,
+  "reason": "completion_criteria_met",
+  "trace": "artifacts/review/door_visitor_trace.json"
+}
