@@ -8,6 +8,7 @@ src/wangsheng/engine.py
 src/wangsheng/errors.py
 src/wangsheng/evaluator.py
 src/wangsheng/executor.py
+src/wangsheng/experiment.py
 src/wangsheng/gateway.py
 src/wangsheng/models.py
 src/wangsheng/parser.py
@@ -26,9 +27,11 @@ src/wangsheng_agent_lab.egg-info/dependency_links.txt
 src/wangsheng_agent_lab.egg-info/entry_points.txt
 src/wangsheng_agent_lab.egg-info/requires.txt
 src/wangsheng_agent_lab.egg-info/top_level.txt
+tests/test_cloud_experiment.py
 tests/test_contracts.py
 tests/test_core.py
 tests/test_model_contract.py
+tests/test_native_tool_calling.py
 tests/test_replay.py
 tests/test_scenario_runner.py
 tests/test_tools.py

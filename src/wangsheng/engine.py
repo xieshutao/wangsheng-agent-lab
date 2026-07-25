@@ -44,7 +44,7 @@ class EpisodeEngine:
             return Observation(False, ReasonCode.TASK_TERMINAL.value, "No tick after terminal task.", Action("wait", parameters={"seconds": 0}), source="runtime")
 
         step = task.step_count
-        context = self._build_context(task)
+        context = self.build_context(task)
         world_before = self.world.snapshot()
         started = perf_counter()
         gateway_status = "not_reached"
@@ -78,7 +78,17 @@ class EpisodeEngine:
         world_after = self.world.snapshot()
         duration_ms = (perf_counter() - started) * 1000
         if self.trace_recorder:
-            self.trace_recorder.record_tick(step=step, context=context, observation=observation, world_before=world_before, world_after=world_after, gateway_status=gateway_status, duration_ms=duration_ms, task=task)
+            self.trace_recorder.record_tick(
+                step=step,
+                context=context,
+                observation=observation,
+                world_before=world_before,
+                world_after=world_after,
+                gateway_status=gateway_status,
+                duration_ms=duration_ms,
+                task=task,
+                model_metadata=getattr(self.policy, "last_model_metadata", None),
+            )
         return observation
 
     def run_until_terminal(self) -> ActiveTask:
@@ -87,7 +97,7 @@ class EpisodeEngine:
             self.tick()
         return task
 
-    def _build_context(self, task: ActiveTask) -> PolicyContext:
+    def build_context(self, task: ActiveTask) -> PolicyContext:
         allowed = frozenset(name for name in task.spec.allowed_actions if self.gateway.registry.get(name))
         return PolicyContext(
             command=task.spec.command,

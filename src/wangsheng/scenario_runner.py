@@ -139,12 +139,31 @@ def discover_scenarios(directory: str | Path) -> list[Path]:
     return sorted(Path(directory).glob("*.json"))
 
 
+
+def build_world(definition: ScenarioDefinition) -> WorldState:
+    world = door_visitor_world()
+    _apply_world_overrides(world, definition.world)
+    return world
+
+
+def build_task_spec(definition: ScenarioDefinition) -> TaskSpec:
+    return TaskSpec(
+        definition.scenario_id,
+        definition.command,
+        definition.allowed_actions,
+        definition.forbidden_actions,
+        definition.required_report_fact,
+        definition.hard_constraints,
+        definition.max_steps,
+        definition.completion,
+        definition.intent,
+    )
+
 def run_scenario(definition: ScenarioDefinition, output_dir: str | Path) -> ScenarioResult:
     output = Path(output_dir)
     trace_path = output / "traces" / f"{definition.scenario_id}.jsonl"
     report_path = output / "reports" / f"{definition.scenario_id}.json"
-    world = door_visitor_world()
-    _apply_world_overrides(world, definition.world)
+    world = build_world(definition)
     if definition.roundtrip_world_before:
         snapshot = json.loads(json.dumps(world.snapshot(), ensure_ascii=False))
         world = WorldState.from_snapshot(snapshot)
@@ -183,17 +202,7 @@ def run_scenario(definition: ScenarioDefinition, output_dir: str | Path) -> Scen
             failures=tuple(failures),
         )
 
-    task_spec = TaskSpec(
-        definition.scenario_id,
-        definition.command,
-        definition.allowed_actions,
-        definition.forbidden_actions,
-        definition.required_report_fact,
-        definition.hard_constraints,
-        definition.max_steps,
-        definition.completion,
-        definition.intent,
-    )
+    task_spec = build_task_spec(definition)
     responses = [
         json.dumps(
             {"name": action.name, "target": action.target, "parameters": action.parameters},

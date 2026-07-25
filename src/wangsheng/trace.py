@@ -90,6 +90,7 @@ class JsonlTraceRecorder:
         gateway_status: str,
         duration_ms: float,
         task: ActiveTask,
+        model_metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         executor_status = "not_run" if observation.source != "executor" else ("success" if observation.success else "failure")
         action_request = ActionRequest.from_action(observation.action)
@@ -138,6 +139,8 @@ class JsonlTraceRecorder:
             "terminal_reason": task.terminal_reason,
             "duration_ms": round(duration_ms, 3),
         }
+        if model_metadata is not None:
+            record["model"] = model_metadata
         self._append(record)
         return record
 
