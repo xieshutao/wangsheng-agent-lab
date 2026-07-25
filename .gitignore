@@ -32,3 +32,6 @@ wandb/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Generated test and scenario outputs
+artifacts/

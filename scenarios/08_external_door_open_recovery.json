@@ -1,0 +1,94 @@
+{
+  "scenario_id": "external_door_open_recovery",
+  "task": {
+    "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+    "required_report_fact": "Xiaoman",
+    "max_steps": 14,
+    "allowed_actions": [
+      "ask_through",
+      "close",
+      "listen_at",
+      "move_to",
+      "observe",
+      "open",
+      "report",
+      "wait"
+    ],
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ]
+  },
+  "world": {},
+  "events": [
+    {
+      "before_step": 1,
+      "type": "set_object_state",
+      "object_id": "door.front",
+      "state": "open"
+    }
+  ],
+  "scripted_actions": [
+    {
+      "name": "move_to",
+      "target": "door.front",
+      "parameters": {
+        "acceptance_radius": 80
+      }
+    },
+    {
+      "name": "close",
+      "target": "door.front",
+      "parameters": {}
+    },
+    {
+      "name": "listen_at",
+      "target": "door.front",
+      "parameters": {
+        "duration": 2
+      }
+    },
+    {
+      "name": "ask_through",
+      "target": "visitor.xiaoman",
+      "parameters": {
+        "barrier_id": "door.front",
+        "topic": "identity"
+      }
+    },
+    {
+      "name": "move_to",
+      "target": "player",
+      "parameters": {
+        "acceptance_radius": 120
+      }
+    },
+    {
+      "name": "report",
+      "target": "player",
+      "parameters": {
+        "text": "The visitor claims to be Xiaoman.",
+        "facts": [
+          {
+            "subject": "visitor.xiaoman",
+            "predicate": "claimed_name",
+            "value": "Xiaoman",
+            "certainty": "CLAIMED",
+            "source": "visitor_statement"
+          }
+        ]
+      }
+    }
+  ],
+  "expected": {
+    "status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "door_state": "closed",
+    "must_observe_codes": [
+      "CLOSED",
+      "REPORT_RECORDED"
+    ]
+  }
+}

@@ -1,47 +1,29 @@
-# Architecture
+# Architecture v0.3
 
-## Non-negotiable rule
+## Runtime layers
 
-The model proposes one action. It never decides whether the action succeeded,
-whether a target exists, or whether the task is complete.
+1. Scenario/Player command creates one persistent task.
+2. Policy selects one action.
+3. Tool Registry validates the selected tool's argument schema.
+4. Action Gateway checks target, knowledge, permission, precondition and hard constraints.
+5. Executor changes authoritative world state or returns a real failure code.
+6. Evaluator decides completion from world evidence.
+7. Trace records each layer and state delta.
 
-## Model boundary
+## Gateway validation order
 
-`ModelPolicy` performs exactly one provider request per engine tick.
+1. active task
+2. registered tool
+3. tool available to this task
+4. argument schema
+5. target existence
+6. target knowledge
+7. actor permission
+8. physical precondition
+9. hard task constraint
 
-The provider returns raw text. `StrictActionParser` accepts only one JSON
-object with these fields:
+The Gateway never chooses an alternative action.
 
-- `name`: required non-empty string
-- `target`: string or null
-- `parameters`: object
+## Stable protocol
 
-No Markdown, prose, arrays, extra top-level fields, or malformed types are
-accepted.
-
-## Error handling
-
-Parser and provider failures become structured observations. They consume one
-tick, do not mutate the world, and are included in the next policy context.
-
-## Provider interface
-
-`TextProvider.complete(prompt) -> str`
-
-Included implementations:
-
-- `ScriptedTextProvider`: deterministic tests
-- `OpenAICompatibleProvider`: vLLM, llama.cpp server, Ollama-compatible
-  endpoints, or cloud APIs
-
-## Existing control loop
-
-Player command
--> persistent ActiveTask
--> one provider call
--> one strict Action
--> Gateway
--> Executor
--> Observation
--> Evaluator
--> next tick
+All tools expose function-compatible JSON schemas. This milestone does not call a real model; it freezes the schemas and deterministic behavior first.

@@ -4,12 +4,19 @@ pyproject.toml
 src/wangsheng/__init__.py
 src/wangsheng/cli.py
 src/wangsheng/engine.py
+src/wangsheng/errors.py
 src/wangsheng/evaluator.py
 src/wangsheng/executor.py
 src/wangsheng/gateway.py
 src/wangsheng/models.py
+src/wangsheng/parser.py
 src/wangsheng/policy.py
+src/wangsheng/prompting.py
+src/wangsheng/providers.py
+src/wangsheng/reason_codes.py
+src/wangsheng/scenario_runner.py
 src/wangsheng/scenarios.py
+src/wangsheng/tools.py
 src/wangsheng/trace.py
 src/wangsheng_agent_lab.egg-info/PKG-INFO
 src/wangsheng_agent_lab.egg-info/SOURCES.txt
@@ -18,4 +25,7 @@ src/wangsheng_agent_lab.egg-info/entry_points.txt
 src/wangsheng_agent_lab.egg-info/requires.txt
 src/wangsheng_agent_lab.egg-info/top_level.txt
 tests/test_core.py
+tests/test_model_contract.py
+tests/test_scenario_runner.py
+tests/test_tools.py
 tests/test_trace.py
