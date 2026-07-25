@@ -1,7 +1,7 @@
 {
-  "scenario_id": "player_cancel",
+  "scenario_id": "player_cancels_task",
   "task": {
-    "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+    "command": "Check the visitor until the player cancels.",
     "required_report_fact": "Xiaoman",
     "max_steps": 5,
     "allowed_actions": [
@@ -49,6 +49,9 @@
     "door_state": "closed",
     "must_observe_codes": [
       "OBSERVED"
+    ],
+    "must_classify": [
+      "cancelled"
     ]
   }
 }

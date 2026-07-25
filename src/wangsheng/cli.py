@@ -11,6 +11,7 @@ from .gateway import Gateway
 from .policy import ModelPolicy
 from .providers import ScriptedTextProvider
 from .scenario_runner import load_scenario, run_all, run_scenario
+from .replay import replay_golden_trace
 from .scenarios import claimed_fact, door_visitor_task, door_visitor_world, make_reference_door_engine
 
 
@@ -55,6 +56,9 @@ def build_parser() -> argparse.ArgumentParser:
     all_parser = sub.add_parser("run-all-scripted")
     all_parser.add_argument("--scenario-dir", default="scenarios")
     all_parser.add_argument("--output-dir", default="artifacts/scripted")
+    replay = sub.add_parser("replay-trace")
+    replay.add_argument("path")
+    replay.add_argument("--project-root", default=".")
     return parser
 
 
@@ -72,6 +76,10 @@ def main() -> int:
         summary = run_all(args.scenario_dir, args.output_dir)
         print(json.dumps(summary, ensure_ascii=False, indent=2))
         return 0 if summary["failed"] == 0 else 1
+    if args.command == "replay-trace":
+        result = replay_golden_trace(args.path, project_root=args.project_root)
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0 if result["passed"] else 1
     raise AssertionError(args.command)
 
 

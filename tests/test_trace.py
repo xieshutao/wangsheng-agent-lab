@@ -25,3 +25,12 @@ def test_jsonl_trace_has_layered_results(tmp_path):
     assert lines[0]["executor"]["status"] == "success"
     assert lines[-1]["task_status"] == "succeeded"
     assert lines[-1]["action"]["action_id"].endswith("a005")
+
+
+def test_trace_contains_action_request_and_action_result_contracts(tmp_path):
+    recorder = JsonlTraceRecorder(tmp_path / "trace-contract.jsonl", "episode-contract")
+    engine = EpisodeEngine(door_visitor_world(), ScriptedPolicy(reference_door_actions()), Gateway(), SimulatedExecutor(), DoorVisitorEvaluator(), trace_recorder=recorder)
+    engine.submit_command(door_visitor_task()); engine.tick()
+    line = json.loads((tmp_path / "trace-contract.jsonl").read_text(encoding="utf-8").splitlines()[0])
+    assert line["action_request"]["schema_version"] == "wangsheng.action_request.v1"
+    assert line["action_result"]["schema_version"] == "wangsheng.action_result.v1"

@@ -1,0 +1,19 @@
+{
+  "scenario_id": "casual_chat_no_world_action",
+  "mode": "dialogue_only",
+  "intent": {
+    "kind": "chat",
+    "text": "It is quiet tonight, isn't it?"
+  },
+  "task": {
+    "command": "Casual chat only."
+  },
+  "world": {},
+  "scripted_actions": [],
+  "expected": {
+    "status": "succeeded",
+    "terminal_reason": "INTENT_CHAT_ONLY",
+    "door_state": "closed",
+    "action_count": 0
+  }
+}

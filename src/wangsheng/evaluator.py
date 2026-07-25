@@ -22,25 +22,48 @@ class DoorVisitorEvaluator:
             task.status = TaskStatus.FAILED
             task.terminal_reason = "MAX_STEPS_EXCEEDED"
 
-    @staticmethod
-    def _completion_met(task: ActiveTask, world: WorldState, observation: Observation) -> bool:
+    def _completion_met(self, task: ActiveTask, world: WorldState, observation: Observation) -> bool:
+        completion = task.spec.completion
+        if completion:
+            return self._generic_completion(completion, world, observation)
         required = task.spec.required_report_fact
         if required is None:
             return False
-        claim_exists = any(
-            fact.get("predicate") == "claimed_name"
-            and fact.get("value") == required
-            and fact.get("verified") is False
-            for fact in world.conversation_facts
-        )
+        claim_exists = world.has_accessible_fact(predicate="claimed_name", value=required)
         report_facts = observation.action.parameters.get("facts", [])
         report_preserves_source = any(
             fact.get("predicate") == "claimed_name"
             and fact.get("value") == required
             and fact.get("certainty") == "CLAIMED"
-            and fact.get("source") == "visitor_statement"
             for fact in report_facts
         )
-        actor_returned = world.actor.location == world.player_location
-        door_closed = world.objects["door.front"].state == "closed"
-        return claim_exists and report_preserves_source and actor_returned and door_closed
+        return claim_exists and report_preserves_source and self._safe_report_position(world)
+
+    @staticmethod
+    def _generic_completion(completion: dict, world: WorldState, observation: Observation) -> bool:
+        facts = observation.action.parameters.get("facts", [])
+        kind = completion.get("type", "report_predicate")
+        if kind == "report_predicate":
+            matched = any(
+                fact.get("predicate") == completion.get("predicate")
+                and (completion.get("value") is None or fact.get("value") == completion.get("value"))
+                for fact in facts
+            )
+        elif kind == "report_fact":
+            matched = any(
+                fact.get("predicate") == completion.get("predicate")
+                and fact.get("value") == completion.get("value")
+                and (completion.get("certainty") is None or fact.get("certainty") == completion.get("certainty"))
+                for fact in facts
+            )
+        elif kind == "report_conflict":
+            values = {fact.get("value") for fact in facts if fact.get("predicate") == "claimed_name"}
+            conflict = any(fact.get("predicate") == "identity_status" and fact.get("value") == "CONFLICTED" for fact in facts)
+            matched = len(values - {None}) >= 2 and conflict
+        else:
+            matched = False
+        return matched and DoorVisitorEvaluator._safe_report_position(world)
+
+    @staticmethod
+    def _safe_report_position(world: WorldState) -> bool:
+        return world.actor.location == world.player_location and world.objects["door.front"].state == "closed"

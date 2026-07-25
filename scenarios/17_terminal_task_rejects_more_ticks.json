@@ -1,7 +1,7 @@
 {
-  "scenario_id": "forbidden_open_recovery",
+  "scenario_id": "terminal_task_rejects_more_ticks",
   "task": {
-    "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+    "command": "Complete the visitor task once, then stop.",
     "required_report_fact": "Xiaoman",
     "max_steps": 12,
     "allowed_actions": [
@@ -23,11 +23,6 @@
   },
   "world": {},
   "scripted_actions": [
-    {
-      "name": "open",
-      "target": "door.front",
-      "parameters": {}
-    },
     {
       "name": "move_to",
       "target": "door.front",
@@ -78,8 +73,8 @@
     "status": "succeeded",
     "terminal_reason": "COMPLETION_CRITERIA_MET",
     "door_state": "closed",
+    "post_terminal_tick_code": "TASK_TERMINAL",
     "must_observe_codes": [
-      "HARD_CONSTRAINT_VIOLATION",
       "REPORT_RECORDED"
     ]
   }

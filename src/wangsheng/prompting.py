@@ -23,6 +23,7 @@ class ActionPromptBuilder:
                 "parameters": "object matching the selected tool schema",
             },
             "task": {"task_id": context.task_id, "command": context.command, "step_count": context.step_count},
+            "intent": context.intent,
             "available_actions": list(context.available_actions),
             "forbidden_actions": list(context.forbidden_actions),
             "tools": list(context.tool_schemas),

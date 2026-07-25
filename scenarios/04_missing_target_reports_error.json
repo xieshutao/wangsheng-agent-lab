@@ -1,7 +1,7 @@
 {
-  "scenario_id": "locked_door_recovery",
+  "scenario_id": "missing_target_reports_error",
   "task": {
-    "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+    "command": "Check the visitor without inventing targets.",
     "required_report_fact": "Xiaoman",
     "max_steps": 12,
     "allowed_actions": [
@@ -14,23 +14,21 @@
       "report",
       "wait"
     ],
-    "forbidden_actions": [],
-    "hard_constraints": []
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ]
   },
-  "world": {
-    "objects": {
-      "door.front": {
-        "properties": {
-          "locked": true
-        }
-      }
-    }
-  },
+  "world": {},
   "scripted_actions": [
     {
-      "name": "open",
-      "target": "door.front",
-      "parameters": {}
+      "name": "move_to",
+      "target": "room.invented",
+      "parameters": {
+        "acceptance_radius": 80
+      }
     },
     {
       "name": "move_to",
@@ -83,8 +81,11 @@
     "terminal_reason": "COMPLETION_CRITERIA_MET",
     "door_state": "closed",
     "must_observe_codes": [
-      "LOCKED",
+      "TARGET_NOT_FOUND",
       "REPORT_RECORDED"
+    ],
+    "must_classify": [
+      "target_error"
     ]
   }
 }

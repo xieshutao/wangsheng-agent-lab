@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from .contracts import Intent, MemoryAccess, MemoryEvent
+
 
 class TaskStatus(str, Enum):
     ACTIVE = "active"
@@ -80,6 +82,9 @@ class WorldState:
     conversation_facts: list[dict[str, Any]] = field(default_factory=list)
     reports: list[dict[str, Any]] = field(default_factory=list)
     time_seconds: float = 0.0
+    memory_events: list[MemoryEvent] = field(default_factory=list)
+    emotional_residue: list[str] = field(default_factory=list)
+    forced_action_results: dict[str, list[str]] = field(default_factory=dict)
 
     def target_exists(self, target: str) -> bool:
         return target in self.objects or target in {
@@ -87,6 +92,24 @@ class WorldState:
             "player",
             self.visitor_id,
         }
+
+    def accessible_memories(self) -> list[MemoryEvent]:
+        return [memory for memory in self.memory_events if memory.is_context_accessible]
+
+    def has_accessible_fact(self, *, predicate: str, value: str | None = None) -> bool:
+        for fact in self.conversation_facts:
+            if fact.get("predicate") == predicate and (value is None or fact.get("value") == value):
+                return True
+        for memory in self.accessible_memories():
+            if memory.predicate == predicate and (value is None or memory.value == value):
+                return True
+        return False
+
+    def context_snapshot(self) -> dict[str, Any]:
+        payload = self.snapshot()
+        payload["memory_events"] = [memory.to_dict() for memory in self.accessible_memories()]
+        payload.pop("forced_action_results", None)
+        return payload
 
     def snapshot(self) -> dict[str, Any]:
         return {
@@ -114,7 +137,44 @@ class WorldState:
             "conversation_facts": list(self.conversation_facts),
             "reports": list(self.reports),
             "time_seconds": self.time_seconds,
+            "memory_events": [memory.to_dict() for memory in self.memory_events],
+            "emotional_residue": list(self.emotional_residue),
+            "forced_action_results": {key: list(value) for key, value in sorted(self.forced_action_results.items())},
         }
+
+    @classmethod
+    def from_snapshot(cls, snapshot: dict[str, Any]) -> "WorldState":
+        actor_payload = snapshot["actor"]
+        return cls(
+            actor=CharacterState(
+                actor_payload["character_id"],
+                actor_payload["location"],
+                set(actor_payload.get("known_targets", [])),
+                set(actor_payload.get("permissions", [])),
+            ),
+            player_location=snapshot["player_location"],
+            objects={
+                object_id: WorldObject(
+                    object_id,
+                    payload["object_type"],
+                    payload["location"],
+                    payload["state"],
+                    payload.get("interactable", True),
+                    dict(payload.get("properties", {})),
+                )
+                for object_id, payload in snapshot["objects"].items()
+            },
+            visitor_id=snapshot.get("visitor_id"),
+            visitor_claimed_name=snapshot.get("visitor_claimed_name"),
+            visitor_responses=[None] * int(snapshot.get("visitor_responses_remaining", 0)),
+            heard_events=list(snapshot.get("heard_events", [])),
+            conversation_facts=list(snapshot.get("conversation_facts", [])),
+            reports=list(snapshot.get("reports", [])),
+            time_seconds=float(snapshot.get("time_seconds", 0.0)),
+            memory_events=[MemoryEvent.from_dict(item) for item in snapshot.get("memory_events", [])],
+            emotional_residue=list(snapshot.get("emotional_residue", [])),
+            forced_action_results={key: list(value) for key, value in snapshot.get("forced_action_results", {}).items()},
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,6 +186,8 @@ class TaskSpec:
     required_report_fact: str | None
     hard_constraints: frozenset[str] = frozenset()
     max_steps: int = 12
+    completion: dict[str, Any] = field(default_factory=dict)
+    intent: Intent | None = None
 
 
 @dataclass(slots=True)
@@ -152,3 +214,4 @@ class PolicyContext:
     world: dict[str, Any]
     observations: tuple[dict[str, Any], ...]
     tool_schemas: tuple[dict[str, Any], ...] = ()
+    intent: dict[str, Any] = field(default_factory=dict)

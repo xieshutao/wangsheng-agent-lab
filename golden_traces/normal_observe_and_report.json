@@ -1,0 +1,2186 @@
+{
+  "expected_digest": "b662a8e8831c71a087bdbe7e86a39993c3463c51f055154072d624b664451e19",
+  "records": [
+    {
+      "action": {
+        "action_id": "normal_observe_and_report:a001",
+        "name": "observe",
+        "parameters": {},
+        "target": "door.front"
+      },
+      "action_request": {
+        "action_id": "normal_observe_and_report:a001",
+        "arguments": {},
+        "name": "observe",
+        "schema_version": "wangsheng.action_request.v1",
+        "target_id": "door.front"
+      },
+      "action_result": {
+        "action_id": "normal_observe_and_report:a001",
+        "evidence": {
+          "object_type": "door",
+          "properties": {
+            "locked": false,
+            "reachable": true
+          },
+          "state": "closed",
+          "target_id": "door.front"
+        },
+        "message": "Observed 'door.front'.",
+        "reason_code": "OBSERVED",
+        "schema_version": "wangsheng.action_result.v1",
+        "source": "executor",
+        "status": "success",
+        "world_delta": {}
+      },
+      "context": {
+        "available_actions": [
+          "ask_through",
+          "close",
+          "listen_at",
+          "move_to",
+          "observe",
+          "open",
+          "report",
+          "wait"
+        ],
+        "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "forbidden_actions": [
+          "open"
+        ],
+        "intent": {
+          "intent_id": "intent.normal_observe_and_report",
+          "kind": "task",
+          "schema_version": "wangsheng.intent.v1",
+          "source": "player",
+          "text": "Confirm who is outside without opening the door."
+        },
+        "previous_observations": [],
+        "world": {
+          "actor": {
+            "character_id": "npc.qingyan",
+            "known_targets": [
+              "door.front",
+              "object.paper_crane",
+              "player",
+              "visitor.xiaoman"
+            ],
+            "location": "room.front_hall",
+            "permissions": [
+              "communicate",
+              "manipulate",
+              "navigate",
+              "perceive",
+              "wait"
+            ]
+          },
+          "conversation_facts": [],
+          "emotional_residue": [],
+          "heard_events": [],
+          "memory_events": [],
+          "objects": {
+            "door.front": {
+              "interactable": true,
+              "location": "area.front_door",
+              "object_type": "door",
+              "properties": {
+                "locked": false,
+                "reachable": true
+              },
+              "state": "closed"
+            },
+            "object.paper_crane": {
+              "interactable": true,
+              "location": "room.front_hall",
+              "object_type": "item",
+              "properties": {
+                "reachable": true
+              },
+              "state": "intact"
+            }
+          },
+          "player_location": "room.front_hall",
+          "reports": [],
+          "time_seconds": 0.0,
+          "visitor_claimed_name": "Xiaoman",
+          "visitor_id": "visitor.xiaoman",
+          "visitor_responses_remaining": 1
+        }
+      },
+      "context_hash": "b8d8405090a9e53a2b02469f03ab981c377bff7459a25cd66c8d6d3d000a2c0b",
+      "episode_id": "normal_observe_and_report",
+      "event_type": "tick",
+      "executor": {
+        "reason_code": "OBSERVED",
+        "status": "success"
+      },
+      "gateway": {
+        "reason_code": "NONE",
+        "status": "allowed"
+      },
+      "memory_events": [],
+      "observation": {
+        "action": {
+          "action_id": "normal_observe_and_report:a001",
+          "name": "observe",
+          "parameters": {},
+          "target": "door.front"
+        },
+        "code": "OBSERVED",
+        "evidence": {
+          "object_type": "door",
+          "properties": {
+            "locked": false,
+            "reachable": true
+          },
+          "state": "closed",
+          "target_id": "door.front"
+        },
+        "message": "Observed 'door.front'.",
+        "source": "executor",
+        "success": true,
+        "world_delta": {}
+      },
+      "schema_version": "wangsheng.trace.v2",
+      "sequence": 0,
+      "state_delta": {},
+      "step": 0,
+      "task_id": "normal_observe_and_report",
+      "task_status": "active",
+      "terminal_reason": null,
+      "world_after": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "room.front_hall",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [],
+        "memory_events": [],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 1
+      },
+      "world_before": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "room.front_hall",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [],
+        "memory_events": [],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 1
+      }
+    },
+    {
+      "action": {
+        "action_id": "normal_observe_and_report:a002",
+        "name": "move_to",
+        "parameters": {
+          "acceptance_radius": 80
+        },
+        "target": "door.front"
+      },
+      "action_request": {
+        "action_id": "normal_observe_and_report:a002",
+        "arguments": {
+          "acceptance_radius": 80
+        },
+        "name": "move_to",
+        "schema_version": "wangsheng.action_request.v1",
+        "target_id": "door.front"
+      },
+      "action_result": {
+        "action_id": "normal_observe_and_report:a002",
+        "evidence": {},
+        "message": "Arrived at 'door.front'.",
+        "reason_code": "ARRIVED",
+        "schema_version": "wangsheng.action_result.v1",
+        "source": "executor",
+        "status": "success",
+        "world_delta": {
+          "actor.location": {
+            "from": "room.front_hall",
+            "to": "area.front_door"
+          }
+        }
+      },
+      "context": {
+        "available_actions": [
+          "ask_through",
+          "close",
+          "listen_at",
+          "move_to",
+          "observe",
+          "open",
+          "report",
+          "wait"
+        ],
+        "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "forbidden_actions": [
+          "open"
+        ],
+        "intent": {
+          "intent_id": "intent.normal_observe_and_report",
+          "kind": "task",
+          "schema_version": "wangsheng.intent.v1",
+          "source": "player",
+          "text": "Confirm who is outside without opening the door."
+        },
+        "previous_observations": [
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a001",
+              "name": "observe",
+              "parameters": {},
+              "target": "door.front"
+            },
+            "code": "OBSERVED",
+            "evidence": {
+              "object_type": "door",
+              "properties": {
+                "locked": false,
+                "reachable": true
+              },
+              "state": "closed",
+              "target_id": "door.front"
+            },
+            "message": "Observed 'door.front'.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {}
+          }
+        ],
+        "world": {
+          "actor": {
+            "character_id": "npc.qingyan",
+            "known_targets": [
+              "door.front",
+              "object.paper_crane",
+              "player",
+              "visitor.xiaoman"
+            ],
+            "location": "room.front_hall",
+            "permissions": [
+              "communicate",
+              "manipulate",
+              "navigate",
+              "perceive",
+              "wait"
+            ]
+          },
+          "conversation_facts": [],
+          "emotional_residue": [],
+          "heard_events": [],
+          "memory_events": [],
+          "objects": {
+            "door.front": {
+              "interactable": true,
+              "location": "area.front_door",
+              "object_type": "door",
+              "properties": {
+                "locked": false,
+                "reachable": true
+              },
+              "state": "closed"
+            },
+            "object.paper_crane": {
+              "interactable": true,
+              "location": "room.front_hall",
+              "object_type": "item",
+              "properties": {
+                "reachable": true
+              },
+              "state": "intact"
+            }
+          },
+          "player_location": "room.front_hall",
+          "reports": [],
+          "time_seconds": 0.0,
+          "visitor_claimed_name": "Xiaoman",
+          "visitor_id": "visitor.xiaoman",
+          "visitor_responses_remaining": 1
+        }
+      },
+      "context_hash": "fbe877fb4769348d06926312ce5d87597d2656997436aba7166645d046fbd17d",
+      "episode_id": "normal_observe_and_report",
+      "event_type": "tick",
+      "executor": {
+        "reason_code": "ARRIVED",
+        "status": "success"
+      },
+      "gateway": {
+        "reason_code": "NONE",
+        "status": "allowed"
+      },
+      "memory_events": [],
+      "observation": {
+        "action": {
+          "action_id": "normal_observe_and_report:a002",
+          "name": "move_to",
+          "parameters": {
+            "acceptance_radius": 80
+          },
+          "target": "door.front"
+        },
+        "code": "ARRIVED",
+        "evidence": {},
+        "message": "Arrived at 'door.front'.",
+        "source": "executor",
+        "success": true,
+        "world_delta": {
+          "actor.location": {
+            "from": "room.front_hall",
+            "to": "area.front_door"
+          }
+        }
+      },
+      "schema_version": "wangsheng.trace.v2",
+      "sequence": 1,
+      "state_delta": {
+        "actor.location": {
+          "from": "room.front_hall",
+          "to": "area.front_door"
+        }
+      },
+      "step": 1,
+      "task_id": "normal_observe_and_report",
+      "task_status": "active",
+      "terminal_reason": null,
+      "world_after": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "area.front_door",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [],
+        "memory_events": [],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 1
+      },
+      "world_before": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "room.front_hall",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [],
+        "memory_events": [],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 1
+      }
+    },
+    {
+      "action": {
+        "action_id": "normal_observe_and_report:a003",
+        "name": "listen_at",
+        "parameters": {
+          "duration": 2
+        },
+        "target": "door.front"
+      },
+      "action_request": {
+        "action_id": "normal_observe_and_report:a003",
+        "arguments": {
+          "duration": 2
+        },
+        "name": "listen_at",
+        "schema_version": "wangsheng.action_request.v1",
+        "target_id": "door.front"
+      },
+      "action_result": {
+        "action_id": "normal_observe_and_report:a003",
+        "evidence": {
+          "source": "auditory",
+          "visitor_present": true
+        },
+        "message": "A person is waiting outside the closed front door.",
+        "reason_code": "HEARD_VISITOR",
+        "schema_version": "wangsheng.action_result.v1",
+        "source": "executor",
+        "status": "success",
+        "world_delta": {}
+      },
+      "context": {
+        "available_actions": [
+          "ask_through",
+          "close",
+          "listen_at",
+          "move_to",
+          "observe",
+          "open",
+          "report",
+          "wait"
+        ],
+        "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "forbidden_actions": [
+          "open"
+        ],
+        "intent": {
+          "intent_id": "intent.normal_observe_and_report",
+          "kind": "task",
+          "schema_version": "wangsheng.intent.v1",
+          "source": "player",
+          "text": "Confirm who is outside without opening the door."
+        },
+        "previous_observations": [
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a001",
+              "name": "observe",
+              "parameters": {},
+              "target": "door.front"
+            },
+            "code": "OBSERVED",
+            "evidence": {
+              "object_type": "door",
+              "properties": {
+                "locked": false,
+                "reachable": true
+              },
+              "state": "closed",
+              "target_id": "door.front"
+            },
+            "message": "Observed 'door.front'.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {}
+          },
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a002",
+              "name": "move_to",
+              "parameters": {
+                "acceptance_radius": 80
+              },
+              "target": "door.front"
+            },
+            "code": "ARRIVED",
+            "evidence": {},
+            "message": "Arrived at 'door.front'.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {
+              "actor.location": {
+                "from": "room.front_hall",
+                "to": "area.front_door"
+              }
+            }
+          }
+        ],
+        "world": {
+          "actor": {
+            "character_id": "npc.qingyan",
+            "known_targets": [
+              "door.front",
+              "object.paper_crane",
+              "player",
+              "visitor.xiaoman"
+            ],
+            "location": "area.front_door",
+            "permissions": [
+              "communicate",
+              "manipulate",
+              "navigate",
+              "perceive",
+              "wait"
+            ]
+          },
+          "conversation_facts": [],
+          "emotional_residue": [],
+          "heard_events": [],
+          "memory_events": [],
+          "objects": {
+            "door.front": {
+              "interactable": true,
+              "location": "area.front_door",
+              "object_type": "door",
+              "properties": {
+                "locked": false,
+                "reachable": true
+              },
+              "state": "closed"
+            },
+            "object.paper_crane": {
+              "interactable": true,
+              "location": "room.front_hall",
+              "object_type": "item",
+              "properties": {
+                "reachable": true
+              },
+              "state": "intact"
+            }
+          },
+          "player_location": "room.front_hall",
+          "reports": [],
+          "time_seconds": 0.0,
+          "visitor_claimed_name": "Xiaoman",
+          "visitor_id": "visitor.xiaoman",
+          "visitor_responses_remaining": 1
+        }
+      },
+      "context_hash": "60c1169fbf02327bf8d717504e4a521671c0fa62c8aad3e133b369f5149d29be",
+      "episode_id": "normal_observe_and_report",
+      "event_type": "tick",
+      "executor": {
+        "reason_code": "HEARD_VISITOR",
+        "status": "success"
+      },
+      "gateway": {
+        "reason_code": "NONE",
+        "status": "allowed"
+      },
+      "memory_events": [],
+      "observation": {
+        "action": {
+          "action_id": "normal_observe_and_report:a003",
+          "name": "listen_at",
+          "parameters": {
+            "duration": 2
+          },
+          "target": "door.front"
+        },
+        "code": "HEARD_VISITOR",
+        "evidence": {
+          "source": "auditory",
+          "visitor_present": true
+        },
+        "message": "A person is waiting outside the closed front door.",
+        "source": "executor",
+        "success": true,
+        "world_delta": {}
+      },
+      "schema_version": "wangsheng.trace.v2",
+      "sequence": 2,
+      "state_delta": {
+        "heard_events": {
+          "from": [],
+          "to": [
+            "A person is waiting outside the closed front door."
+          ]
+        }
+      },
+      "step": 2,
+      "task_id": "normal_observe_and_report",
+      "task_status": "active",
+      "terminal_reason": null,
+      "world_after": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "area.front_door",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [
+          "A person is waiting outside the closed front door."
+        ],
+        "memory_events": [],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 1
+      },
+      "world_before": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "area.front_door",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [],
+        "memory_events": [],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 1
+      }
+    },
+    {
+      "action": {
+        "action_id": "normal_observe_and_report:a004",
+        "name": "ask_through",
+        "parameters": {
+          "barrier_id": "door.front",
+          "topic": "identity"
+        },
+        "target": "visitor.xiaoman"
+      },
+      "action_request": {
+        "action_id": "normal_observe_and_report:a004",
+        "arguments": {
+          "barrier_id": "door.front",
+          "topic": "identity"
+        },
+        "name": "ask_through",
+        "schema_version": "wangsheng.action_request.v1",
+        "target_id": "visitor.xiaoman"
+      },
+      "action_result": {
+        "action_id": "normal_observe_and_report:a004",
+        "evidence": {
+          "certainty": "CLAIMED",
+          "predicate": "claimed_name",
+          "source": "visitor_statement",
+          "subject": "visitor.xiaoman",
+          "value": "Xiaoman",
+          "verified": false
+        },
+        "message": "The visitor claims to be Xiaoman.",
+        "reason_code": "ASK_SUCCEEDED",
+        "schema_version": "wangsheng.action_result.v1",
+        "source": "executor",
+        "status": "success",
+        "world_delta": {}
+      },
+      "context": {
+        "available_actions": [
+          "ask_through",
+          "close",
+          "listen_at",
+          "move_to",
+          "observe",
+          "open",
+          "report",
+          "wait"
+        ],
+        "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "forbidden_actions": [
+          "open"
+        ],
+        "intent": {
+          "intent_id": "intent.normal_observe_and_report",
+          "kind": "task",
+          "schema_version": "wangsheng.intent.v1",
+          "source": "player",
+          "text": "Confirm who is outside without opening the door."
+        },
+        "previous_observations": [
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a001",
+              "name": "observe",
+              "parameters": {},
+              "target": "door.front"
+            },
+            "code": "OBSERVED",
+            "evidence": {
+              "object_type": "door",
+              "properties": {
+                "locked": false,
+                "reachable": true
+              },
+              "state": "closed",
+              "target_id": "door.front"
+            },
+            "message": "Observed 'door.front'.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {}
+          },
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a002",
+              "name": "move_to",
+              "parameters": {
+                "acceptance_radius": 80
+              },
+              "target": "door.front"
+            },
+            "code": "ARRIVED",
+            "evidence": {},
+            "message": "Arrived at 'door.front'.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {
+              "actor.location": {
+                "from": "room.front_hall",
+                "to": "area.front_door"
+              }
+            }
+          },
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a003",
+              "name": "listen_at",
+              "parameters": {
+                "duration": 2
+              },
+              "target": "door.front"
+            },
+            "code": "HEARD_VISITOR",
+            "evidence": {
+              "source": "auditory",
+              "visitor_present": true
+            },
+            "message": "A person is waiting outside the closed front door.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {}
+          }
+        ],
+        "world": {
+          "actor": {
+            "character_id": "npc.qingyan",
+            "known_targets": [
+              "door.front",
+              "object.paper_crane",
+              "player",
+              "visitor.xiaoman"
+            ],
+            "location": "area.front_door",
+            "permissions": [
+              "communicate",
+              "manipulate",
+              "navigate",
+              "perceive",
+              "wait"
+            ]
+          },
+          "conversation_facts": [],
+          "emotional_residue": [],
+          "heard_events": [
+            "A person is waiting outside the closed front door."
+          ],
+          "memory_events": [],
+          "objects": {
+            "door.front": {
+              "interactable": true,
+              "location": "area.front_door",
+              "object_type": "door",
+              "properties": {
+                "locked": false,
+                "reachable": true
+              },
+              "state": "closed"
+            },
+            "object.paper_crane": {
+              "interactable": true,
+              "location": "room.front_hall",
+              "object_type": "item",
+              "properties": {
+                "reachable": true
+              },
+              "state": "intact"
+            }
+          },
+          "player_location": "room.front_hall",
+          "reports": [],
+          "time_seconds": 0.0,
+          "visitor_claimed_name": "Xiaoman",
+          "visitor_id": "visitor.xiaoman",
+          "visitor_responses_remaining": 1
+        }
+      },
+      "context_hash": "833d8c90b2a3a201843a53326911e88993af965695eaa063d55f46dc48578495",
+      "episode_id": "normal_observe_and_report",
+      "event_type": "tick",
+      "executor": {
+        "reason_code": "ASK_SUCCEEDED",
+        "status": "success"
+      },
+      "gateway": {
+        "reason_code": "NONE",
+        "status": "allowed"
+      },
+      "memory_events": [
+        {
+          "access": "CLEAR",
+          "confidence": 0.85,
+          "content": "The visitor claimed the name Xiaoman.",
+          "kind": "claim",
+          "memory_id": "memory.claim.001",
+          "predicate": "claimed_name",
+          "schema_version": "wangsheng.memory_event.v1",
+          "source": "visitor_statement",
+          "subject": "visitor.xiaoman",
+          "value": "Xiaoman",
+          "version": 1
+        }
+      ],
+      "observation": {
+        "action": {
+          "action_id": "normal_observe_and_report:a004",
+          "name": "ask_through",
+          "parameters": {
+            "barrier_id": "door.front",
+            "topic": "identity"
+          },
+          "target": "visitor.xiaoman"
+        },
+        "code": "ASK_SUCCEEDED",
+        "evidence": {
+          "certainty": "CLAIMED",
+          "predicate": "claimed_name",
+          "source": "visitor_statement",
+          "subject": "visitor.xiaoman",
+          "value": "Xiaoman",
+          "verified": false
+        },
+        "message": "The visitor claims to be Xiaoman.",
+        "source": "executor",
+        "success": true,
+        "world_delta": {}
+      },
+      "schema_version": "wangsheng.trace.v2",
+      "sequence": 3,
+      "state_delta": {
+        "conversation_facts": {
+          "from": [],
+          "to": [
+            {
+              "certainty": "CLAIMED",
+              "predicate": "claimed_name",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman",
+              "verified": false
+            }
+          ]
+        },
+        "memory_events": {
+          "from": [],
+          "to": [
+            {
+              "access": "CLEAR",
+              "confidence": 0.85,
+              "content": "The visitor claimed the name Xiaoman.",
+              "kind": "claim",
+              "memory_id": "memory.claim.001",
+              "predicate": "claimed_name",
+              "schema_version": "wangsheng.memory_event.v1",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman",
+              "version": 1
+            }
+          ]
+        },
+        "visitor_responses_remaining": {
+          "from": 1,
+          "to": 0
+        }
+      },
+      "step": 3,
+      "task_id": "normal_observe_and_report",
+      "task_status": "active",
+      "terminal_reason": null,
+      "world_after": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "area.front_door",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [
+          {
+            "certainty": "CLAIMED",
+            "predicate": "claimed_name",
+            "source": "visitor_statement",
+            "subject": "visitor.xiaoman",
+            "value": "Xiaoman",
+            "verified": false
+          }
+        ],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [
+          "A person is waiting outside the closed front door."
+        ],
+        "memory_events": [
+          {
+            "access": "CLEAR",
+            "confidence": 0.85,
+            "content": "The visitor claimed the name Xiaoman.",
+            "kind": "claim",
+            "memory_id": "memory.claim.001",
+            "predicate": "claimed_name",
+            "schema_version": "wangsheng.memory_event.v1",
+            "source": "visitor_statement",
+            "subject": "visitor.xiaoman",
+            "value": "Xiaoman",
+            "version": 1
+          }
+        ],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 0
+      },
+      "world_before": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "area.front_door",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [
+          "A person is waiting outside the closed front door."
+        ],
+        "memory_events": [],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 1
+      }
+    },
+    {
+      "action": {
+        "action_id": "normal_observe_and_report:a005",
+        "name": "move_to",
+        "parameters": {
+          "acceptance_radius": 120
+        },
+        "target": "player"
+      },
+      "action_request": {
+        "action_id": "normal_observe_and_report:a005",
+        "arguments": {
+          "acceptance_radius": 120
+        },
+        "name": "move_to",
+        "schema_version": "wangsheng.action_request.v1",
+        "target_id": "player"
+      },
+      "action_result": {
+        "action_id": "normal_observe_and_report:a005",
+        "evidence": {},
+        "message": "Arrived at 'player'.",
+        "reason_code": "ARRIVED",
+        "schema_version": "wangsheng.action_result.v1",
+        "source": "executor",
+        "status": "success",
+        "world_delta": {
+          "actor.location": {
+            "from": "area.front_door",
+            "to": "room.front_hall"
+          }
+        }
+      },
+      "context": {
+        "available_actions": [
+          "ask_through",
+          "close",
+          "listen_at",
+          "move_to",
+          "observe",
+          "open",
+          "report",
+          "wait"
+        ],
+        "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "forbidden_actions": [
+          "open"
+        ],
+        "intent": {
+          "intent_id": "intent.normal_observe_and_report",
+          "kind": "task",
+          "schema_version": "wangsheng.intent.v1",
+          "source": "player",
+          "text": "Confirm who is outside without opening the door."
+        },
+        "previous_observations": [
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a001",
+              "name": "observe",
+              "parameters": {},
+              "target": "door.front"
+            },
+            "code": "OBSERVED",
+            "evidence": {
+              "object_type": "door",
+              "properties": {
+                "locked": false,
+                "reachable": true
+              },
+              "state": "closed",
+              "target_id": "door.front"
+            },
+            "message": "Observed 'door.front'.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {}
+          },
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a002",
+              "name": "move_to",
+              "parameters": {
+                "acceptance_radius": 80
+              },
+              "target": "door.front"
+            },
+            "code": "ARRIVED",
+            "evidence": {},
+            "message": "Arrived at 'door.front'.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {
+              "actor.location": {
+                "from": "room.front_hall",
+                "to": "area.front_door"
+              }
+            }
+          },
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a003",
+              "name": "listen_at",
+              "parameters": {
+                "duration": 2
+              },
+              "target": "door.front"
+            },
+            "code": "HEARD_VISITOR",
+            "evidence": {
+              "source": "auditory",
+              "visitor_present": true
+            },
+            "message": "A person is waiting outside the closed front door.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {}
+          },
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a004",
+              "name": "ask_through",
+              "parameters": {
+                "barrier_id": "door.front",
+                "topic": "identity"
+              },
+              "target": "visitor.xiaoman"
+            },
+            "code": "ASK_SUCCEEDED",
+            "evidence": {
+              "certainty": "CLAIMED",
+              "predicate": "claimed_name",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman",
+              "verified": false
+            },
+            "message": "The visitor claims to be Xiaoman.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {}
+          }
+        ],
+        "world": {
+          "actor": {
+            "character_id": "npc.qingyan",
+            "known_targets": [
+              "door.front",
+              "object.paper_crane",
+              "player",
+              "visitor.xiaoman"
+            ],
+            "location": "area.front_door",
+            "permissions": [
+              "communicate",
+              "manipulate",
+              "navigate",
+              "perceive",
+              "wait"
+            ]
+          },
+          "conversation_facts": [
+            {
+              "certainty": "CLAIMED",
+              "predicate": "claimed_name",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman",
+              "verified": false
+            }
+          ],
+          "emotional_residue": [],
+          "heard_events": [
+            "A person is waiting outside the closed front door."
+          ],
+          "memory_events": [
+            {
+              "access": "CLEAR",
+              "confidence": 0.85,
+              "content": "The visitor claimed the name Xiaoman.",
+              "kind": "claim",
+              "memory_id": "memory.claim.001",
+              "predicate": "claimed_name",
+              "schema_version": "wangsheng.memory_event.v1",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman",
+              "version": 1
+            }
+          ],
+          "objects": {
+            "door.front": {
+              "interactable": true,
+              "location": "area.front_door",
+              "object_type": "door",
+              "properties": {
+                "locked": false,
+                "reachable": true
+              },
+              "state": "closed"
+            },
+            "object.paper_crane": {
+              "interactable": true,
+              "location": "room.front_hall",
+              "object_type": "item",
+              "properties": {
+                "reachable": true
+              },
+              "state": "intact"
+            }
+          },
+          "player_location": "room.front_hall",
+          "reports": [],
+          "time_seconds": 0.0,
+          "visitor_claimed_name": "Xiaoman",
+          "visitor_id": "visitor.xiaoman",
+          "visitor_responses_remaining": 0
+        }
+      },
+      "context_hash": "1a051e5cef7361766b61c235b76da25c0819e4c1df45bbcc0f1bb5c5233b5e3a",
+      "episode_id": "normal_observe_and_report",
+      "event_type": "tick",
+      "executor": {
+        "reason_code": "ARRIVED",
+        "status": "success"
+      },
+      "gateway": {
+        "reason_code": "NONE",
+        "status": "allowed"
+      },
+      "memory_events": [
+        {
+          "access": "CLEAR",
+          "confidence": 0.85,
+          "content": "The visitor claimed the name Xiaoman.",
+          "kind": "claim",
+          "memory_id": "memory.claim.001",
+          "predicate": "claimed_name",
+          "schema_version": "wangsheng.memory_event.v1",
+          "source": "visitor_statement",
+          "subject": "visitor.xiaoman",
+          "value": "Xiaoman",
+          "version": 1
+        }
+      ],
+      "observation": {
+        "action": {
+          "action_id": "normal_observe_and_report:a005",
+          "name": "move_to",
+          "parameters": {
+            "acceptance_radius": 120
+          },
+          "target": "player"
+        },
+        "code": "ARRIVED",
+        "evidence": {},
+        "message": "Arrived at 'player'.",
+        "source": "executor",
+        "success": true,
+        "world_delta": {
+          "actor.location": {
+            "from": "area.front_door",
+            "to": "room.front_hall"
+          }
+        }
+      },
+      "schema_version": "wangsheng.trace.v2",
+      "sequence": 4,
+      "state_delta": {
+        "actor.location": {
+          "from": "area.front_door",
+          "to": "room.front_hall"
+        }
+      },
+      "step": 4,
+      "task_id": "normal_observe_and_report",
+      "task_status": "active",
+      "terminal_reason": null,
+      "world_after": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "room.front_hall",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [
+          {
+            "certainty": "CLAIMED",
+            "predicate": "claimed_name",
+            "source": "visitor_statement",
+            "subject": "visitor.xiaoman",
+            "value": "Xiaoman",
+            "verified": false
+          }
+        ],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [
+          "A person is waiting outside the closed front door."
+        ],
+        "memory_events": [
+          {
+            "access": "CLEAR",
+            "confidence": 0.85,
+            "content": "The visitor claimed the name Xiaoman.",
+            "kind": "claim",
+            "memory_id": "memory.claim.001",
+            "predicate": "claimed_name",
+            "schema_version": "wangsheng.memory_event.v1",
+            "source": "visitor_statement",
+            "subject": "visitor.xiaoman",
+            "value": "Xiaoman",
+            "version": 1
+          }
+        ],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 0
+      },
+      "world_before": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "area.front_door",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [
+          {
+            "certainty": "CLAIMED",
+            "predicate": "claimed_name",
+            "source": "visitor_statement",
+            "subject": "visitor.xiaoman",
+            "value": "Xiaoman",
+            "verified": false
+          }
+        ],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [
+          "A person is waiting outside the closed front door."
+        ],
+        "memory_events": [
+          {
+            "access": "CLEAR",
+            "confidence": 0.85,
+            "content": "The visitor claimed the name Xiaoman.",
+            "kind": "claim",
+            "memory_id": "memory.claim.001",
+            "predicate": "claimed_name",
+            "schema_version": "wangsheng.memory_event.v1",
+            "source": "visitor_statement",
+            "subject": "visitor.xiaoman",
+            "value": "Xiaoman",
+            "version": 1
+          }
+        ],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 0
+      }
+    },
+    {
+      "action": {
+        "action_id": "normal_observe_and_report:a006",
+        "name": "report",
+        "parameters": {
+          "facts": [
+            {
+              "certainty": "CLAIMED",
+              "predicate": "claimed_name",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman"
+            }
+          ],
+          "text": "The visitor claims to be Xiaoman."
+        },
+        "target": "player"
+      },
+      "action_request": {
+        "action_id": "normal_observe_and_report:a006",
+        "arguments": {
+          "facts": [
+            {
+              "certainty": "CLAIMED",
+              "predicate": "claimed_name",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman"
+            }
+          ],
+          "text": "The visitor claims to be Xiaoman."
+        },
+        "name": "report",
+        "schema_version": "wangsheng.action_request.v1",
+        "target_id": "player"
+      },
+      "action_result": {
+        "action_id": "normal_observe_and_report:a006",
+        "evidence": {
+          "facts": [
+            {
+              "certainty": "CLAIMED",
+              "predicate": "claimed_name",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman"
+            }
+          ],
+          "target_id": "player",
+          "text": "The visitor claims to be Xiaoman."
+        },
+        "message": "Report delivered.",
+        "reason_code": "REPORT_RECORDED",
+        "schema_version": "wangsheng.action_result.v1",
+        "source": "executor",
+        "status": "success",
+        "world_delta": {}
+      },
+      "context": {
+        "available_actions": [
+          "ask_through",
+          "close",
+          "listen_at",
+          "move_to",
+          "observe",
+          "open",
+          "report",
+          "wait"
+        ],
+        "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "forbidden_actions": [
+          "open"
+        ],
+        "intent": {
+          "intent_id": "intent.normal_observe_and_report",
+          "kind": "task",
+          "schema_version": "wangsheng.intent.v1",
+          "source": "player",
+          "text": "Confirm who is outside without opening the door."
+        },
+        "previous_observations": [
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a001",
+              "name": "observe",
+              "parameters": {},
+              "target": "door.front"
+            },
+            "code": "OBSERVED",
+            "evidence": {
+              "object_type": "door",
+              "properties": {
+                "locked": false,
+                "reachable": true
+              },
+              "state": "closed",
+              "target_id": "door.front"
+            },
+            "message": "Observed 'door.front'.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {}
+          },
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a002",
+              "name": "move_to",
+              "parameters": {
+                "acceptance_radius": 80
+              },
+              "target": "door.front"
+            },
+            "code": "ARRIVED",
+            "evidence": {},
+            "message": "Arrived at 'door.front'.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {
+              "actor.location": {
+                "from": "room.front_hall",
+                "to": "area.front_door"
+              }
+            }
+          },
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a003",
+              "name": "listen_at",
+              "parameters": {
+                "duration": 2
+              },
+              "target": "door.front"
+            },
+            "code": "HEARD_VISITOR",
+            "evidence": {
+              "source": "auditory",
+              "visitor_present": true
+            },
+            "message": "A person is waiting outside the closed front door.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {}
+          },
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a004",
+              "name": "ask_through",
+              "parameters": {
+                "barrier_id": "door.front",
+                "topic": "identity"
+              },
+              "target": "visitor.xiaoman"
+            },
+            "code": "ASK_SUCCEEDED",
+            "evidence": {
+              "certainty": "CLAIMED",
+              "predicate": "claimed_name",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman",
+              "verified": false
+            },
+            "message": "The visitor claims to be Xiaoman.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {}
+          },
+          {
+            "action": {
+              "action_id": "normal_observe_and_report:a005",
+              "name": "move_to",
+              "parameters": {
+                "acceptance_radius": 120
+              },
+              "target": "player"
+            },
+            "code": "ARRIVED",
+            "evidence": {},
+            "message": "Arrived at 'player'.",
+            "source": "executor",
+            "success": true,
+            "world_delta": {
+              "actor.location": {
+                "from": "area.front_door",
+                "to": "room.front_hall"
+              }
+            }
+          }
+        ],
+        "world": {
+          "actor": {
+            "character_id": "npc.qingyan",
+            "known_targets": [
+              "door.front",
+              "object.paper_crane",
+              "player",
+              "visitor.xiaoman"
+            ],
+            "location": "room.front_hall",
+            "permissions": [
+              "communicate",
+              "manipulate",
+              "navigate",
+              "perceive",
+              "wait"
+            ]
+          },
+          "conversation_facts": [
+            {
+              "certainty": "CLAIMED",
+              "predicate": "claimed_name",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman",
+              "verified": false
+            }
+          ],
+          "emotional_residue": [],
+          "heard_events": [
+            "A person is waiting outside the closed front door."
+          ],
+          "memory_events": [
+            {
+              "access": "CLEAR",
+              "confidence": 0.85,
+              "content": "The visitor claimed the name Xiaoman.",
+              "kind": "claim",
+              "memory_id": "memory.claim.001",
+              "predicate": "claimed_name",
+              "schema_version": "wangsheng.memory_event.v1",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman",
+              "version": 1
+            }
+          ],
+          "objects": {
+            "door.front": {
+              "interactable": true,
+              "location": "area.front_door",
+              "object_type": "door",
+              "properties": {
+                "locked": false,
+                "reachable": true
+              },
+              "state": "closed"
+            },
+            "object.paper_crane": {
+              "interactable": true,
+              "location": "room.front_hall",
+              "object_type": "item",
+              "properties": {
+                "reachable": true
+              },
+              "state": "intact"
+            }
+          },
+          "player_location": "room.front_hall",
+          "reports": [],
+          "time_seconds": 0.0,
+          "visitor_claimed_name": "Xiaoman",
+          "visitor_id": "visitor.xiaoman",
+          "visitor_responses_remaining": 0
+        }
+      },
+      "context_hash": "1f0f86659e50401069f038eaca409c9c1db7069ee01ba09024583145727bb0b5",
+      "episode_id": "normal_observe_and_report",
+      "event_type": "tick",
+      "executor": {
+        "reason_code": "REPORT_RECORDED",
+        "status": "success"
+      },
+      "gateway": {
+        "reason_code": "NONE",
+        "status": "allowed"
+      },
+      "memory_events": [
+        {
+          "access": "CLEAR",
+          "confidence": 0.85,
+          "content": "The visitor claimed the name Xiaoman.",
+          "kind": "claim",
+          "memory_id": "memory.claim.001",
+          "predicate": "claimed_name",
+          "schema_version": "wangsheng.memory_event.v1",
+          "source": "visitor_statement",
+          "subject": "visitor.xiaoman",
+          "value": "Xiaoman",
+          "version": 1
+        }
+      ],
+      "observation": {
+        "action": {
+          "action_id": "normal_observe_and_report:a006",
+          "name": "report",
+          "parameters": {
+            "facts": [
+              {
+                "certainty": "CLAIMED",
+                "predicate": "claimed_name",
+                "source": "visitor_statement",
+                "subject": "visitor.xiaoman",
+                "value": "Xiaoman"
+              }
+            ],
+            "text": "The visitor claims to be Xiaoman."
+          },
+          "target": "player"
+        },
+        "code": "REPORT_RECORDED",
+        "evidence": {
+          "facts": [
+            {
+              "certainty": "CLAIMED",
+              "predicate": "claimed_name",
+              "source": "visitor_statement",
+              "subject": "visitor.xiaoman",
+              "value": "Xiaoman"
+            }
+          ],
+          "target_id": "player",
+          "text": "The visitor claims to be Xiaoman."
+        },
+        "message": "Report delivered.",
+        "source": "executor",
+        "success": true,
+        "world_delta": {}
+      },
+      "schema_version": "wangsheng.trace.v2",
+      "sequence": 5,
+      "state_delta": {
+        "reports": {
+          "from": [],
+          "to": [
+            {
+              "facts": [
+                {
+                  "certainty": "CLAIMED",
+                  "predicate": "claimed_name",
+                  "source": "visitor_statement",
+                  "subject": "visitor.xiaoman",
+                  "value": "Xiaoman"
+                }
+              ],
+              "target_id": "player",
+              "text": "The visitor claims to be Xiaoman."
+            }
+          ]
+        }
+      },
+      "step": 5,
+      "task_id": "normal_observe_and_report",
+      "task_status": "succeeded",
+      "terminal_reason": "COMPLETION_CRITERIA_MET",
+      "world_after": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "room.front_hall",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [
+          {
+            "certainty": "CLAIMED",
+            "predicate": "claimed_name",
+            "source": "visitor_statement",
+            "subject": "visitor.xiaoman",
+            "value": "Xiaoman",
+            "verified": false
+          }
+        ],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [
+          "A person is waiting outside the closed front door."
+        ],
+        "memory_events": [
+          {
+            "access": "CLEAR",
+            "confidence": 0.85,
+            "content": "The visitor claimed the name Xiaoman.",
+            "kind": "claim",
+            "memory_id": "memory.claim.001",
+            "predicate": "claimed_name",
+            "schema_version": "wangsheng.memory_event.v1",
+            "source": "visitor_statement",
+            "subject": "visitor.xiaoman",
+            "value": "Xiaoman",
+            "version": 1
+          }
+        ],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [
+          {
+            "facts": [
+              {
+                "certainty": "CLAIMED",
+                "predicate": "claimed_name",
+                "source": "visitor_statement",
+                "subject": "visitor.xiaoman",
+                "value": "Xiaoman"
+              }
+            ],
+            "target_id": "player",
+            "text": "The visitor claims to be Xiaoman."
+          }
+        ],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 0
+      },
+      "world_before": {
+        "actor": {
+          "character_id": "npc.qingyan",
+          "known_targets": [
+            "door.front",
+            "object.paper_crane",
+            "player",
+            "visitor.xiaoman"
+          ],
+          "location": "room.front_hall",
+          "permissions": [
+            "communicate",
+            "manipulate",
+            "navigate",
+            "perceive",
+            "wait"
+          ]
+        },
+        "conversation_facts": [
+          {
+            "certainty": "CLAIMED",
+            "predicate": "claimed_name",
+            "source": "visitor_statement",
+            "subject": "visitor.xiaoman",
+            "value": "Xiaoman",
+            "verified": false
+          }
+        ],
+        "emotional_residue": [],
+        "forced_action_results": {},
+        "heard_events": [
+          "A person is waiting outside the closed front door."
+        ],
+        "memory_events": [
+          {
+            "access": "CLEAR",
+            "confidence": 0.85,
+            "content": "The visitor claimed the name Xiaoman.",
+            "kind": "claim",
+            "memory_id": "memory.claim.001",
+            "predicate": "claimed_name",
+            "schema_version": "wangsheng.memory_event.v1",
+            "source": "visitor_statement",
+            "subject": "visitor.xiaoman",
+            "value": "Xiaoman",
+            "version": 1
+          }
+        ],
+        "objects": {
+          "door.front": {
+            "interactable": true,
+            "location": "area.front_door",
+            "object_type": "door",
+            "properties": {
+              "locked": false,
+              "reachable": true
+            },
+            "state": "closed"
+          },
+          "object.paper_crane": {
+            "interactable": true,
+            "location": "room.front_hall",
+            "object_type": "item",
+            "properties": {
+              "reachable": true
+            },
+            "state": "intact"
+          }
+        },
+        "player_location": "room.front_hall",
+        "reports": [],
+        "time_seconds": 0.0,
+        "visitor_claimed_name": "Xiaoman",
+        "visitor_id": "visitor.xiaoman",
+        "visitor_responses_remaining": 0
+      }
+    }
+  ],
+  "scenario_id": "normal_observe_and_report",
+  "scenario_path": "scenarios/01_normal_observe_and_report.json",
+  "schema_version": "wangsheng.golden_trace.v1"
+}

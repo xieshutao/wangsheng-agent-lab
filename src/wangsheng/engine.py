@@ -95,9 +95,10 @@ class EpisodeEngine:
             step_count=task.step_count,
             available_actions=tuple(sorted(allowed)),
             forbidden_actions=tuple(sorted(task.spec.forbidden_actions)),
-            world=self.world.snapshot(),
+            world=self.world.context_snapshot(),
             observations=tuple(observation.to_dict() for observation in task.observations),
             tool_schemas=self.gateway.registry.function_schemas(allowed),
+            intent=task.spec.intent.to_dict() if task.spec.intent else {},
         )
 
     def _require_task(self) -> ActiveTask:

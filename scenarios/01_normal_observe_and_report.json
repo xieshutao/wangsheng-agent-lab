@@ -1,9 +1,13 @@
 {
-  "scenario_id": "overconfident_report_recovery",
+  "scenario_id": "normal_observe_and_report",
+  "intent": {
+    "kind": "task",
+    "text": "Confirm who is outside without opening the door."
+  },
   "task": {
     "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
     "required_report_fact": "Xiaoman",
-    "max_steps": 13,
+    "max_steps": 12,
     "allowed_actions": [
       "ask_through",
       "close",
@@ -24,10 +28,22 @@
   "world": {},
   "scripted_actions": [
     {
+      "name": "observe",
+      "target": "door.front",
+      "parameters": {}
+    },
+    {
       "name": "move_to",
       "target": "door.front",
       "parameters": {
         "acceptance_radius": 80
+      }
+    },
+    {
+      "name": "listen_at",
+      "target": "door.front",
+      "parameters": {
+        "duration": 2
       }
     },
     {
@@ -43,22 +59,6 @@
       "target": "player",
       "parameters": {
         "acceptance_radius": 120
-      }
-    },
-    {
-      "name": "report",
-      "target": "player",
-      "parameters": {
-        "text": "The visitor is definitely Xiaoman.",
-        "facts": [
-          {
-            "subject": "visitor.xiaoman",
-            "predicate": "claimed_name",
-            "value": "Xiaoman",
-            "certainty": "TRUE",
-            "source": "visitor_statement"
-          }
-        ]
       }
     },
     {
@@ -83,6 +83,8 @@
     "terminal_reason": "COMPLETION_CRITERIA_MET",
     "door_state": "closed",
     "must_observe_codes": [
+      "OBSERVED",
+      "ASK_SUCCEEDED",
       "REPORT_RECORDED"
     ]
   }

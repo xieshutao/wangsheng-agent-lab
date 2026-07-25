@@ -16,6 +16,8 @@ class ToolSpec:
     parameters_schema: dict[str, Any]
     timeout_seconds: float
     cancellable: bool
+    produces_memory: bool = False
+    schema_version: str = "wangsheng.tool.v1"
 
     def function_schema(self) -> dict[str, Any]:
         properties = dict(self.parameters_schema.get("properties", {}))
@@ -39,6 +41,8 @@ class ToolSpec:
                 "timeout_seconds": self.timeout_seconds,
                 "cancellable": self.cancellable,
                 "permission": self.permission,
+                "produces_memory": self.produces_memory,
+                "schema_version": self.schema_version,
             },
         }
 
@@ -157,12 +161,12 @@ def default_tool_specs() -> tuple[ToolSpec, ...]:
         ("subject", "predicate", "value", "certainty", "source"),
     )
     return (
-        ToolSpec("move_to", "Move toward a known target.", True, "navigate", _object_schema({"acceptance_radius": {"type": "number", "minimum": 0, "maximum": 500}}), 20.0, True),
-        ToolSpec("observe", "Observe a known target without changing it.", True, "perceive", _object_schema({}), 5.0, True),
-        ToolSpec("listen_at", "Listen near a target; never opens it.", True, "perceive", _object_schema({"duration": {"type": "number", "minimum": 0, "maximum": 30}}), 10.0, True),
-        ToolSpec("ask_through", "Ask a target through a physical barrier.", True, "communicate", _object_schema({"barrier_id": {"type": "string", "minLength": 1}, "topic": {"type": "string", "minLength": 1}}, ("barrier_id", "topic")), 15.0, True),
-        ToolSpec("open", "Open a target when permitted and unlocked.", True, "manipulate", _object_schema({}), 8.0, True),
-        ToolSpec("close", "Close an open target.", True, "manipulate", _object_schema({}), 8.0, True),
-        ToolSpec("report", "Report known facts and their sources to a target.", True, "communicate", _object_schema({"text": {"type": "string", "minLength": 1}, "facts": {"type": "array", "minItems": 1, "items": fact_schema}}, ("text", "facts")), 15.0, True),
-        ToolSpec("wait", "Wait for a bounded duration.", False, "wait", _object_schema({"seconds": {"type": "number", "minimum": 0, "maximum": 60}}, ("seconds",)), 60.0, True),
+        ToolSpec("move_to", "Move toward a known target.", True, "navigate", _object_schema({"acceptance_radius": {"type": "number", "minimum": 0, "maximum": 500}}), 20.0, True, False),
+        ToolSpec("observe", "Observe a known target without changing it.", True, "perceive", _object_schema({}), 5.0, True, True),
+        ToolSpec("listen_at", "Listen near a target; never opens it.", True, "perceive", _object_schema({"duration": {"type": "number", "minimum": 0, "maximum": 30}}), 10.0, True, True),
+        ToolSpec("ask_through", "Ask a target through a physical barrier.", True, "communicate", _object_schema({"barrier_id": {"type": "string", "minLength": 1}, "topic": {"type": "string", "minLength": 1}}, ("barrier_id", "topic")), 15.0, True, True),
+        ToolSpec("open", "Open a target when permitted and unlocked.", True, "manipulate", _object_schema({}), 8.0, True, True),
+        ToolSpec("close", "Close an open target.", True, "manipulate", _object_schema({}), 8.0, True, True),
+        ToolSpec("report", "Report known facts and their sources to a target.", True, "communicate", _object_schema({"text": {"type": "string", "minLength": 1}, "facts": {"type": "array", "minItems": 1, "items": fact_schema}}, ("text", "facts")), 15.0, True, True),
+        ToolSpec("wait", "Wait for a bounded duration.", False, "wait", _object_schema({"seconds": {"type": "number", "minimum": 0, "maximum": 60}}, ("seconds",)), 60.0, True, False),
     )

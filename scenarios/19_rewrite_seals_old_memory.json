@@ -1,0 +1,90 @@
+{
+  "scenario_id": "rewrite_seals_old_memory",
+  "task": {
+    "command": "Use only the current rewritten memory when reporting.",
+    "required_report_fact": null,
+    "max_steps": 12,
+    "allowed_actions": [
+      "ask_through",
+      "close",
+      "listen_at",
+      "move_to",
+      "observe",
+      "open",
+      "report",
+      "wait"
+    ],
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ],
+    "completion": {
+      "type": "report_fact",
+      "predicate": "claimed_name",
+      "value": "Xiaoman",
+      "certainty": "CLAIMED"
+    }
+  },
+  "world": {
+    "memory_events": [
+      {
+        "memory_id": "memory.identity.v1",
+        "subject": "visitor.xiaoman",
+        "kind": "claim",
+        "content": "Old version: the visitor was Ahe.",
+        "source": "reality.v1",
+        "access": "SEALED",
+        "confidence": 0.8,
+        "version": 1,
+        "predicate": "claimed_name",
+        "value": "Ahe"
+      },
+      {
+        "memory_id": "memory.identity.v2",
+        "subject": "visitor.xiaoman",
+        "kind": "claim",
+        "content": "Current version: the visitor claimed Xiaoman.",
+        "source": "reality.v2",
+        "access": "REWRITTEN",
+        "confidence": 0.8,
+        "version": 2,
+        "predicate": "claimed_name",
+        "value": "Xiaoman"
+      }
+    ]
+  },
+  "scripted_actions": [
+    {
+      "name": "report",
+      "target": "player",
+      "parameters": {
+        "text": "The accessible version says the visitor claimed to be Xiaoman.",
+        "facts": [
+          {
+            "subject": "visitor.xiaoman",
+            "predicate": "claimed_name",
+            "value": "Xiaoman",
+            "certainty": "CLAIMED",
+            "source": "reality.v2"
+          }
+        ]
+      }
+    }
+  ],
+  "expected": {
+    "status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "door_state": "closed",
+    "context_must_contain": [
+      "Xiaoman"
+    ],
+    "context_must_not_contain": [
+      "Ahe"
+    ],
+    "must_observe_codes": [
+      "REPORT_RECORDED"
+    ]
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "scenario_id": "forgotten_name_filtered",
+  "task": {
+    "command": "Recall the visitor's name only if it remains accessible.",
+    "required_report_fact": null,
+    "max_steps": 12,
+    "allowed_actions": [
+      "ask_through",
+      "close",
+      "listen_at",
+      "move_to",
+      "observe",
+      "open",
+      "report",
+      "wait"
+    ],
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ],
+    "completion": {
+      "type": "report_predicate",
+      "predicate": "identity_status",
+      "value": "UNKNOWN"
+    }
+  },
+  "world": {
+    "memory_events": [
+      {
+        "memory_id": "memory.old_name",
+        "subject": "visitor.xiaoman",
+        "kind": "fact",
+        "content": "The visitor was called Ahe.",
+        "source": "old_episode",
+        "access": "FORGOTTEN",
+        "confidence": 0.9,
+        "version": 1,
+        "predicate": "claimed_name",
+        "value": "Ahe"
+      }
+    ]
+  },
+  "scripted_actions": [
+    {
+      "name": "report",
+      "target": "player",
+      "parameters": {
+        "text": "The name is no longer accessible.",
+        "facts": [
+          {
+            "subject": "visitor.xiaoman",
+            "predicate": "identity_status",
+            "value": "UNKNOWN",
+            "certainty": "UNKNOWN",
+            "source": "memory_access"
+          }
+        ]
+      }
+    }
+  ],
+  "expected": {
+    "status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "door_state": "closed",
+    "context_must_not_contain": [
+      "Ahe"
+    ],
+    "must_observe_codes": [
+      "REPORT_RECORDED"
+    ]
+  }
+}

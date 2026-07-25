@@ -29,3 +29,10 @@ def test_every_tool_exports_function_schema_and_metadata():
 def test_invalid_tool_arguments_are_rejected(action):
     failure = ToolRegistry().validate_action_arguments(action)
     assert failure is not None and failure.code == "INVALID_ARGUMENT"
+
+
+def test_every_tool_declares_memory_and_schema_version_metadata():
+    for schema in ToolRegistry().function_schemas():
+        metadata = schema["x-wangsheng"]
+        assert metadata["schema_version"] == "wangsheng.tool.v1"
+        assert isinstance(metadata["produces_memory"], bool)

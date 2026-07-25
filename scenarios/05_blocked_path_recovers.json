@@ -1,9 +1,9 @@
 {
-  "scenario_id": "external_door_open_recovery",
+  "scenario_id": "blocked_path_recovers",
   "task": {
-    "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+    "command": "Reach the door, recover from a blocked path, and report.",
     "required_report_fact": "Xiaoman",
-    "max_steps": 14,
+    "max_steps": 13,
     "allowed_actions": [
       "ask_through",
       "close",
@@ -21,13 +21,22 @@
       "door.front.must_remain_closed"
     ]
   },
-  "world": {},
+  "world": {
+    "objects": {
+      "door.front": {
+        "properties": {
+          "reachable": false
+        }
+      }
+    }
+  },
   "events": [
     {
       "before_step": 1,
-      "type": "set_object_state",
+      "type": "set_object_property",
       "object_id": "door.front",
-      "state": "open"
+      "property": "reachable",
+      "value": true
     }
   ],
   "scripted_actions": [
@@ -39,9 +48,11 @@
       }
     },
     {
-      "name": "close",
+      "name": "move_to",
       "target": "door.front",
-      "parameters": {}
+      "parameters": {
+        "acceptance_radius": 80
+      }
     },
     {
       "name": "listen_at",
@@ -87,8 +98,11 @@
     "terminal_reason": "COMPLETION_CRITERIA_MET",
     "door_state": "closed",
     "must_observe_codes": [
-      "CLOSED",
+      "NO_PATH",
       "REPORT_RECORDED"
+    ],
+    "must_classify": [
+      "execution_failure"
     ]
   }
 }

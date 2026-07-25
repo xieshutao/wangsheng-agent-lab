@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .contracts import MemoryEvent
 from .models import Action, Observation, WorldState
 from .reason_codes import ReasonCode
 
@@ -9,6 +10,17 @@ from .reason_codes import ReasonCode
 @dataclass(slots=True)
 class SimulatedExecutor:
     def execute(self, *, action: Action, world: WorldState) -> Observation:
+        forced = world.forced_action_results.get(action.name)
+        if forced:
+            code = forced.pop(0)
+            if code != ReasonCode.NONE.value:
+                return Observation(
+                    False,
+                    code,
+                    f"Forced simulator result for '{action.name}': {code}.",
+                    action,
+                    source="executor",
+                )
         handler = getattr(self, f"_do_{action.name}", None)
         if handler is None:
             return Observation(False, ReasonCode.EXECUTOR_MISSING.value, f"No handler for '{action.name}'.", action, source="executor")
@@ -62,6 +74,18 @@ class SimulatedExecutor:
         claim = {"subject": action.target, "predicate": "claimed_name", "value": response, "source": "visitor_statement", "certainty": "CLAIMED", "verified": False}
         if claim not in world.conversation_facts:
             world.conversation_facts.append(claim)
+        memory = MemoryEvent(
+            memory_id=f"memory.claim.{len(world.memory_events) + 1:03d}",
+            subject=action.target,
+            kind="claim",
+            content=f"The visitor claimed the name {response}.",
+            source="visitor_statement",
+            confidence=0.85,
+            predicate="claimed_name",
+            value=response,
+        )
+        if not any(item.predicate == memory.predicate and item.value == memory.value and item.source == memory.source for item in world.memory_events):
+            world.memory_events.append(memory)
         return Observation(True, ReasonCode.ASK_SUCCEEDED.value, f"The visitor claims to be {response}.", action, source="executor", evidence=claim)
 
     def _do_open(self, *, action: Action, world: WorldState) -> Observation:
@@ -82,9 +106,51 @@ class SimulatedExecutor:
         assert action.target is not None
         if action.target == "player" and world.actor.location != world.player_location:
             return Observation(False, ReasonCode.TOO_FAR.value, "Actor must return to the player before reporting.", action, source="executor")
-        report = {"target_id": action.target, "text": action.parameters["text"], "facts": list(action.parameters["facts"])}
+        facts = list(action.parameters["facts"])
+        invalid = [fact for fact in facts if not self._fact_is_grounded(fact, world)]
+        if invalid:
+            return Observation(
+                False,
+                ReasonCode.REPORT_INVALID.value,
+                "Report contains an ungrounded or overconfident fact.",
+                action,
+                source="executor",
+                evidence={"invalid_facts": invalid},
+            )
+        report = {"target_id": action.target, "text": action.parameters["text"], "facts": facts}
         world.reports.append(report)
         return Observation(True, ReasonCode.REPORT_RECORDED.value, "Report delivered.", action, source="executor", evidence=report)
+
+    @staticmethod
+    def _fact_is_grounded(fact: dict, world: WorldState) -> bool:
+        predicate = fact.get("predicate")
+        value = fact.get("value")
+        certainty = fact.get("certainty")
+        source = fact.get("source")
+        if predicate == "claimed_name":
+            if certainty != "CLAIMED":
+                return False
+            return world.has_accessible_fact(predicate="claimed_name", value=value)
+        if predicate == "identity_status" and value == "UNKNOWN":
+            return not world.has_accessible_fact(predicate="claimed_name")
+        if predicate == "identity_status" and value == "CONFLICTED":
+            names = {
+                item.value
+                for item in world.accessible_memories()
+                if item.predicate == "claimed_name" and item.value
+            }
+            names.update(
+                item.get("value")
+                for item in world.conversation_facts
+                if item.get("predicate") == "claimed_name" and item.get("value")
+            )
+            return len(names) >= 2 and certainty == "CONFLICTED"
+        if predicate == "emotion":
+            accessible = any(item.kind == "emotion" and item.value == value for item in world.accessible_memories())
+            return accessible or value in world.emotional_residue
+        if predicate == "refusal":
+            return certainty == "TRUE" and source == "character_rule"
+        return world.has_accessible_fact(predicate=str(predicate), value=str(value))
 
     def _do_wait(self, *, action: Action, world: WorldState) -> Observation:
         seconds = float(action.parameters["seconds"])

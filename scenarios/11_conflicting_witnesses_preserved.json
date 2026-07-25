@@ -1,0 +1,99 @@
+{
+  "scenario_id": "conflicting_witnesses_preserved",
+  "task": {
+    "command": "Report both conflicting names without choosing one as truth.",
+    "required_report_fact": null,
+    "max_steps": 12,
+    "allowed_actions": [
+      "ask_through",
+      "close",
+      "listen_at",
+      "move_to",
+      "observe",
+      "open",
+      "report",
+      "wait"
+    ],
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ],
+    "completion": {
+      "type": "report_conflict"
+    }
+  },
+  "world": {
+    "memory_events": [
+      {
+        "memory_id": "memory.w1",
+        "subject": "visitor.xiaoman",
+        "kind": "claim",
+        "content": "Witness one said Xiaoman.",
+        "source": "witness.one",
+        "access": "CLEAR",
+        "confidence": 0.8,
+        "version": 1,
+        "predicate": "claimed_name",
+        "value": "Xiaoman"
+      },
+      {
+        "memory_id": "memory.w2",
+        "subject": "visitor.xiaoman",
+        "kind": "claim",
+        "content": "Witness two said Ahe.",
+        "source": "witness.two",
+        "access": "CLEAR",
+        "confidence": 0.6,
+        "version": 1,
+        "predicate": "claimed_name",
+        "value": "Ahe"
+      }
+    ]
+  },
+  "scripted_actions": [
+    {
+      "name": "report",
+      "target": "player",
+      "parameters": {
+        "text": "One witness said Xiaoman and another said Ahe; identity remains conflicted.",
+        "facts": [
+          {
+            "subject": "visitor.xiaoman",
+            "predicate": "claimed_name",
+            "value": "Xiaoman",
+            "certainty": "CLAIMED",
+            "source": "witness.one"
+          },
+          {
+            "subject": "visitor.xiaoman",
+            "predicate": "claimed_name",
+            "value": "Ahe",
+            "certainty": "CLAIMED",
+            "source": "witness.two"
+          },
+          {
+            "subject": "visitor.xiaoman",
+            "predicate": "identity_status",
+            "value": "CONFLICTED",
+            "certainty": "CONFLICTED",
+            "source": "belief_resolver"
+          }
+        ]
+      }
+    }
+  ],
+  "expected": {
+    "status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "door_state": "closed",
+    "context_must_contain": [
+      "Xiaoman",
+      "Ahe"
+    ],
+    "must_observe_codes": [
+      "REPORT_RECORDED"
+    ]
+  }
+}
