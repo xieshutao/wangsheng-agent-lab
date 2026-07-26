@@ -1,37 +1,70 @@
-# Cloud first-action experiment protocol
+# Cloud first-action experiment protocol v0.4.1
 
 ## Purpose
 
-Measure P0 protocol validity and P1 first-action quality without mixing in multi-step execution or memory retrieval.
+Measure P0 protocol validity and P1 immediate-action quality without mixing in multi-step completion.
 
 ## Frozen inputs
 
 - 20 scenario files under `scenarios/`
-- eight tool schemas from `ToolRegistry`
-- first-action expectations in `experiments/first_action_expectations.json`
-- temperature 0 unless the provider cannot support it
-- one named model and one provider configuration per result directory
+- eight Tool Registry schemas
+- first-action expectations under `experiments/`
+- model-visible world schema v1
+- prompt version `wangsheng.tool_call_prompt.v2`
+- tool schema version `wangsheng.tool.v2`
+- temperature 0 unless unsupported
+- one named model and provider configuration per output directory
+
+## Required provider configuration
+
+Task cases:
+
+```text
+tool_choice=required
+parallel_tool_calls=false
+```
+
+Chat-only cases:
+
+```text
+tool_choice=auto
+```
+
+The CLI uses these defaults. Disable transmission of `parallel_tool_calls` only when an endpoint rejects the field, and record that deviation.
 
 ## Run order
 
 1. One-scenario smoke request.
 2. Twenty scenarios once each (`20×1`).
-3. Review endpoint compatibility and result completeness.
-4. Twenty scenarios ten times each (`20×10`).
+3. Review protocol, Gateway and semantic failures.
+4. Run a small fixed repeat set only after the one-pass results are understood.
+5. Run `20×10` only if repeated statistics are still decision-relevant.
 
-Do not selectively rerun failed cases into the same result directory.
+Never overwrite or selectively rerun failed cases into the same directory.
 
 ## Metrics
 
-- protocol-valid rate: exactly one native tool call for task cases, no world-action tool call for the chat-only case, and arguments pass Tool Schema
-- semantic first-action rate: selected tool and target belong to the frozen acceptable set
+- protocol-valid rate
+- semantic first-action rate
+- model-visible target and resolved target
+- no-tool and multi-tool counts
 - selected forbidden tools
 - Gateway rejection count and reason codes
-- actual hard violations, which must remain zero
+- actual hard violations
 - provider errors
-- mean and p95 request latency
+- mean and p95 latency
 - prompt, completion and total tokens
+
+## Semantic rule
+
+A task action is semantically passing only when:
+
+1. exactly one valid native tool call is returned;
+2. the selected tool and model-visible target match the frozen expectation;
+3. Gateway allows the resolved action.
+
+A chat-only case passes when no world-action tool is called.
 
 ## Evidence handling
 
-Generated artifacts are ignored by Git. Keep the result directory intact and record the model name, provider base URL, prompt version, tool version and source commit. Never store API keys in result files.
+Artifacts remain outside Git. Preserve the full directory and record source commit, exact model, base URL, prompt version, tool version and provider public configuration. Never store API keys.

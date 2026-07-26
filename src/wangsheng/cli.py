@@ -96,7 +96,15 @@ def _add_cloud_provider_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--max-retries", type=int, default=2)
     parser.add_argument("--retry-backoff", type=float, default=0.5)
     parser.add_argument("--tool-choice", choices=("auto", "required", "none"), default="required")
-    parser.add_argument("--send-parallel-tool-calls", action="store_true")
+    parser.add_argument(
+        "--send-parallel-tool-calls",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Send parallel_tool_calls=false to enforce one action per turn. "
+            "Use --no-send-parallel-tool-calls only for providers that reject the field."
+        ),
+    )
     parser.add_argument(
         "--extra-body-json",
         default="{}",

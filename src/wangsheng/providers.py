@@ -215,7 +215,7 @@ class OpenAICompatibleToolCallingProvider:
     max_tokens: int = 256
     max_retries: int = 2
     retry_backoff_seconds: float = 0.5
-    send_parallel_tool_calls: bool = False
+    send_parallel_tool_calls: bool = True
     extra_body: dict[str, Any] = field(default_factory=dict)
 
     def complete_tool_call(

@@ -17,7 +17,7 @@ class ToolSpec:
     timeout_seconds: float
     cancellable: bool
     produces_memory: bool = False
-    schema_version: str = "wangsheng.tool.v1"
+    schema_version: str = "wangsheng.tool.v2"
 
     def function_schema(self) -> dict[str, Any]:
         properties = dict(self.parameters_schema.get("properties", {}))
@@ -64,25 +64,42 @@ class ToolRegistry:
     def names(self) -> tuple[str, ...]:
         return tuple(sorted(self._specs))
 
-    def function_schemas(self, allowed: set[str] | frozenset[str] | None = None) -> tuple[dict[str, Any], ...]:
-        names = self.names() if allowed is None else tuple(name for name in self.names() if name in allowed)
+    def function_schemas(
+        self,
+        allowed: set[str] | frozenset[str] | None = None,
+    ) -> tuple[dict[str, Any], ...]:
+        names = (
+            self.names()
+            if allowed is None
+            else tuple(name for name in self.names() if name in allowed)
+        )
         return tuple(self._specs[name].function_schema() for name in names)
 
     def validate_action_arguments(self, action: Action) -> ValidationFailure | None:
         spec = self.get(action.name)
         if spec is None:
-            return ValidationFailure(ReasonCode.TOOL_NOT_FOUND.value, f"Unknown tool '{action.name}'.")
+            return ValidationFailure(
+                ReasonCode.TOOL_NOT_FOUND.value,
+                f"Unknown tool '{action.name}'.",
+            )
         if spec.target_required and not action.target:
             return ValidationFailure(ReasonCode.INVALID_ARGUMENT.value, "target_id is required.")
         if not spec.target_required and action.target is not None:
-            return ValidationFailure(ReasonCode.INVALID_ARGUMENT.value, "This tool does not accept target_id.")
+            return ValidationFailure(
+                ReasonCode.INVALID_ARGUMENT.value,
+                "This tool does not accept target_id.",
+            )
         problem = validate_json_object(action.parameters, spec.parameters_schema)
         if problem:
             return ValidationFailure(ReasonCode.INVALID_ARGUMENT.value, problem)
         return None
 
 
-def validate_json_object(value: Any, schema: dict[str, Any], path: str = "parameters") -> str | None:
+def validate_json_object(
+    value: Any,
+    schema: dict[str, Any],
+    path: str = "parameters",
+) -> str | None:
     if not isinstance(value, dict):
         return f"{path} must be an object."
     properties = schema.get("properties", {})
@@ -155,18 +172,116 @@ def default_tool_specs() -> tuple[ToolSpec, ...]:
             "subject": {"type": "string", "minLength": 1},
             "predicate": {"type": "string", "minLength": 1},
             "value": {"type": "string", "minLength": 1},
-            "certainty": {"type": "string", "enum": ["TRUE", "FALSE", "UNKNOWN", "CLAIMED", "CONFLICTED"]},
+            "certainty": {
+                "type": "string",
+                "enum": ["TRUE", "FALSE", "UNKNOWN", "CLAIMED", "CONFLICTED"],
+            },
             "source": {"type": "string", "minLength": 1},
         },
         ("subject", "predicate", "value", "certainty", "source"),
     )
     return (
-        ToolSpec("move_to", "Move toward a known target.", True, "navigate", _object_schema({"acceptance_radius": {"type": "number", "minimum": 0, "maximum": 500}}), 20.0, True, False),
-        ToolSpec("observe", "Observe a known target without changing it.", True, "perceive", _object_schema({}), 5.0, True, True),
-        ToolSpec("listen_at", "Listen near a target; never opens it.", True, "perceive", _object_schema({"duration": {"type": "number", "minimum": 0, "maximum": 30}}), 10.0, True, True),
-        ToolSpec("ask_through", "Ask a target through a physical barrier.", True, "communicate", _object_schema({"barrier_id": {"type": "string", "minLength": 1}, "topic": {"type": "string", "minLength": 1}}, ("barrier_id", "topic")), 15.0, True, True),
-        ToolSpec("open", "Open a target when permitted and unlocked.", True, "manipulate", _object_schema({}), 8.0, True, True),
-        ToolSpec("close", "Close an open target.", True, "manipulate", _object_schema({}), 8.0, True, True),
-        ToolSpec("report", "Report known facts and their sources to a target.", True, "communicate", _object_schema({"text": {"type": "string", "minLength": 1}, "facts": {"type": "array", "minItems": 1, "items": fact_schema}}, ("text", "facts")), 15.0, True, True),
-        ToolSpec("wait", "Wait for a bounded duration.", False, "wait", _object_schema({"seconds": {"type": "number", "minimum": 0, "maximum": 60}}, ("seconds",)), 60.0, True, False),
+        ToolSpec(
+            "move_to",
+            "Move to a known object or the player. Use this before proximity-dependent "
+            "actions when current_affordances reports TOO_FAR.",
+            True,
+            "navigate",
+            _object_schema({"acceptance_radius": {"type": "number", "minimum": 0, "maximum": 500}}),
+            20.0,
+            True,
+            False,
+        ),
+        ToolSpec(
+            "observe",
+            "Inspect a currently observable known target without changing it. An entity "
+            "behind a closed opaque door is not directly observable.",
+            True,
+            "perceive",
+            _object_schema({}),
+            5.0,
+            True,
+            True,
+        ),
+        ToolSpec(
+            "listen_at",
+            "Listen at a known barrier without opening it. Requires the actor to already "
+            "be near the target; use move_to first when TOO_FAR.",
+            True,
+            "perceive",
+            _object_schema({"duration": {"type": "number", "minimum": 0, "maximum": 30}}),
+            10.0,
+            True,
+            True,
+        ),
+        ToolSpec(
+            "ask_through",
+            "Ask a known external entity through a closed physical barrier. Requires the "
+            "actor to be near barrier_id; use anonymous model-visible entity IDs exactly "
+            "as supplied.",
+            True,
+            "communicate",
+            _object_schema(
+                {
+                    "barrier_id": {"type": "string", "minLength": 1},
+                    "topic": {"type": "string", "minLength": 1},
+                },
+                ("barrier_id", "topic"),
+            ),
+            15.0,
+            True,
+            True,
+        ),
+        ToolSpec(
+            "open",
+            "Open a nearby door only when permitted, unlocked and not forbidden by "
+            "the active task.",
+            True,
+            "manipulate",
+            _object_schema({}),
+            8.0,
+            True,
+            True,
+        ),
+        ToolSpec(
+            "close",
+            "Close a nearby door that is currently open.",
+            True,
+            "manipulate",
+            _object_schema({}),
+            8.0,
+            True,
+            True,
+        ),
+        ToolSpec(
+            "report",
+            "Report only grounded facts and sources to a nearby target. Use "
+            "identity_status=UNKNOWN when no accessible claimed_name exists; never infer "
+            "identity from an anonymous entity ID.",
+            True,
+            "communicate",
+            _object_schema(
+                {
+                    "text": {"type": "string", "minLength": 1},
+                    "facts": {"type": "array", "minItems": 1, "items": fact_schema},
+                },
+                ("text", "facts"),
+            ),
+            15.0,
+            True,
+            True,
+        ),
+        ToolSpec(
+            "wait",
+            "Wait for a bounded duration when no safer immediate action is executable.",
+            False,
+            "wait",
+            _object_schema(
+                {"seconds": {"type": "number", "minimum": 0, "maximum": 60}},
+                ("seconds",),
+            ),
+            60.0,
+            True,
+            False,
+        ),
     )

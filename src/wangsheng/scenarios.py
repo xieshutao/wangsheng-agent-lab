@@ -32,6 +32,7 @@ def door_visitor_world() -> WorldState:
         visitor_id="visitor.xiaoman",
         visitor_claimed_name="Xiaoman",
         visitor_responses=["Xiaoman"],
+        model_target_aliases={"visitor.front_001": "visitor.xiaoman"},
     )
 
 

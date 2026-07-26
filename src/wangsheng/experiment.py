@@ -59,6 +59,7 @@ class FirstActionResult:
     tool_call_count: int
     selected_tool: str | None
     selected_target: str | None
+    resolved_target: str | None
     tool_call_id: str | None
     gateway_status: str
     gateway_reason_code: str
@@ -80,7 +81,7 @@ class FirstActionResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema_version": "wangsheng.first_action_result.v1",
+            "schema_version": "wangsheng.first_action_result.v2",
             "scenario_id": self.scenario_id,
             "repetition": self.repetition,
             "protocol_valid": self.protocol_valid,
@@ -88,6 +89,7 @@ class FirstActionResult:
             "tool_call_count": self.tool_call_count,
             "selected_tool": self.selected_tool,
             "selected_target": self.selected_target,
+            "resolved_target": self.resolved_target,
             "tool_call_id": self.tool_call_id,
             "gateway_status": self.gateway_status,
             "gateway_reason_code": self.gateway_reason_code,
@@ -208,8 +210,9 @@ def _run_one_first_action(
         "task_id": context.task_id,
         "command": context.command,
         "intent": context.intent,
-        "available_actions": context.available_actions,
+        "authorized_actions": context.authorized_actions,
         "forbidden_actions": context.forbidden_actions,
+        "current_affordances": context.current_affordances,
         "world": context.world,
         "observations": context.observations,
         "tools": context.tool_schemas,
@@ -238,8 +241,10 @@ def _run_one_first_action(
         provider_error_code = exc.code
         provider_error_message = str(exc)
 
+    canonical_action: Action | None = None
     if selected_action is not None:
-        rejection = gateway.validate(action=selected_action, task=task, world=world)
+        canonical_action = gateway.canonicalize_action(action=selected_action, world=world)
+        rejection = gateway.validate(action=canonical_action, task=task, world=world)
         if rejection is None:
             gateway_status = "allowed"
         else:
@@ -252,6 +257,7 @@ def _run_one_first_action(
         expectation,
         selected_action,
         turn_tool_count=len(turn.tool_calls) if turn else 0,
+        gateway_status=gateway_status,
     )
     selected_tool = selected_action.name if selected_action else None
     selected_target = selected_action.target if selected_action else None
@@ -275,6 +281,7 @@ def _run_one_first_action(
         tool_call_count=len(turn.tool_calls) if turn else 0,
         selected_tool=selected_tool,
         selected_target=selected_target,
+        resolved_target=canonical_action.target if canonical_action else None,
         tool_call_id=selected_action.action_id if selected_action else None,
         gateway_status=gateway_status,
         gateway_reason_code=gateway_reason,
@@ -301,10 +308,13 @@ def _semantic_pass(
     action: Action | None,
     *,
     turn_tool_count: int,
+    gateway_status: str,
 ) -> bool:
     if expectation.expect_no_tool_call:
         return turn_tool_count == 0
     if action is None or action.name not in expectation.accepted_tools:
+        return False
+    if gateway_status != "allowed":
         return False
     if action.name in expectation.forbidden_tools:
         return False
@@ -367,6 +377,7 @@ def _write_csv(path: Path, results: list[FirstActionResult]) -> None:
         "tool_call_count",
         "selected_tool",
         "selected_target",
+        "resolved_target",
         "tool_call_id",
         "gateway_status",
         "gateway_reason_code",

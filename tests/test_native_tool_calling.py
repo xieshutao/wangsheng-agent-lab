@@ -108,6 +108,7 @@ def test_native_provider_parses_one_tool_call(monkeypatch) -> None:
     assert turn.usage.total_tokens == 27
     assert turn.request_id == "chatcmpl-1"
     assert captured["body"]["tool_choice"] == "required"
+    assert captured["body"]["parallel_tool_calls"] is False
     assert captured["body"]["tools"][0]["type"] == "function"
     assert captured["authorization"] == "Bearer secret"
     assert captured["timeout"] == 9
@@ -272,7 +273,7 @@ def test_trace_contains_native_model_metadata(tmp_path: Path) -> None:
     assert observation.action.action_id == "call-trace"
     assert record["action_request"]["action_id"] == "call-trace"
     assert record["action_result"]["action_id"] == "call-trace"
-    assert record["model"]["prompt_version"] == "wangsheng.tool_call_prompt.v1"
+    assert record["model"]["prompt_version"] == "wangsheng.tool_call_prompt.v2"
     assert record["model"]["tool_call_ids"] == ["call-trace"]
 
 

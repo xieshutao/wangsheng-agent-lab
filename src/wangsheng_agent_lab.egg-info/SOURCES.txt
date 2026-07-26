@@ -2,6 +2,7 @@ LICENSE
 README.md
 pyproject.toml
 src/wangsheng/__init__.py
+src/wangsheng/affordances.py
 src/wangsheng/cli.py
 src/wangsheng/contracts.py
 src/wangsheng/engine.py
@@ -31,6 +32,7 @@ tests/test_cloud_experiment.py
 tests/test_contracts.py
 tests/test_core.py
 tests/test_model_contract.py
+tests/test_model_visibility_and_affordances.py
 tests/test_native_tool_calling.py
 tests/test_replay.py
 tests/test_scenario_runner.py

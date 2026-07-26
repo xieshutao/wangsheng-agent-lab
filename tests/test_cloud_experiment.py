@@ -53,7 +53,7 @@ def valid_call(tool: str, target: str | None, index: int) -> NativeToolCall:
                 "text": "I can only report what is known.",
                 "facts": [
                     {
-                        "subject": "visitor.xiaoman",
+                        "subject": "visitor.front_001",
                         "predicate": "identity_status",
                         "value": "UNKNOWN",
                         "certainty": "UNKNOWN",
@@ -161,6 +161,27 @@ def test_forbidden_open_is_recorded_but_never_executed(tmp_path: Path) -> None:
     assert summary["actual_hard_violation_count"] == 0
     assert result["gateway_status"] == "rejected"
     assert result["gateway_reason_code"] == "HARD_CONSTRAINT_VIOLATION"
+
+
+def test_model_visible_alias_is_resolved_before_gateway_validation(tmp_path: Path) -> None:
+    provider = ScriptedToolCallingProvider(
+        [turn_for(NativeToolCall("call-alias", "observe", {"target_id": "visitor.front_001"}))]
+    )
+    summary = run_first_action_experiment(
+        scenario_dir=SCENARIOS,
+        expectation_path=EXPECTATIONS,
+        output_dir=tmp_path,
+        provider=provider,
+        repeat=1,
+        scenario_ids=["unseen_name_not_fabricated"],
+    )
+    result = json.loads((tmp_path / "results.jsonl").read_text().strip())
+    assert summary["protocol_valid_rate"] == 1.0
+    assert summary["semantic_pass_rate"] == 0.0
+    assert result["selected_target"] == "visitor.front_001"
+    assert result["resolved_target"] == "visitor.xiaoman"
+    assert result["gateway_status"] == "rejected"
+    assert result["gateway_reason_code"] == "INVALID_PRECONDITION"
 
 
 def test_repeat_produces_stable_run_count(tmp_path: Path) -> None:

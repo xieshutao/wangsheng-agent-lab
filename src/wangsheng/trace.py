@@ -72,7 +72,7 @@ def normalized_trace_digest(path: str | Path) -> str:
 class JsonlTraceRecorder:
     path: Path
     episode_id: str
-    schema_version: str = "wangsheng.trace.v2"
+    schema_version: str = "wangsheng.trace.v3"
     records: list[dict[str, Any]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -101,6 +101,7 @@ class JsonlTraceRecorder:
             "world": context.world,
             "observations": context.observations,
             "tools": context.tool_schemas,
+            "current_affordances": context.current_affordances,
         }
         record = {
             "schema_version": self.schema_version,
@@ -114,8 +115,9 @@ class JsonlTraceRecorder:
             "context": {
                 "intent": context.intent,
                 "command": context.command,
-                "available_actions": list(context.available_actions),
+                "authorized_actions": list(context.authorized_actions),
                 "forbidden_actions": list(context.forbidden_actions),
+                "current_affordances": context.current_affordances,
                 "world": context.world,
                 "previous_observations": list(context.observations),
             },

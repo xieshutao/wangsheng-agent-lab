@@ -19,7 +19,7 @@ Adopted design:
 - provider-specific translation stays in the adapter layer
 - tool results must be returned to the model in later multi-step work
 
-Not adopted in v0.4.0:
+Not adopted through v0.4.1:
 
 - Qwen-Agent's full agent loop
 - its memory, tool execution or task-completion ownership
@@ -29,8 +29,11 @@ No Qwen-Agent source code is copied into this repository. The generic native ada
 
 ## ORAK
 
-ORAK remains an evaluation reference rather than a runtime dependency. v0.4.0 adopts repeated fixed scenarios, raw run records and separated metrics, but does not import ORAK code or game environments.
+ORAK remains an evaluation reference rather than a runtime dependency. v0.4.1 retains repeated fixed scenarios, raw run records and separated metrics, but does not import ORAK code or game environments.
 
 ## Concordia
 
 The architecture adopts the principle that an agent proposes intent while the world authority decides outcomes. Unlike an LLM-driven Game Master, WangSheng keeps critical world decisions deterministic in Gateway, Executor and Evaluator.
+
+
+See `OPEN_SOURCE_REUSE_MATRIX.md` for the repository-wide dependency and vendoring policy.

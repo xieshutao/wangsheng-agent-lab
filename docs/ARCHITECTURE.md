@@ -1,24 +1,86 @@
-# Architecture v0.4.0
+# Architecture v0.4.1
 
 ## Runtime layers
 
 1. Intent classifies player input as task, chat or refusal.
 2. A task creates one persistent task state.
-3. Policy requests at most one native model tool call per tick.
-4. Native provider response becomes an `Action`; ordinary prose is not parsed as an action.
-5. Tool Registry validates the selected tool's argument schema.
-6. Action Gateway checks target, knowledge, permission, precondition and hard constraints.
-7. Executor changes authoritative world state or returns a real failure code.
-8. Evaluator decides completion from world evidence.
-9. Trace records each layer, contract payload, state delta and model metadata.
+3. ContextBuilder produces actor-visible state and current affordances.
+4. Policy requests at most one native model tool call per tick.
+5. Model-visible target aliases are resolved to canonical world IDs.
+6. Tool Registry validates argument Schema.
+7. Action Gateway checks target, knowledge, permission, physical precondition and hard constraints.
+8. Executor changes authoritative world state or returns a real failure code.
+9. Evaluator decides completion from world evidence.
+10. Trace records each layer, contract payload, state delta and model metadata.
+
+## Two world representations
+
+### FullWorldSnapshot
+
+Used for:
+
+- save/load
+- deterministic replay
+- Evaluator
+- state diff
+- debugging
+
+It may contain canonical IDs, simulator queues and fields that must never be shown to a model.
+
+### ModelVisibleWorld
+
+Used only for model context. It contains:
+
+- actor location and permissions
+- known objects
+- anonymous known entities
+- accessible conversation facts
+- accessible memories
+- heard events and emotional residue
+
+It excludes:
+
+- raw visitor identity
+- canonical IDs that encode hidden information
+- sealed, forgotten or suppressed memories
+- forced simulator results
+- visitor response queues
+- unobserved world objects
+
+Model aliases are stable within the episode. For example:
+
+```text
+visitor.front_001 → internal visitor.xiaoman
+```
+
+The model sees only the left side. Resolution happens before Gateway validation.
+
+## Authorization versus affordance
+
+`authorized_actions` means the task permits a tool in principle.
+
+`current_affordances` means whether the tool is executable in the current world state. It can expose:
+
+- candidate model-visible targets
+- `executable_now`
+- `blocked_by`
+- physical requirements
+- required arguments such as a barrier ID
+
+Affordances are advisory. Gateway remains authoritative and revalidates every action.
 
 ## Native tool-call boundary
 
-The API receives standard tool objects containing only `type` and `function`. WangSheng-only metadata such as permission, timeout and memory effects remains inside the runtime.
+The API receives standard tool objects containing only `type` and `function`. WangSheng-only metadata remains inside the runtime.
 
-A provider tool call such as `call_123` becomes the action ID. The same ID must appear in the subsequent `ActionRequest`, execution observation and `ActionResult`. This is required for later UE action-result correlation.
+One tool call becomes one immediate action. Parallel future-plan calls are disallowed. Provider requests therefore default to:
 
-Multiple parallel tool calls are rejected by Policy because one runtime tick may execute at most one action. The Gateway never selects an alternative action.
+```text
+tool_choice=required
+parallel_tool_calls=false
+```
+
+Dialogue-only scenarios use `tool_choice=auto` and may return no tool call.
 
 ## Gateway validation order
 
@@ -32,20 +94,29 @@ Multiple parallel tool calls are rejected by Policy because one runtime tick may
 8. physical precondition
 9. hard task constraint
 
+The Gateway does not choose a substitute action.
+
 ## First-action experiment boundary
 
-The v0.4.0 experiment asks the model for one turn and does not execute the selected tool. It records:
+The first-action experiment asks for one turn and does not commit the action to world state. It records:
 
 - native tool-call shape
-- argument Schema validity
-- selected tool and target
-- frozen semantic first-action acceptance
+- argument validity
+- model-visible selected target
+- resolved canonical target
 - Gateway decision and reason code
+- semantic first-action acceptance
 - forbidden tool selection
 - model latency and token usage
 
-`actual_hard_violation_count` remains zero because the experiment never commits an action to world state. Full execution and replanning belongs to the next milestone.
+Semantic success requires both a frozen acceptable action and a Gateway-allowed result.
 
 ## Stable replay
 
-The v0.3.1 Golden Trace remains unchanged. Model metadata is included only on native-model traces, so deterministic scripted replay continues to compare the same normalized records.
+The Golden Trace was intentionally regenerated because model context is now a different contract. The authoritative world and deterministic scenario outcome remain stable.
+
+Current normalized digest:
+
+```text
+14282d3127cffb67f529db1f95e7cf552b3d3b406fbaf4fdf55014fe6587e944
+```

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
+from .affordances import build_current_affordances
 from .models import Action, ActiveTask, Observation, WorldState
 from .reason_codes import ReasonCode
 from .tools import ToolRegistry
@@ -11,59 +13,173 @@ from .tools import ToolRegistry
 class Gateway:
     registry: ToolRegistry = field(default_factory=ToolRegistry)
 
-    def validate(self, *, action: Action, task: ActiveTask, world: WorldState) -> Observation | None:
+    def canonicalize_action(self, *, action: Action, world: WorldState) -> Action:
+        return world.canonicalize_action(action)
+
+    def current_affordances(
+        self,
+        *,
+        task: ActiveTask,
+        world: WorldState,
+    ) -> dict[str, Any]:
+        return build_current_affordances(world=world, task=task, registry=self.registry)
+
+    def validate(
+        self,
+        *,
+        action: Action,
+        task: ActiveTask,
+        world: WorldState,
+    ) -> Observation | None:
         if task.is_terminal:
-            code = ReasonCode.TASK_CANCELLED if task.status.value == "cancelled" else ReasonCode.TASK_TERMINAL
+            code = (
+                ReasonCode.TASK_CANCELLED
+                if task.status.value == "cancelled"
+                else ReasonCode.TASK_TERMINAL
+            )
             return self._reject(action, code, "The task is no longer active.")
 
         spec = self.registry.get(action.name)
         if spec is None:
             return self._reject(action, ReasonCode.TOOL_NOT_FOUND, f"Unknown tool '{action.name}'.")
         if action.name not in task.spec.allowed_actions:
-            return self._reject(action, ReasonCode.TOOL_NOT_AVAILABLE, f"Tool '{action.name}' is not available for this task.")
+            return self._reject(
+                action,
+                ReasonCode.TOOL_NOT_AVAILABLE,
+                f"Tool '{action.name}' is not available for this task.",
+            )
 
         argument_failure = self.registry.validate_action_arguments(action)
         if argument_failure:
             return self._reject(action, argument_failure.code, argument_failure.message)
 
-        targets = [target for target in (action.target, action.parameters.get("barrier_id")) if target]
+        targets = [
+            target
+            for target in (action.target, action.parameters.get("barrier_id"))
+            if target
+        ]
         for target in targets:
             if not world.target_exists(target):
-                return self._reject(action, ReasonCode.TARGET_NOT_FOUND, f"Target '{target}' does not exist.")
-            if target not in world.actor.known_targets and target not in {"player", world.actor.character_id}:
-                return self._reject(action, ReasonCode.TARGET_NOT_KNOWN, f"Target '{target}' is not known to the actor.")
+                return self._reject(
+                    action,
+                    ReasonCode.TARGET_NOT_FOUND,
+                    f"Target '{target}' does not exist.",
+                )
+            if target not in world.actor.known_targets and target not in {
+                "player",
+                world.actor.character_id,
+            }:
+                return self._reject(
+                    action,
+                    ReasonCode.TARGET_NOT_KNOWN,
+                    f"Target '{target}' is not known to the actor.",
+                )
 
         if spec.permission not in world.actor.permissions:
-            return self._reject(action, ReasonCode.NO_PERMISSION, f"Actor lacks permission '{spec.permission}'.")
+            return self._reject(
+                action,
+                ReasonCode.NO_PERMISSION,
+                f"Actor lacks permission '{spec.permission}'.",
+            )
 
         precondition = self._check_preconditions(action, world)
         if precondition:
             return precondition
 
         if action.name in task.spec.forbidden_actions:
-            return self._reject(action, ReasonCode.HARD_CONSTRAINT_VIOLATION, f"Tool '{action.name}' violates the task constraint.")
-        if action.name == "open" and action.target == "door.front" and "door.front.must_remain_closed" in task.spec.hard_constraints:
-            return self._reject(action, ReasonCode.HARD_CONSTRAINT_VIOLATION, "The front door must remain closed.")
+            return self._reject(
+                action,
+                ReasonCode.HARD_CONSTRAINT_VIOLATION,
+                f"Tool '{action.name}' violates the task constraint.",
+            )
+        if (
+            action.name == "open"
+            and action.target == "door.front"
+            and "door.front.must_remain_closed" in task.spec.hard_constraints
+        ):
+            return self._reject(
+                action,
+                ReasonCode.HARD_CONSTRAINT_VIOLATION,
+                "The front door must remain closed.",
+            )
         return None
 
     def _check_preconditions(self, action: Action, world: WorldState) -> Observation | None:
+        if action.name == "move_to" and action.target not in {"player", *world.objects}:
+            return self._reject(
+                action,
+                ReasonCode.INVALID_PRECONDITION,
+                "move_to requires a navigable object or the player, not an external entity.",
+            )
+        if action.name == "observe" and action.target == world.visitor_id:
+            door = world.objects.get("door.front")
+            if door is not None and door.state == "closed":
+                return self._reject(
+                    action,
+                    ReasonCode.INVALID_PRECONDITION,
+                    "The visitor is outside an opaque closed door and cannot be observed directly.",
+                )
+        if action.name == "listen_at":
+            assert action.target is not None
+            obj = world.objects[action.target]
+            if world.actor.location != obj.location:
+                return self._reject(
+                    action,
+                    ReasonCode.TOO_FAR,
+                    f"Actor must move near '{action.target}' before listening.",
+                )
         if action.name in {"open", "close"}:
             assert action.target is not None
             obj = world.objects[action.target]
             if obj.object_type != "door":
-                return self._reject(action, ReasonCode.INVALID_PRECONDITION, "Target is not a door.")
+                return self._reject(
+                    action,
+                    ReasonCode.INVALID_PRECONDITION,
+                    "Target is not a door.",
+                )
             if action.name == "open":
                 if obj.properties.get("locked", False):
                     return self._reject(action, ReasonCode.LOCKED, "The door is locked.")
                 if obj.state == "open":
-                    return self._reject(action, ReasonCode.INVALID_PRECONDITION, "The door is already open.")
+                    return self._reject(
+                        action,
+                        ReasonCode.INVALID_PRECONDITION,
+                        "The door is already open.",
+                    )
             if action.name == "close" and obj.state != "open":
-                return self._reject(action, ReasonCode.INVALID_PRECONDITION, "The door is not open.")
+                return self._reject(
+                    action,
+                    ReasonCode.INVALID_PRECONDITION,
+                    "The door is not open.",
+                )
         if action.name == "ask_through":
             barrier_id = action.parameters["barrier_id"]
             barrier = world.objects[barrier_id]
             if barrier.object_type != "door":
-                return self._reject(action, ReasonCode.INVALID_PRECONDITION, "The barrier is not supported.")
+                return self._reject(
+                    action,
+                    ReasonCode.INVALID_PRECONDITION,
+                    "The barrier is not supported.",
+                )
+            if barrier.state != "closed":
+                return self._reject(
+                    action,
+                    ReasonCode.INVALID_PRECONDITION,
+                    "ask_through requires a closed physical barrier.",
+                )
+            if world.actor.location != barrier.location:
+                return self._reject(
+                    action,
+                    ReasonCode.TOO_FAR,
+                    f"Actor must move near '{barrier_id}' before asking through it.",
+                )
+        if action.name == "report" and action.target == "player":
+            if world.actor.location != world.player_location:
+                return self._reject(
+                    action,
+                    ReasonCode.TOO_FAR,
+                    "Actor must return to the player before reporting.",
+                )
         return None
 
     @staticmethod

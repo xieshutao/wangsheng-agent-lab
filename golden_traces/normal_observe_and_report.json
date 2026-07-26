@@ -1,5 +1,5 @@
 {
-  "expected_digest": "b662a8e8831c71a087bdbe7e86a39993c3463c51f055154072d624b664451e19",
+  "expected_digest": "14282d3127cffb67f529db1f95e7cf552b3d3b406fbaf4fdf55014fe6587e944",
   "records": [
     {
       "action": {
@@ -34,7 +34,7 @@
         "world_delta": {}
       },
       "context": {
-        "available_actions": [
+        "authorized_actions": [
           "ask_through",
           "close",
           "listen_at",
@@ -45,6 +45,122 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "current_affordances": {
+          "ask_through": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "visitor.front_001": {
+                "blocked_by": "TOO_FAR",
+                "executable_now": false,
+                "requires": "requires actor.location=area.front_door; use move_to(door.front) first"
+              }
+            }
+          },
+          "close": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "manipulate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "door is not open"
+              }
+            }
+          },
+          "listen_at": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": "TOO_FAR",
+                "executable_now": false,
+                "requires": "requires actor.location=area.front_door; use move_to first"
+              }
+            }
+          },
+          "move_to": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "navigate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is area.front_door"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is room.front_hall"
+              },
+              "player": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "moves to the player's current location"
+              }
+            }
+          },
+          "observe": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known door can be inspected"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known item can be inspected"
+              },
+              "visitor.front_001": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "the entity is outside a closed opaque door; use listen_at or ask_through after moving near the door"
+              }
+            }
+          },
+          "open": {
+            "blocked_by": "HARD_CONSTRAINT_VIOLATION",
+            "executable_now": false,
+            "forbidden_by_task": true,
+            "permission": "manipulate",
+            "requires": "the active task explicitly forbids this action",
+            "target_required": true
+          },
+          "report": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "player": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "actor is near the player"
+              }
+            }
+          },
+          "wait": {
+            "blocked_by": null,
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "note": "bounded waiting is executable now",
+            "permission": "wait",
+            "target_required": false
+          }
+        },
         "forbidden_actions": [
           "open"
         ],
@@ -63,7 +179,7 @@
               "door.front",
               "object.paper_crane",
               "player",
-              "visitor.xiaoman"
+              "visitor.front_001"
             ],
             "location": "room.front_hall",
             "permissions": [
@@ -76,6 +192,13 @@
           },
           "conversation_facts": [],
           "emotional_residue": [],
+          "entities": {
+            "visitor.front_001": {
+              "entity_type": "visitor",
+              "identity_status": "unknown",
+              "presence": "known"
+            }
+          },
           "heard_events": [],
           "memory_events": [],
           "objects": {
@@ -99,15 +222,15 @@
               "state": "intact"
             }
           },
-          "player_location": "room.front_hall",
-          "reports": [],
-          "time_seconds": 0.0,
-          "visitor_claimed_name": "Xiaoman",
-          "visitor_id": "visitor.xiaoman",
-          "visitor_responses_remaining": 1
+          "player": {
+            "location": "room.front_hall",
+            "target_id": "player"
+          },
+          "schema_version": "wangsheng.model_visible_world.v1",
+          "time_seconds": 0.0
         }
       },
-      "context_hash": "b8d8405090a9e53a2b02469f03ab981c377bff7459a25cd66c8d6d3d000a2c0b",
+      "context_hash": "e22f02951763410a733141fa26ae50459405e17df5e107207e581cee5210dda6",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -141,7 +264,7 @@
         "success": true,
         "world_delta": {}
       },
-      "schema_version": "wangsheng.trace.v2",
+      "schema_version": "wangsheng.trace.v3",
       "sequence": 0,
       "state_delta": {},
       "step": 0,
@@ -171,6 +294,9 @@
         "forced_action_results": {},
         "heard_events": [],
         "memory_events": [],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,
@@ -222,6 +348,9 @@
         "forced_action_results": {},
         "heard_events": [],
         "memory_events": [],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,
@@ -285,7 +414,7 @@
         }
       },
       "context": {
-        "available_actions": [
+        "authorized_actions": [
           "ask_through",
           "close",
           "listen_at",
@@ -296,6 +425,122 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "current_affordances": {
+          "ask_through": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "visitor.front_001": {
+                "blocked_by": "TOO_FAR",
+                "executable_now": false,
+                "requires": "requires actor.location=area.front_door; use move_to(door.front) first"
+              }
+            }
+          },
+          "close": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "manipulate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "door is not open"
+              }
+            }
+          },
+          "listen_at": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": "TOO_FAR",
+                "executable_now": false,
+                "requires": "requires actor.location=area.front_door; use move_to first"
+              }
+            }
+          },
+          "move_to": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "navigate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is area.front_door"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is room.front_hall"
+              },
+              "player": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "moves to the player's current location"
+              }
+            }
+          },
+          "observe": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known door can be inspected"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known item can be inspected"
+              },
+              "visitor.front_001": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "the entity is outside a closed opaque door; use listen_at or ask_through after moving near the door"
+              }
+            }
+          },
+          "open": {
+            "blocked_by": "HARD_CONSTRAINT_VIOLATION",
+            "executable_now": false,
+            "forbidden_by_task": true,
+            "permission": "manipulate",
+            "requires": "the active task explicitly forbids this action",
+            "target_required": true
+          },
+          "report": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "player": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "actor is near the player"
+              }
+            }
+          },
+          "wait": {
+            "blocked_by": null,
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "note": "bounded waiting is executable now",
+            "permission": "wait",
+            "target_required": false
+          }
+        },
         "forbidden_actions": [
           "open"
         ],
@@ -337,7 +582,7 @@
               "door.front",
               "object.paper_crane",
               "player",
-              "visitor.xiaoman"
+              "visitor.front_001"
             ],
             "location": "room.front_hall",
             "permissions": [
@@ -350,6 +595,13 @@
           },
           "conversation_facts": [],
           "emotional_residue": [],
+          "entities": {
+            "visitor.front_001": {
+              "entity_type": "visitor",
+              "identity_status": "unknown",
+              "presence": "known"
+            }
+          },
           "heard_events": [],
           "memory_events": [],
           "objects": {
@@ -373,15 +625,15 @@
               "state": "intact"
             }
           },
-          "player_location": "room.front_hall",
-          "reports": [],
-          "time_seconds": 0.0,
-          "visitor_claimed_name": "Xiaoman",
-          "visitor_id": "visitor.xiaoman",
-          "visitor_responses_remaining": 1
+          "player": {
+            "location": "room.front_hall",
+            "target_id": "player"
+          },
+          "schema_version": "wangsheng.model_visible_world.v1",
+          "time_seconds": 0.0
         }
       },
-      "context_hash": "fbe877fb4769348d06926312ce5d87597d2656997436aba7166645d046fbd17d",
+      "context_hash": "ac1b572c0ed3a198c01cd77024a0a1261e38a5d4f9a73f99009e5a003d3d737e",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -414,7 +666,7 @@
           }
         }
       },
-      "schema_version": "wangsheng.trace.v2",
+      "schema_version": "wangsheng.trace.v3",
       "sequence": 1,
       "state_delta": {
         "actor.location": {
@@ -449,6 +701,9 @@
         "forced_action_results": {},
         "heard_events": [],
         "memory_events": [],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,
@@ -500,6 +755,9 @@
         "forced_action_results": {},
         "heard_events": [],
         "memory_events": [],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,
@@ -561,7 +819,7 @@
         "world_delta": {}
       },
       "context": {
-        "available_actions": [
+        "authorized_actions": [
           "ask_through",
           "close",
           "listen_at",
@@ -572,6 +830,125 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "current_affordances": {
+          "ask_through": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "visitor.front_001": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "actor is near the closed barrier",
+                "required_arguments": {
+                  "barrier_id": "door.front"
+                }
+              }
+            }
+          },
+          "close": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "manipulate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "door is not open"
+              }
+            }
+          },
+          "listen_at": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "actor is already near the barrier"
+              }
+            }
+          },
+          "move_to": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "navigate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is area.front_door"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is room.front_hall"
+              },
+              "player": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "moves to the player's current location"
+              }
+            }
+          },
+          "observe": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known door can be inspected"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known item can be inspected"
+              },
+              "visitor.front_001": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "the entity is outside a closed opaque door; use listen_at or ask_through after moving near the door"
+              }
+            }
+          },
+          "open": {
+            "blocked_by": "HARD_CONSTRAINT_VIOLATION",
+            "executable_now": false,
+            "forbidden_by_task": true,
+            "permission": "manipulate",
+            "requires": "the active task explicitly forbids this action",
+            "target_required": true
+          },
+          "report": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "player": {
+                "blocked_by": "TOO_FAR",
+                "executable_now": false,
+                "requires": "requires actor.location=room.front_hall; use move_to(player) first"
+              }
+            }
+          },
+          "wait": {
+            "blocked_by": null,
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "note": "bounded waiting is executable now",
+            "permission": "wait",
+            "target_required": false
+          }
+        },
         "forbidden_actions": [
           "open"
         ],
@@ -634,7 +1011,7 @@
               "door.front",
               "object.paper_crane",
               "player",
-              "visitor.xiaoman"
+              "visitor.front_001"
             ],
             "location": "area.front_door",
             "permissions": [
@@ -647,6 +1024,13 @@
           },
           "conversation_facts": [],
           "emotional_residue": [],
+          "entities": {
+            "visitor.front_001": {
+              "entity_type": "visitor",
+              "identity_status": "unknown",
+              "presence": "known"
+            }
+          },
           "heard_events": [],
           "memory_events": [],
           "objects": {
@@ -670,15 +1054,15 @@
               "state": "intact"
             }
           },
-          "player_location": "room.front_hall",
-          "reports": [],
-          "time_seconds": 0.0,
-          "visitor_claimed_name": "Xiaoman",
-          "visitor_id": "visitor.xiaoman",
-          "visitor_responses_remaining": 1
+          "player": {
+            "location": "room.front_hall",
+            "target_id": "player"
+          },
+          "schema_version": "wangsheng.model_visible_world.v1",
+          "time_seconds": 0.0
         }
       },
-      "context_hash": "60c1169fbf02327bf8d717504e4a521671c0fa62c8aad3e133b369f5149d29be",
+      "context_hash": "3ebdf3e2d4e8cddd071f14b5d4f967f39029730f320ea1d2b985a20f9830c19c",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -709,7 +1093,7 @@
         "success": true,
         "world_delta": {}
       },
-      "schema_version": "wangsheng.trace.v2",
+      "schema_version": "wangsheng.trace.v3",
       "sequence": 2,
       "state_delta": {
         "heard_events": {
@@ -748,6 +1132,9 @@
           "A person is waiting outside the closed front door."
         ],
         "memory_events": [],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,
@@ -799,6 +1186,9 @@
         "forced_action_results": {},
         "heard_events": [],
         "memory_events": [],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,
@@ -866,7 +1256,7 @@
         "world_delta": {}
       },
       "context": {
-        "available_actions": [
+        "authorized_actions": [
           "ask_through",
           "close",
           "listen_at",
@@ -877,6 +1267,125 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "current_affordances": {
+          "ask_through": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "visitor.front_001": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "actor is near the closed barrier",
+                "required_arguments": {
+                  "barrier_id": "door.front"
+                }
+              }
+            }
+          },
+          "close": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "manipulate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "door is not open"
+              }
+            }
+          },
+          "listen_at": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "actor is already near the barrier"
+              }
+            }
+          },
+          "move_to": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "navigate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is area.front_door"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is room.front_hall"
+              },
+              "player": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "moves to the player's current location"
+              }
+            }
+          },
+          "observe": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known door can be inspected"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known item can be inspected"
+              },
+              "visitor.front_001": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "the entity is outside a closed opaque door; use listen_at or ask_through after moving near the door"
+              }
+            }
+          },
+          "open": {
+            "blocked_by": "HARD_CONSTRAINT_VIOLATION",
+            "executable_now": false,
+            "forbidden_by_task": true,
+            "permission": "manipulate",
+            "requires": "the active task explicitly forbids this action",
+            "target_required": true
+          },
+          "report": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "player": {
+                "blocked_by": "TOO_FAR",
+                "executable_now": false,
+                "requires": "requires actor.location=room.front_hall; use move_to(player) first"
+              }
+            }
+          },
+          "wait": {
+            "blocked_by": null,
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "note": "bounded waiting is executable now",
+            "permission": "wait",
+            "target_required": false
+          }
+        },
         "forbidden_actions": [
           "open"
         ],
@@ -958,7 +1467,7 @@
               "door.front",
               "object.paper_crane",
               "player",
-              "visitor.xiaoman"
+              "visitor.front_001"
             ],
             "location": "area.front_door",
             "permissions": [
@@ -971,6 +1480,13 @@
           },
           "conversation_facts": [],
           "emotional_residue": [],
+          "entities": {
+            "visitor.front_001": {
+              "entity_type": "visitor",
+              "identity_status": "unknown",
+              "presence": "known"
+            }
+          },
           "heard_events": [
             "A person is waiting outside the closed front door."
           ],
@@ -996,15 +1512,15 @@
               "state": "intact"
             }
           },
-          "player_location": "room.front_hall",
-          "reports": [],
-          "time_seconds": 0.0,
-          "visitor_claimed_name": "Xiaoman",
-          "visitor_id": "visitor.xiaoman",
-          "visitor_responses_remaining": 1
+          "player": {
+            "location": "room.front_hall",
+            "target_id": "player"
+          },
+          "schema_version": "wangsheng.model_visible_world.v1",
+          "time_seconds": 0.0
         }
       },
-      "context_hash": "833d8c90b2a3a201843a53326911e88993af965695eaa063d55f46dc48578495",
+      "context_hash": "2471a750f633e70af8f662f03df6f00133b02659697d0d84512abbc66a7ec28e",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -1054,7 +1570,7 @@
         "success": true,
         "world_delta": {}
       },
-      "schema_version": "wangsheng.trace.v2",
+      "schema_version": "wangsheng.trace.v3",
       "sequence": 3,
       "state_delta": {
         "conversation_facts": {
@@ -1145,6 +1661,9 @@
             "version": 1
           }
         ],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,
@@ -1198,6 +1717,9 @@
           "A person is waiting outside the closed front door."
         ],
         "memory_events": [],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,
@@ -1261,7 +1783,7 @@
         }
       },
       "context": {
-        "available_actions": [
+        "authorized_actions": [
           "ask_through",
           "close",
           "listen_at",
@@ -1272,6 +1794,125 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "current_affordances": {
+          "ask_through": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "visitor.front_001": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "actor is near the closed barrier",
+                "required_arguments": {
+                  "barrier_id": "door.front"
+                }
+              }
+            }
+          },
+          "close": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "manipulate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "door is not open"
+              }
+            }
+          },
+          "listen_at": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "actor is already near the barrier"
+              }
+            }
+          },
+          "move_to": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "navigate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is area.front_door"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is room.front_hall"
+              },
+              "player": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "moves to the player's current location"
+              }
+            }
+          },
+          "observe": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known door can be inspected"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known item can be inspected"
+              },
+              "visitor.front_001": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "the entity is outside a closed opaque door; use listen_at or ask_through after moving near the door"
+              }
+            }
+          },
+          "open": {
+            "blocked_by": "HARD_CONSTRAINT_VIOLATION",
+            "executable_now": false,
+            "forbidden_by_task": true,
+            "permission": "manipulate",
+            "requires": "the active task explicitly forbids this action",
+            "target_required": true
+          },
+          "report": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "player": {
+                "blocked_by": "TOO_FAR",
+                "executable_now": false,
+                "requires": "requires actor.location=room.front_hall; use move_to(player) first"
+              }
+            }
+          },
+          "wait": {
+            "blocked_by": null,
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "note": "bounded waiting is executable now",
+            "permission": "wait",
+            "target_required": false
+          }
+        },
         "forbidden_actions": [
           "open"
         ],
@@ -1377,7 +2018,7 @@
               "door.front",
               "object.paper_crane",
               "player",
-              "visitor.xiaoman"
+              "visitor.front_001"
             ],
             "location": "area.front_door",
             "permissions": [
@@ -1393,12 +2034,19 @@
               "certainty": "CLAIMED",
               "predicate": "claimed_name",
               "source": "visitor_statement",
-              "subject": "visitor.xiaoman",
+              "subject": "visitor.front_001",
               "value": "Xiaoman",
               "verified": false
             }
           ],
           "emotional_residue": [],
+          "entities": {
+            "visitor.front_001": {
+              "entity_type": "visitor",
+              "identity_status": "claimed",
+              "presence": "known"
+            }
+          },
           "heard_events": [
             "A person is waiting outside the closed front door."
           ],
@@ -1412,7 +2060,7 @@
               "predicate": "claimed_name",
               "schema_version": "wangsheng.memory_event.v1",
               "source": "visitor_statement",
-              "subject": "visitor.xiaoman",
+              "subject": "visitor.front_001",
               "value": "Xiaoman",
               "version": 1
             }
@@ -1438,15 +2086,15 @@
               "state": "intact"
             }
           },
-          "player_location": "room.front_hall",
-          "reports": [],
-          "time_seconds": 0.0,
-          "visitor_claimed_name": "Xiaoman",
-          "visitor_id": "visitor.xiaoman",
-          "visitor_responses_remaining": 0
+          "player": {
+            "location": "room.front_hall",
+            "target_id": "player"
+          },
+          "schema_version": "wangsheng.model_visible_world.v1",
+          "time_seconds": 0.0
         }
       },
-      "context_hash": "1a051e5cef7361766b61c235b76da25c0819e4c1df45bbcc0f1bb5c5233b5e3a",
+      "context_hash": "e9f50553475f5e2839c1122436aff08048fa1a61ea56579a43c8bb8feb176e9b",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -1493,7 +2141,7 @@
           }
         }
       },
-      "schema_version": "wangsheng.trace.v2",
+      "schema_version": "wangsheng.trace.v3",
       "sequence": 4,
       "state_delta": {
         "actor.location": {
@@ -1553,6 +2201,9 @@
             "version": 1
           }
         ],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,
@@ -1629,6 +2280,9 @@
             "version": 1
           }
         ],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,
@@ -1717,7 +2371,7 @@
         "world_delta": {}
       },
       "context": {
-        "available_actions": [
+        "authorized_actions": [
           "ask_through",
           "close",
           "listen_at",
@@ -1728,6 +2382,122 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "current_affordances": {
+          "ask_through": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "visitor.front_001": {
+                "blocked_by": "TOO_FAR",
+                "executable_now": false,
+                "requires": "requires actor.location=area.front_door; use move_to(door.front) first"
+              }
+            }
+          },
+          "close": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "manipulate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "door is not open"
+              }
+            }
+          },
+          "listen_at": {
+            "executable_now": false,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": "TOO_FAR",
+                "executable_now": false,
+                "requires": "requires actor.location=area.front_door; use move_to first"
+              }
+            }
+          },
+          "move_to": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "navigate",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is area.front_door"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "destination is room.front_hall"
+              },
+              "player": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "moves to the player's current location"
+              }
+            }
+          },
+          "observe": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "perceive",
+            "target_required": true,
+            "targets": {
+              "door.front": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known door can be inspected"
+              },
+              "object.paper_crane": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "known item can be inspected"
+              },
+              "visitor.front_001": {
+                "blocked_by": "INVALID_PRECONDITION",
+                "executable_now": false,
+                "requires": "the entity is outside a closed opaque door; use listen_at or ask_through after moving near the door"
+              }
+            }
+          },
+          "open": {
+            "blocked_by": "HARD_CONSTRAINT_VIOLATION",
+            "executable_now": false,
+            "forbidden_by_task": true,
+            "permission": "manipulate",
+            "requires": "the active task explicitly forbids this action",
+            "target_required": true
+          },
+          "report": {
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "permission": "communicate",
+            "target_required": true,
+            "targets": {
+              "player": {
+                "blocked_by": null,
+                "executable_now": true,
+                "note": "actor is near the player"
+              }
+            }
+          },
+          "wait": {
+            "blocked_by": null,
+            "executable_now": true,
+            "forbidden_by_task": false,
+            "note": "bounded waiting is executable now",
+            "permission": "wait",
+            "target_required": false
+          }
+        },
         "forbidden_actions": [
           "open"
         ],
@@ -1854,7 +2624,7 @@
               "door.front",
               "object.paper_crane",
               "player",
-              "visitor.xiaoman"
+              "visitor.front_001"
             ],
             "location": "room.front_hall",
             "permissions": [
@@ -1870,12 +2640,19 @@
               "certainty": "CLAIMED",
               "predicate": "claimed_name",
               "source": "visitor_statement",
-              "subject": "visitor.xiaoman",
+              "subject": "visitor.front_001",
               "value": "Xiaoman",
               "verified": false
             }
           ],
           "emotional_residue": [],
+          "entities": {
+            "visitor.front_001": {
+              "entity_type": "visitor",
+              "identity_status": "claimed",
+              "presence": "known"
+            }
+          },
           "heard_events": [
             "A person is waiting outside the closed front door."
           ],
@@ -1889,7 +2666,7 @@
               "predicate": "claimed_name",
               "schema_version": "wangsheng.memory_event.v1",
               "source": "visitor_statement",
-              "subject": "visitor.xiaoman",
+              "subject": "visitor.front_001",
               "value": "Xiaoman",
               "version": 1
             }
@@ -1915,15 +2692,15 @@
               "state": "intact"
             }
           },
-          "player_location": "room.front_hall",
-          "reports": [],
-          "time_seconds": 0.0,
-          "visitor_claimed_name": "Xiaoman",
-          "visitor_id": "visitor.xiaoman",
-          "visitor_responses_remaining": 0
+          "player": {
+            "location": "room.front_hall",
+            "target_id": "player"
+          },
+          "schema_version": "wangsheng.model_visible_world.v1",
+          "time_seconds": 0.0
         }
       },
-      "context_hash": "1f0f86659e50401069f038eaca409c9c1db7069ee01ba09024583145727bb0b5",
+      "context_hash": "bae8a3baac6aea9024ef1689023e27b157a7211844f7af69e7179cce53fb19f5",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -1986,7 +2763,7 @@
         "success": true,
         "world_delta": {}
       },
-      "schema_version": "wangsheng.trace.v2",
+      "schema_version": "wangsheng.trace.v3",
       "sequence": 5,
       "state_delta": {
         "reports": {
@@ -2060,6 +2837,9 @@
             "version": 1
           }
         ],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,
@@ -2150,6 +2930,9 @@
             "version": 1
           }
         ],
+        "model_target_aliases": {
+          "visitor.front_001": "visitor.xiaoman"
+        },
         "objects": {
           "door.front": {
             "interactable": true,

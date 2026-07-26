@@ -1,37 +1,65 @@
 # WangSheng Agent Lab Baseline Status
 
-## Frozen repository baseline
+## Repository baseline
 
-- Previous release: `v0.3.1`
-- Verified deterministic runtime: 53 tests, 20/20 scripted scenarios, zero executed hard violations, zero incomplete traces, stable Golden Trace
-- Current candidate: `v0.4.0`
+- Previous deterministic release: `v0.3.1`
+- Previous cloud harness candidate: `v0.4.0`
+- Current candidate: `v0.4.1`
 - Runtime language: Python 3.10+
 - Runtime third-party dependencies: none
 - Development dependencies: pytest and ruff
 
-## What v0.4.0 adds
+## Verified local scope
 
-- Native OpenAI-compatible `tool_calls` request and response handling
-- Strict one-tool-call-per-tick policy
-- Exact preservation of provider tool-call IDs
-- Provider timeout, retry, redaction and public configuration reporting
-- Model/token/latency metadata in Trace when a native provider is used
-- Frozen first-action expectations for all 20 scenarios
-- One-turn cloud smoke command
-- 20×N experiment command with JSONL, CSV and aggregate metrics
-- Explicit separation between protocol validity, semantic first-action quality and Gateway safety
+- 82 automated tests
+- 20/20 deterministic scenarios
+- zero executed hard violations
+- zero incomplete traces
+- Golden Trace replay passes
+- old scripted and text-contract demos pass
 
-## Current verified scope
+## Real-model evidence that triggered v0.4.1
 
-The local source can deterministically validate the provider protocol and experiment calculations without external network access. It can send real native tool schemas to a configured OpenAI-compatible endpoint and record the resulting evidence.
+The first DeepSeek V4 Pro `20×1` run on `v0.4.0` produced:
 
-The repository does not claim that a real model has passed until a named endpoint/model is run and the generated artifacts are reviewed.
+- protocol valid: 11/20
+- semantic pass: 5/20
+- multiple tool calls: 7
+- no tool calls: 3
+- selected forbidden tools: 0
+- actual hard violations: 0
 
-## Gate decision
+A five-scenario configuration comparison then used:
 
-1. Run one smoke request.
-2. Run the frozen 20×1 experiment.
-3. If the endpoint shape is correct, run 20×10 without changing scenarios or expectations.
-4. Only after P0/P1 results are frozen should the project implement full multi-step cloud-model replanning.
+```text
+tool_choice=required
+parallel_tool_calls=false
+```
 
-No additional deterministic scenarios should be added merely to improve a model score. A scenario or evaluator change requires a demonstrated contract defect independent of model quality.
+It produced:
+
+- protocol valid: 5/5
+- multiple tool calls: 0
+- provider errors: 0
+- semantic pass: 2/5
+
+This separated transport/configuration defects from semantic/context defects.
+
+## What v0.4.1 fixes
+
+- correct one-action provider defaults
+- hidden identity leakage through canonical target IDs
+- confusion between authorized tools and executable actions
+- missing physical prerequisite descriptions
+- first-action semantic scoring that ignored Gateway rejection
+- lack of explicit alias-to-canonical trace evidence
+
+## Next gate
+
+1. Apply and verify `v0.4.1`.
+2. Run one smoke request with frozen configuration.
+3. Run a new non-overwriting `20×1` experiment.
+4. Compare with the original `v0.4.0` baseline.
+5. If semantic failures are localized, implement the full multi-step loop and replanning test.
+
+Do not change expectations after seeing model answers unless an independent world-contract defect is demonstrated and documented.

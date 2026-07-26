@@ -2,23 +2,32 @@
 
 Reliability-first framework for AI-controlled game NPCs.
 
-Version 0.4.0 opens the real-model evaluation phase without changing the frozen v0.3.1 world rules, Gateway, Executor or deterministic scenarios.
+Version 0.4.1 fixes the two defects exposed by the first real DeepSeek V4 Pro run:
 
-## v0.4.0 milestone
+1. task-authorized actions were being presented as if they were executable now;
+2. the model-facing world leaked a canonical entity ID that encoded the visitor's identity.
 
-- native OpenAI-compatible `tool_calls` provider
-- exactly one tool call per active task tick
-- ordinary assistant prose is never parsed into an action
-- provider `tool_call_id` is preserved through `Action`, `ActionRequest`, `ActionResult` and Trace
-- API-only tool schemas strip WangSheng internal metadata before transmission
-- configurable timeout, bounded retry and retry backoff
-- credential redaction in provider errors
-- model, request, token, latency, finish reason and response-hash metadata
-- frozen 20-scenario P0/P1 first-action experiment
-- one dialogue-only case that correctly expects no world-action tool call
-- JSONL, CSV and aggregate JSON experiment outputs
-- forbidden tool selection is recorded but never executed during first-action evaluation
-- deterministic v0.3.1 regression gate remains intact
+The authoritative world, Gateway, Executor and deterministic evaluator remain separate from the model-facing view.
+
+## v0.4.1 milestone
+
+- `FullWorldSnapshot` and `ModelVisibleWorld` are now distinct representations
+- hidden canonical IDs are replaced with anonymous model-visible aliases
+- raw visitor identity and simulator response queues never enter model context
+- accessible facts and memories retain source and certainty while using visible aliases
+- one alias-resolution boundary converts model IDs back to canonical IDs before Gateway/Executor
+- `authorized_actions` is separated from `current_affordances`
+- current affordances state whether each tool/target is executable now and why not
+- proximity-dependent tools explicitly expose `TOO_FAR` prerequisites
+- direct observation through a closed opaque door is rejected
+- `move_to` rejects non-navigable external entities
+- tool descriptions now state physical and knowledge prerequisites
+- task calls default to `tool_choice=required`
+- provider requests default to `parallel_tool_calls=false`
+- dialogue-only cases still use `tool_choice=auto`
+- first-action semantic scoring now requires the Gateway to allow the action
+- selected model-visible target and resolved canonical target are both recorded
+- deterministic scenarios, Golden Trace and old demos remain regression-tested
 
 The eight tools remain:
 
@@ -39,28 +48,28 @@ python tools/replay_trace.py \
 Expected local verification for this source release:
 
 ```text
-73 tests passed
+82 tests passed
 20/20 deterministic scenarios
 0 executed hard violations
 0 incomplete traces
 Golden Trace replay passed
+Golden digest: 14282d3127cffb67f529db1f95e7cf552b3d3b406fbaf4fdf55014fe6587e944
 ```
 
 ## Configure one cloud model
 
-Copy `.env.example` values into the shell or a private environment file that is never committed:
+Keep credentials outside Git:
 
 ```bash
 export WANGSHENG_CLOUD_BASE_URL="https://provider.example/v1"
 export WANGSHENG_CLOUD_MODEL="replace-with-model-name"
-export WANGSHENG_CLOUD_API_KEY="replace-with-secret"
+read -rsp "API key: " WANGSHENG_CLOUD_API_KEY
+export WANGSHENG_CLOUD_API_KEY
 ```
 
 The runtime does not print or persist the API key.
 
 ## Real native-tool smoke test
-
-Run one frozen scenario once:
 
 ```bash
 python -m wangsheng.cli cloud-tool-smoke \
@@ -68,24 +77,21 @@ python -m wangsheng.cli cloud-tool-smoke \
   --output-dir artifacts/cloud-tool-smoke
 ```
 
-This command succeeds only when the model returns exactly one valid native tool call and the selected first action is inside the frozen acceptable set.
+Default task configuration now sends:
+
+```text
+tool_choice=required
+parallel_tool_calls=false
+```
+
+Use `--no-send-parallel-tool-calls` only if a provider rejects that field.
 
 ## Twenty-scenario first-action experiment
-
-Run each scenario once to validate endpoint compatibility:
 
 ```bash
 python -m wangsheng.cli run-cloud-first-actions \
   --repeat 1 \
   --output-dir artifacts/cloud-first-action-20x1
-```
-
-After reviewing the 20x1 output, run the fixed repeated experiment:
-
-```bash
-python -m wangsheng.cli run-cloud-first-actions \
-  --repeat 10 \
-  --output-dir artifacts/cloud-first-action-20x10
 ```
 
 Outputs:
@@ -95,13 +101,14 @@ Outputs:
 - `results.csv` for analysis
 - `summary.json` with protocol rate, semantic first-action rate, forbidden selections, Gateway rejections, latency and token totals
 
-## Protocol boundary
+Do not selectively rerun failures into the same result directory.
 
-The production path is now:
+## Protocol boundary
 
 ```text
 native API tool_calls
-→ Action
+→ model-visible ActionRequest
+→ alias resolution
 → Tool Schema
 → Action Gateway
 → Executor / UE later
@@ -109,17 +116,28 @@ native API tool_calls
 → next model turn
 ```
 
-The old strict text-JSON parser remains only for deterministic regression and malformed-output tests. It is not the formal cloud-model protocol.
+The model may propose an intent, but only Gateway and Executor determine whether and how the world changes.
 
-## What v0.4.0 does not prove yet
+## Model-visible versus authoritative state
 
-This release contains the real provider and experiment harness, but the repository itself does not include a successful external-model result. A result is evidence only after the user runs a fixed named model and stores the generated experiment artifacts outside Git.
+```text
+FullWorldSnapshot
+  save/debug/evaluator/trace authority
+  may contain canonical IDs and simulator-only fields
 
-It also does not yet provide:
+ModelVisibleWorld
+  only actor-accessible facts, memories, objects and anonymous entities
+  never contains hidden canonical identity fields
+```
 
-- complete multi-step cloud-model task evaluation
-- failure-result replanning metrics
+An anonymous ID such as `visitor.front_001` means only “the currently known visitor entity.” It does not encode a name or verified identity.
+
+## What v0.4.1 does not prove yet
+
+- complete multi-step cloud-model task completion
+- failure-result replanning rate
+- stable repeated model quality
 - local 9B/GGUF comparison
-- production memory persistence and belief updates
+- production belief and memory persistence
 - Unreal Engine integration
 - voice, animation, LoRA or AIGC integration

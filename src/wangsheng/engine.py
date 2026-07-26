@@ -51,7 +51,12 @@ class EpisodeEngine:
 
         try:
             proposed = self.policy.next_action(context)
-            action = proposed if proposed.action_id else replace(proposed, action_id=f"{task.spec.task_id}:a{step + 1:03d}")
+            requested = (
+                proposed
+                if proposed.action_id
+                else replace(proposed, action_id=f"{task.spec.task_id}:a{step + 1:03d}")
+            )
+            action = self.gateway.canonicalize_action(action=requested, world=self.world)
         except PolicyOutputError as exc:
             observation = Observation(False, exc.code, str(exc), Action("__invalid_model_output__", parameters={"raw_output": exc.raw_output}, action_id=f"{task.spec.task_id}:a{step + 1:03d}"), source="policy")
         except ProviderError as exc:
@@ -109,6 +114,7 @@ class EpisodeEngine:
             observations=tuple(observation.to_dict() for observation in task.observations),
             tool_schemas=self.gateway.registry.function_schemas(allowed),
             intent=task.spec.intent.to_dict() if task.spec.intent else {},
+            current_affordances=self.gateway.current_affordances(task=task, world=self.world),
         )
 
     def _require_task(self) -> ActiveTask:
