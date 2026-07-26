@@ -35,3 +35,6 @@ Thumbs.db
 
 # Generated test and scenario outputs
 artifacts/
+
+# Python generated package metadata
+*.egg-info/
