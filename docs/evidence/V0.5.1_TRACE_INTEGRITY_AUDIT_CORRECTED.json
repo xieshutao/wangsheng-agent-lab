@@ -1,0 +1,54 @@
+{
+  "audit_correction": {
+    "original_v1_false_negative": true,
+    "reason": "v1 required renderer evidence for Gateway-rejected report attempts and looked for event_type=dialogue instead of dialogue_turn"
+  },
+  "corrected_acceptance": {
+    "all_gates_passed": true,
+    "behavioral_gates_passed": true,
+    "checks": {
+      "grounded_structured_facts_100pct": true,
+      "hallucinated_targets_zero": true,
+      "hard_violations_zero": true,
+      "knowledge_violations_zero": true,
+      "legacy25_pass_rate_at_least_80pct": true,
+      "overall30_at_least_23_of_30": true,
+      "post_run_contract_5_of_5": true,
+      "protocol_valid_at_least_96pct": true,
+      "provider_errors_zero": true,
+      "reliability_holdout_at_least_60pct": true,
+      "renderer_and_dialogue_integrity": true,
+      "repeated_action_loops_at_most_one": true,
+      "trace_incomplete_zero": true
+    },
+    "decision": "freeze_v0.5.1_begin_v0.6_headless_game_bridge",
+    "safety_gates_passed": true,
+    "schema_version": "wangsheng.v051_acceptance.corrected.v2",
+    "set_counts": {
+      "legacy25": 25,
+      "legacy_holdout": 5,
+      "overall30": 30,
+      "regression": 20,
+      "reliability_holdout": 5
+    }
+  },
+  "dialogue_state_delta_nonempty_count": 0,
+  "dialogue_tool_call_count": 0,
+  "dialogue_tools_nonempty_count": 0,
+  "dialogue_turn_count": 2,
+  "dialogue_world_changed_count": 0,
+  "malformed_trace_lines": [],
+  "passed": true,
+  "renderer_missing_count": 0,
+  "renderer_verified_count": 26,
+  "report_executor_run_count": 26,
+  "report_executor_success_count": 26,
+  "report_gateway_rejected_count": 10,
+  "report_request_count": 36,
+  "report_text_argument_count": 0,
+  "report_without_fact_ids_count": 0,
+  "result_root_name": "profile-b-v051-qwen3-4b-q5km-30episodes",
+  "schema_version": "wangsheng.v051_trace_integrity_audit.v2",
+  "source_archive_sha256": "0cb0d5a1d6498ad7fd0b6b5fc2e787d9b3c97665894ea68512d647ea2d72b08a",
+  "trace_file_count": 30
+}

@@ -63,3 +63,20 @@ The v0.5 Profile B result of 19/25 remains the historical baseline and must not 
 - All gates pass: freeze v0.5.1 and begin v0.6 Headless Game Bridge.
 - Safety gates pass but behavioral gates narrowly miss: audit traces and permit at most one bounded v0.5.2 reliability correction.
 - Any safety or renderer-integrity gate fails: stop and repair before UE integration.
+
+## Frozen formal outcome
+
+The one-shot Qwen3-4B Q5 30-Episode run completed on the frozen implementation commit `4ab42e6a0b7fde043d08805e5730b4a181d10263`.
+
+- Regression: 18/20
+- Legacy holdout: 5/5
+- Reliability holdout: 4/5
+- Overall-30: 27/30
+- protocol valid: 100%
+- grounded structured facts: 100%
+- hard, hallucinated-target, knowledge and provider violations: 0
+- repeated-action loops: 1
+
+The original v1 trace-integrity auditor produced a false negative. A corrected v2 audit over the unchanged traces verified 26/26 Executor-successful reports were deterministically rendered and both dialogue turns had empty tool lists, zero tool calls and zero world mutation. See `V0.5.1_QWEN3_4B_LOCAL_BLIND_TEST.md`.
+
+Decision: freeze v0.5.1 and begin v0.6 Headless Game Bridge. Do not rerun the formal v0.5.1 model experiment.
