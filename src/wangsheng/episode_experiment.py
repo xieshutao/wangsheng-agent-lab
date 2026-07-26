@@ -725,6 +725,7 @@ def _action_record(
         "prompt_tokens": None if turn is None else turn.usage.prompt_tokens,
         "completion_tokens": None if turn is None else turn.usage.completion_tokens,
         "total_tokens": None if turn is None else turn.usage.total_tokens,
+        "provider_metrics": {} if turn is None else dict(turn.provider_metrics),
         "visible_target_violations": (
             [] if turn is None else _visible_target_violations(context, turn)
         ),

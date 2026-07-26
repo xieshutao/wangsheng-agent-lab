@@ -12,6 +12,8 @@ from .evaluator import DoorVisitorEvaluator
 from .executor import SimulatedExecutor
 from .experiment import run_first_action_experiment
 from .gateway import Gateway
+from .local_experiment import LocalModelProfile, run_local_model_baseline
+from .local_runtime import preflight_local_server, run_synthetic_tool_contract
 from .policy import ModelPolicy
 from .providers import OpenAICompatibleToolCallingProvider, ScriptedTextProvider
 from .scenario_runner import load_scenario, run_all, run_scenario
@@ -205,6 +207,97 @@ def _run_cloud_episodes(args: argparse.Namespace) -> int:
     return 0
 
 
+
+def _add_local_provider_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--base-url", default="http://127.0.0.1:8080/v1")
+    parser.add_argument("--model", required=True, help="llama-server model alias.")
+    parser.add_argument("--timeout", type=float, default=60.0)
+    parser.add_argument("--max-tokens", type=int, default=256)
+    parser.add_argument(
+        "--extra-body-json",
+        default='{"chat_template_kwargs":{"enable_thinking":false}}',
+        help="llama.cpp request extensions; cannot override reserved fields.",
+    )
+
+
+def _build_local_provider(args: argparse.Namespace) -> OpenAICompatibleToolCallingProvider:
+    try:
+        extra_body: Any = json.loads(args.extra_body_json)
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"--extra-body-json is invalid JSON: {exc}") from exc
+    if not isinstance(extra_body, dict):
+        raise SystemExit("--extra-body-json must decode to an object.")
+    return OpenAICompatibleToolCallingProvider(
+        base_url=args.base_url,
+        model=args.model,
+        api_key_env="WANGSHENG_LOCAL_API_KEY",
+        timeout_seconds=args.timeout,
+        temperature=0.0,
+        top_p=1.0,
+        max_tokens=args.max_tokens,
+        max_retries=0,
+        retry_backoff_seconds=0.0,
+        send_parallel_tool_calls=True,
+        extra_body=extra_body,
+        provider_name="llama.cpp",
+    )
+
+
+def _run_local_preflight(args: argparse.Namespace) -> int:
+    result = preflight_local_server(
+        base_url=args.base_url,
+        expected_model=args.model,
+        timeout_seconds=args.timeout,
+    )
+    print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def _run_local_synthetic_contract(args: argparse.Namespace) -> int:
+    provider = _build_local_provider(args)
+    summary = run_synthetic_tool_contract(
+        provider=provider,
+        output_path=args.output,
+        request_count=args.request_count,
+    )
+    print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def _run_local_episodes(args: argparse.Namespace) -> int:
+    provider = _build_local_provider(args)
+    profile = LocalModelProfile(
+        profile_id=args.profile_id,
+        model_repository=args.model_repository,
+        model_filename=Path(args.model_path).name,
+        quantization=args.quantization,
+        context_size=args.context_size,
+        gpu_offload=args.gpu_offload,
+    )
+    summary = run_local_model_baseline(
+        project_root=args.project_root,
+        output_dir=args.output_dir,
+        regression_scenario_dir=args.regression_scenario_dir,
+        holdout_scenario_dir=args.holdout_scenario_dir,
+        provider=provider,
+        profile=profile,
+        model_path=args.model_path,
+        runtime_binary_path=args.runtime_binary,
+        runtime_release=args.runtime_release,
+        runtime_commit=args.runtime_commit,
+        server_args=args.server_arg,
+        llama_bench_json=args.llama_bench_json,
+        server_pid=args.server_pid,
+        server_stdout_log=args.server_stdout_log,
+        server_stderr_log=args.server_stderr_log,
+        nvidia_smi_path=args.nvidia_smi_path,
+        telemetry_interval_seconds=args.telemetry_interval,
+        expected_git_commit=args.expected_git_commit,
+        require_clean_git=not args.allow_non_git,
+    )
+    print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="wangsheng")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -237,6 +330,43 @@ def build_parser() -> argparse.ArgumentParser:
     episodes.add_argument("--scenario-dir", default="scenarios")
     episodes.add_argument("--output-dir", default="artifacts/cloud-episodes")
     episodes.add_argument("--scenario-id", action="append", default=[])
+
+    local_preflight = sub.add_parser("local-preflight")
+    _add_local_provider_arguments(local_preflight)
+
+    local_contract = sub.add_parser("local-synthetic-contract")
+    _add_local_provider_arguments(local_contract)
+    local_contract.add_argument("--output", required=True)
+    local_contract.add_argument("--request-count", type=int, default=5)
+
+    local = sub.add_parser("run-local-episodes")
+    _add_local_provider_arguments(local)
+    local.add_argument("--project-root", default=".")
+    local.add_argument("--output-dir", required=True)
+    local.add_argument("--regression-scenario-dir", default="scenarios")
+    local.add_argument("--holdout-scenario-dir", default="scenarios_v043_holdout")
+    local.add_argument("--profile-id", required=True)
+    local.add_argument("--model-repository", required=True)
+    local.add_argument("--model-path", required=True)
+    local.add_argument("--quantization", required=True)
+    local.add_argument("--context-size", type=int, default=8192)
+    local.add_argument("--gpu-offload", default="full")
+    local.add_argument("--runtime-binary", required=True)
+    local.add_argument("--runtime-release", default="b9637")
+    local.add_argument("--runtime-commit", default="aedb2a5")
+    local.add_argument("--server-arg", action="append", default=[])
+    local.add_argument("--server-pid", type=int)
+    local.add_argument("--server-stdout-log")
+    local.add_argument("--server-stderr-log")
+    local.add_argument("--llama-bench-json", required=True)
+    local.add_argument("--nvidia-smi-path", default="nvidia-smi")
+    local.add_argument("--telemetry-interval", type=float, default=0.5)
+    local.add_argument("--expected-git-commit")
+    local.add_argument(
+        "--allow-non-git",
+        action="store_true",
+        help="Test-only escape hatch; forbidden for formal evidence.",
+    )
     return parser
 
 
@@ -264,6 +394,12 @@ def main() -> int:
         return _run_cloud_experiment(args, strict_smoke=False)
     if args.command == "run-cloud-episodes":
         return _run_cloud_episodes(args)
+    if args.command == "local-preflight":
+        return _run_local_preflight(args)
+    if args.command == "local-synthetic-contract":
+        return _run_local_synthetic_contract(args)
+    if args.command == "run-local-episodes":
+        return _run_local_episodes(args)
     raise AssertionError(args.command)
 
 

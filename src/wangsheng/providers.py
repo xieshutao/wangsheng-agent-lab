@@ -87,6 +87,7 @@ class ToolCallingTurn:
     response_message: dict[str, Any]
     provider_name: str = "openai-compatible"
     attempt_count: int = 1
+    provider_metrics: dict[str, Any] = field(default_factory=dict)
 
     def metadata(self) -> dict[str, Any]:
         return {
@@ -100,6 +101,7 @@ class ToolCallingTurn:
             "latency_ms": round(self.latency_ms, 3),
             "raw_response_hash": self.raw_response_hash,
             "attempt_count": self.attempt_count,
+            "provider_metrics": dict(self.provider_metrics),
         }
 
 
@@ -218,6 +220,7 @@ class OpenAICompatibleToolCallingProvider:
     retry_backoff_seconds: float = 0.5
     send_parallel_tool_calls: bool = True
     extra_body: dict[str, Any] = field(default_factory=dict)
+    provider_name: str = "openai-compatible"
 
     def complete_tool_call(
         self,
@@ -331,7 +334,9 @@ class OpenAICompatibleToolCallingProvider:
             latency_ms=latency_ms,
             raw_response_hash=sha256(raw.encode("utf-8")).hexdigest(),
             response_message=response_message,
+            provider_name=self.provider_name,
             attempt_count=attempt_count,
+            provider_metrics=_extract_provider_metrics(payload),
         )
 
     @staticmethod
@@ -409,7 +414,7 @@ class OpenAICompatibleToolCallingProvider:
 
     def public_config(self) -> dict[str, Any]:
         return {
-            "provider": "openai-compatible",
+            "provider": self.provider_name,
             "base_url": _sanitize_base_url(self.base_url),
             "model": self.model,
             "api_key_env": self.api_key_env,
@@ -422,6 +427,36 @@ class OpenAICompatibleToolCallingProvider:
             "send_parallel_tool_calls": self.send_parallel_tool_calls,
             "extra_body_keys": sorted(self.extra_body),
         }
+
+
+def _extract_provider_metrics(payload: dict[str, Any]) -> dict[str, Any]:
+    """Return a bounded set of provider timing counters when available.
+
+    llama.cpp commonly returns a top-level ``timings`` object. Cloud
+    providers may omit it. Unknown nested structures are ignored so raw
+    provider payloads do not leak into traces.
+    """
+
+    raw = payload.get("timings")
+    if not isinstance(raw, dict):
+        return {}
+    allowed = {
+        "cache_n",
+        "prompt_n",
+        "prompt_ms",
+        "prompt_per_token_ms",
+        "prompt_per_second",
+        "predicted_n",
+        "predicted_ms",
+        "predicted_per_token_ms",
+        "predicted_per_second",
+    }
+    result: dict[str, Any] = {}
+    for key in sorted(allowed):
+        value = raw.get(key)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            result[key] = value
+    return {"timings": result} if result else {}
 
 
 def normalize_chat_completions_url(base_url: str) -> str:
