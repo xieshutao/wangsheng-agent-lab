@@ -275,7 +275,7 @@ def test_trace_contains_native_model_metadata(tmp_path: Path) -> None:
     assert observation.action.action_id == "call-trace"
     assert record["action_request"]["action_id"] == "call-trace"
     assert record["action_result"]["action_id"] == "call-trace"
-    assert record["model"]["prompt_version"] == "wangsheng.tool_call_prompt.v3"
+    assert record["model"]["prompt_version"] == "wangsheng.tool_call_prompt.v4"
     assert record["model"]["tool_call_ids"] == ["call-trace"]
 
 

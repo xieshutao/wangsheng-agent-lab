@@ -4,6 +4,7 @@ from typing import Any
 
 from .models import ActiveTask, WorldState
 from .reason_codes import ReasonCode
+from .reporting import completion_progress, required_fact_types
 from .tools import ToolRegistry
 
 
@@ -51,6 +52,8 @@ def build_current_affordances(
         handler = globals().get(f"_afford_{tool_name}")
         if handler is None:
             entry.update(_allowed())
+        elif tool_name in {"ask_through", "report"}:
+            entry.update(handler(world, task))
         else:
             entry.update(handler(world))
         result[tool_name] = entry
@@ -116,7 +119,7 @@ def _afford_listen_at(world: WorldState) -> dict[str, Any]:
     return _targets_entry(targets)
 
 
-def _afford_ask_through(world: WorldState) -> dict[str, Any]:
+def _afford_ask_through(world: WorldState, task: ActiveTask) -> dict[str, Any]:
     targets: dict[str, Any] = {}
     barrier = world.objects.get("door.front")
     if world.visitor_id and world.visitor_id in world.actor.known_targets:
@@ -137,9 +140,23 @@ def _afford_ask_through(world: WorldState) -> dict[str, Any]:
                 f"requires actor.location={barrier.location}; use move_to(door.front) first",
             )
         else:
+            topic_evidence = {
+                "identity": ["claimed_name"],
+                "purpose": ["visit_purpose"],
+                "request": ["visitor_request"],
+                "door_state": ["door_state"],
+            }
+            required = set(required_fact_types(task))
+            recommended_topics = sorted(
+                topic
+                for topic, produces in topic_evidence.items()
+                if required.intersection(produces)
+            )
             targets[visible_id] = {
                 **_target_allowed("actor is near the closed barrier"),
                 "required_arguments": {"barrier_id": "door.front"},
+                "topic_evidence": topic_evidence,
+                "recommended_topics": recommended_topics,
             }
     return _targets_entry(targets)
 
@@ -188,15 +205,38 @@ def _afford_close(world: WorldState) -> dict[str, Any]:
     return _targets_entry(targets)
 
 
-def _afford_report(world: WorldState) -> dict[str, Any]:
-    if world.actor.location == world.player_location:
-        targets = {"player": _target_allowed("actor is near the player")}
+def _afford_report(world: WorldState, task: ActiveTask) -> dict[str, Any]:
+    progress = completion_progress(task, world)
+    accepted = list(progress.get("accepted_fact_ids", []))
+    if not accepted:
+        missing = list(progress.get("missing_fact_types", []))
+        targets = {
+            "player": {
+                "executable_now": False,
+                "blocked_by": "MISSING_TASK_FACT",
+                "requires": (
+                    f"obtain a reportable fact for {missing}" if missing
+                    else "obtain a matching reportable fact"
+                ),
+                "accepted_fact_ids": [],
+            }
+        }
+    elif world.actor.location == world.player_location:
+        targets = {
+            "player": {
+                **_target_allowed("actor is near the player and a completing fact is available"),
+                "accepted_fact_ids": accepted,
+            }
+        }
     else:
         targets = {
-            "player": _target_blocked(
-                ReasonCode.TOO_FAR,
-                f"requires actor.location={world.player_location}; use move_to(player) first",
-            )
+            "player": {
+                **_target_blocked(
+                    ReasonCode.TOO_FAR,
+                    f"requires actor.location={world.player_location}; use move_to(player) first",
+                ),
+                "accepted_fact_ids": accepted,
+            }
         }
     return _targets_entry(targets)
 

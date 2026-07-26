@@ -6,7 +6,7 @@ from typing import Any
 from .contracts import MemoryEvent
 from .models import Action, ActiveTask, Observation, WorldState
 from .reason_codes import ReasonCode
-from .reporting import resolve_fact_ids
+from .reporting import render_report_text, resolve_fact_ids
 
 
 @dataclass(slots=True)
@@ -314,6 +314,15 @@ class SimulatedExecutor:
                         ),
                     },
                 )
+            tone = str(action.parameters.get("tone", "neutral"))
+            report = {
+                "target_id": action.target,
+                "text": render_report_text(facts, tone=tone),
+                "tone": tone,
+                "rendered_by": "deterministic_fact_renderer",
+                "fact_ids": fact_ids,
+                "facts": facts,
+            }
         else:
             facts = list(action.parameters.get("facts", []))
             invalid = [fact for fact in facts if not self._fact_is_grounded(fact, world)]
@@ -332,13 +341,12 @@ class SimulatedExecutor:
                         ),
                     },
                 )
-
-        report = {
-            "target_id": action.target,
-            "text": action.parameters["text"],
-            "fact_ids": fact_ids,
-            "facts": facts,
-        }
+            report = {
+                "target_id": action.target,
+                "text": action.parameters["text"],
+                "fact_ids": fact_ids,
+                "facts": facts,
+            }
         world.reports.append(report)
         return Observation(
             True,

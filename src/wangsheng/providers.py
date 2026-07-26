@@ -231,17 +231,16 @@ class OpenAICompatibleToolCallingProvider:
     ) -> ToolCallingTurn:
         if not messages:
             raise ProviderError("provider_invalid_request", "At least one message is required.")
-        if not tools:
-            raise ProviderError("provider_invalid_request", "At least one tool schema is required.")
 
         body: dict[str, Any] = {
             "model": self.model,
             "messages": messages,
-            "tools": tools,
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
             "stream": False,
         }
+        if tools:
+            body["tools"] = tools
         if self.top_p is not None:
             if not 0 <= self.top_p <= 1:
                 raise ProviderError(
@@ -249,9 +248,9 @@ class OpenAICompatibleToolCallingProvider:
                     "top_p must be between 0 and 1 when provided.",
                 )
             body["top_p"] = self.top_p
-        if tool_choice is not None:
+        if tools and tool_choice is not None:
             body["tool_choice"] = tool_choice
-        if self.send_parallel_tool_calls:
+        if tools and self.send_parallel_tool_calls:
             body["parallel_tool_calls"] = False
         overlap = set(body) & set(self.extra_body)
         if overlap:

@@ -7,7 +7,7 @@ from typing import Any, Protocol
 from .errors import PolicyOutputError, ProviderError
 from .models import Action, PolicyContext
 from .parser import StrictActionParser
-from .prompting import ActionPromptBuilder, ToolCallingPromptBuilder
+from .prompting import ActionPromptBuilder, DialoguePromptBuilder, ToolCallingPromptBuilder
 from .providers import TextProvider, ToolCallingProvider, ToolCallingTurn
 
 
@@ -69,6 +69,7 @@ class NativeToolCallingPolicy:
 
     provider: ToolCallingProvider
     prompt_builder: ToolCallingPromptBuilder = field(default_factory=ToolCallingPromptBuilder)
+    dialogue_prompt_builder: DialoguePromptBuilder = field(default_factory=DialoguePromptBuilder)
     default_tool_choice: str | dict[str, Any] | None = "required"
     turns: list[ToolCallingTurn] = field(default_factory=list)
     last_turn: ToolCallingTurn | None = None
@@ -96,6 +97,34 @@ class NativeToolCallingPolicy:
                 messages=messages,
                 tools=tools,
                 tool_choice=selected_choice,
+            )
+        except ProviderError as exc:
+            self.last_error = {
+                "code": exc.code,
+                "message": str(exc),
+                "details": dict(exc.details),
+            }
+            raise
+        self.turns.append(turn)
+        self.last_turn = turn
+        return turn
+
+    def request_dialogue_turn(self, context: PolicyContext) -> ToolCallingTurn:
+        """Request a plain dialogue turn with no world-action schemas exposed."""
+
+        messages = self.dialogue_prompt_builder.build_messages(context)
+        self.last_request = {
+            "messages": messages,
+            "tools": [],
+            "tool_choice": None,
+        }
+        self.last_error = None
+        self.last_turn = None
+        try:
+            turn = self.provider.complete_tool_call(
+                messages=messages,
+                tools=[],
+                tool_choice=None,
             )
         except ProviderError as exc:
             self.last_error = {

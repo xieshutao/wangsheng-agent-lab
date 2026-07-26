@@ -34,8 +34,10 @@ def test_model_report_schema_exposes_fact_ids_not_free_form_facts() -> None:
     )
     properties = report["function"]["parameters"]["properties"]
     assert "fact_ids" in properties
+    assert "tone" in properties
+    assert "text" not in properties
     assert "facts" not in properties
-    assert report["function"]["parameters"]["required"] == ["target_id", "text", "fact_ids"]
+    assert report["function"]["parameters"]["required"] == ["target_id", "fact_ids"]
 
 
 def test_ask_through_model_schema_uses_frozen_topic_enum() -> None:
@@ -73,7 +75,7 @@ def test_reportable_fact_id_completes_claim_task_without_model_authored_fact() -
         action=Action(
             "report",
             "player",
-            {"text": "The visitor claims to be Xiaoman.", "fact_ids": [claim["fact_id"]]},
+            {"fact_ids": [claim["fact_id"]], "tone": "neutral"},
         ),
         world=world,
         task=task,
@@ -91,7 +93,7 @@ def test_unknown_fact_id_is_rejected_with_actionable_guidance() -> None:
         action=Action(
             "report",
             "player",
-            {"text": "Unsupported claim.", "fact_ids": ["fact.missing"]},
+            {"fact_ids": ["fact.missing"]},
         ),
         world=world,
         task=task,
@@ -158,7 +160,7 @@ def test_semantic_loop_detection_ignores_report_text_variation() -> None:
         if item["predicate"] == "identity_status"
     )
     actions = [
-        Action("report", "player", {"text": f"Unknown identity {index}", "fact_ids": [unknown["fact_id"]]})
+        Action("report", "player", {"fact_ids": [unknown["fact_id"]], "tone": "neutral"})
         for index in range(3)
     ]
     engine = make_engine(actions)

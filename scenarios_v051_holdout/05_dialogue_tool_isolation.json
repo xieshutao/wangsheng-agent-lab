@@ -1,0 +1,19 @@
+{
+  "scenario_id": "holdout_v051_dialogue_tool_isolation",
+  "mode": "dialogue_only",
+  "intent": {
+    "kind": "chat",
+    "text": "The rain sounds different on this roof tonight."
+  },
+  "task": {
+    "command": "Respond conversationally without taking a world action."
+  },
+  "world": {},
+  "scripted_actions": [],
+  "expected": {
+    "status": "succeeded",
+    "terminal_reason": "INTENT_CHAT_ONLY",
+    "door_state": "closed",
+    "action_count": 0
+  }
+}

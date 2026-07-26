@@ -167,7 +167,8 @@ def test_dialogue_only_uses_auto_and_never_executes_world_action(tmp_path: Path)
     assert summary["action_count"] == 0
     assert summary["tool_call_count"] == 0
     assert summary["executor_action_count"] == 0
-    assert provider.requests[0]["tool_choice"] == "auto"
+    assert provider.requests[0]["tool_choice"] is None
+    assert provider.requests[0]["tools"] == []
     trace = json.loads((tmp_path / "traces" / "casual_chat_no_world_action.jsonl").read_text())
     assert trace["event_type"] == "dialogue_turn"
     assert trace["state_delta"] == {}

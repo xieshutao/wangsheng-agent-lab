@@ -1,5 +1,5 @@
 {
-  "expected_digest": "1199369719bde4a4230aa6271e741c5856a406590910e20fab61c47f0461f3f9",
+  "expected_digest": "f405bb9e5d3953abeeda32a547eea5c20dce69e2ce575879c504dd203d4cb88c",
   "records": [
     {
       "action": {
@@ -49,11 +49,49 @@
           "accepted_fact_ids": [],
           "completion_action": "report",
           "description": "Report the accessible source-qualified claimed_name fact.",
+          "evidence_action_hints": [
+            {
+              "action": "ask_through",
+              "arguments": {
+                "topic": "identity"
+              },
+              "produces": [
+                "claimed_name"
+              ]
+            }
+          ],
+          "missing_fact_types": [
+            "claimed_name"
+          ],
           "ready_to_complete": false,
+          "recovery_guidance": {
+            "active": false,
+            "avoid_semantic_actions": [],
+            "instruction": "No recovery intervention is active.",
+            "preferred_evidence_actions": [
+              {
+                "action": "ask_through",
+                "arguments": {
+                  "topic": "identity"
+                },
+                "produces": [
+                  "claimed_name"
+                ]
+              }
+            ],
+            "reason_codes": [],
+            "schema_version": "wangsheng.recovery_guidance.v1",
+            "trailing_steps_without_new_evidence": 0
+          },
           "remaining_requirements": [
             "obtain or select a matching reportable fact; do not invent one"
           ],
-          "schema_version": "wangsheng.completion_progress.v1",
+          "report_would_complete": false,
+          "required_fact_types": [
+            "claimed_name"
+          ],
+          "satisfied_fact_types": [],
+          "schema_version": "wangsheng.completion_progress.v2",
           "stop_after_success": true
         },
         "current_affordances": {
@@ -151,15 +189,16 @@
             "target_required": true
           },
           "report": {
-            "executable_now": true,
+            "executable_now": false,
             "forbidden_by_task": false,
             "permission": "communicate",
             "target_required": true,
             "targets": {
               "player": {
-                "blocked_by": null,
-                "executable_now": true,
-                "note": "actor is near the player"
+                "accepted_fact_ids": [],
+                "blocked_by": "MISSING_TASK_FACT",
+                "executable_now": false,
+                "requires": "obtain a reportable fact for ['claimed_name']"
               }
             }
           },
@@ -261,7 +300,7 @@
           "time_seconds": 0.0
         }
       },
-      "context_hash": "379bd476dbce18da0b8ffb213d81651aad66342b2370a1fa0b4e5fda9197a92d",
+      "context_hash": "9592b042705d98a093735f7af8b2526eebdc12131afdeb84deca038316048f2e",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -460,11 +499,49 @@
           "accepted_fact_ids": [],
           "completion_action": "report",
           "description": "Report the accessible source-qualified claimed_name fact.",
+          "evidence_action_hints": [
+            {
+              "action": "ask_through",
+              "arguments": {
+                "topic": "identity"
+              },
+              "produces": [
+                "claimed_name"
+              ]
+            }
+          ],
+          "missing_fact_types": [
+            "claimed_name"
+          ],
           "ready_to_complete": false,
+          "recovery_guidance": {
+            "active": false,
+            "avoid_semantic_actions": [],
+            "instruction": "No recovery intervention is active.",
+            "preferred_evidence_actions": [
+              {
+                "action": "ask_through",
+                "arguments": {
+                  "topic": "identity"
+                },
+                "produces": [
+                  "claimed_name"
+                ]
+              }
+            ],
+            "reason_codes": [],
+            "schema_version": "wangsheng.recovery_guidance.v1",
+            "trailing_steps_without_new_evidence": 0
+          },
           "remaining_requirements": [
             "obtain or select a matching reportable fact; do not invent one"
           ],
-          "schema_version": "wangsheng.completion_progress.v1",
+          "report_would_complete": false,
+          "required_fact_types": [
+            "claimed_name"
+          ],
+          "satisfied_fact_types": [],
+          "schema_version": "wangsheng.completion_progress.v2",
           "stop_after_success": true
         },
         "current_affordances": {
@@ -562,15 +639,16 @@
             "target_required": true
           },
           "report": {
-            "executable_now": true,
+            "executable_now": false,
             "forbidden_by_task": false,
             "permission": "communicate",
             "target_required": true,
             "targets": {
               "player": {
-                "blocked_by": null,
-                "executable_now": true,
-                "note": "actor is near the player"
+                "accepted_fact_ids": [],
+                "blocked_by": "MISSING_TASK_FACT",
+                "executable_now": false,
+                "requires": "obtain a reportable fact for ['claimed_name']"
               }
             }
           },
@@ -695,7 +773,7 @@
           "time_seconds": 0.0
         }
       },
-      "context_hash": "79ab2e5677ec7fdfbf34876e748ae07db357e2cb21d404cf9cf91dd798196210",
+      "context_hash": "110a3d33146a53211ea8f75c5b6ba95fcc0ebbcb7209435e4bd1026b6c25437c",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -898,12 +976,50 @@
           "accepted_fact_ids": [],
           "completion_action": "report",
           "description": "Report the accessible source-qualified claimed_name fact.",
+          "evidence_action_hints": [
+            {
+              "action": "ask_through",
+              "arguments": {
+                "topic": "identity"
+              },
+              "produces": [
+                "claimed_name"
+              ]
+            }
+          ],
+          "missing_fact_types": [
+            "claimed_name"
+          ],
           "ready_to_complete": false,
+          "recovery_guidance": {
+            "active": false,
+            "avoid_semantic_actions": [],
+            "instruction": "No recovery intervention is active.",
+            "preferred_evidence_actions": [
+              {
+                "action": "ask_through",
+                "arguments": {
+                  "topic": "identity"
+                },
+                "produces": [
+                  "claimed_name"
+                ]
+              }
+            ],
+            "reason_codes": [],
+            "schema_version": "wangsheng.recovery_guidance.v1",
+            "trailing_steps_without_new_evidence": 1
+          },
           "remaining_requirements": [
             "obtain or select a matching reportable fact; do not invent one",
             "move_to(player) before report"
           ],
-          "schema_version": "wangsheng.completion_progress.v1",
+          "report_would_complete": false,
+          "required_fact_types": [
+            "claimed_name"
+          ],
+          "satisfied_fact_types": [],
+          "schema_version": "wangsheng.completion_progress.v2",
           "stop_after_success": true
         },
         "current_affordances": {
@@ -917,8 +1033,25 @@
                 "blocked_by": null,
                 "executable_now": true,
                 "note": "actor is near the closed barrier",
+                "recommended_topics": [
+                  "identity"
+                ],
                 "required_arguments": {
                   "barrier_id": "door.front"
+                },
+                "topic_evidence": {
+                  "door_state": [
+                    "door_state"
+                  ],
+                  "identity": [
+                    "claimed_name"
+                  ],
+                  "purpose": [
+                    "visit_purpose"
+                  ],
+                  "request": [
+                    "visitor_request"
+                  ]
                 }
               }
             }
@@ -1010,9 +1143,10 @@
             "target_required": true,
             "targets": {
               "player": {
-                "blocked_by": "TOO_FAR",
+                "accepted_fact_ids": [],
+                "blocked_by": "MISSING_TASK_FACT",
                 "executable_now": false,
-                "requires": "requires actor.location=room.front_hall; use move_to(player) first"
+                "requires": "obtain a reportable fact for ['claimed_name']"
               }
             }
           },
@@ -1158,7 +1292,7 @@
           "time_seconds": 0.0
         }
       },
-      "context_hash": "160f4d54dfb696ca366241814f25c51c9d2acb2a3509d5f4b0f8fd91ad3c9743",
+      "context_hash": "bc2afc3cfbbd0fc7d3fc61ba89717ba1388cb9ad2c1135ad3fb34f553434ce92",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -1392,12 +1526,50 @@
           "accepted_fact_ids": [],
           "completion_action": "report",
           "description": "Report the accessible source-qualified claimed_name fact.",
+          "evidence_action_hints": [
+            {
+              "action": "ask_through",
+              "arguments": {
+                "topic": "identity"
+              },
+              "produces": [
+                "claimed_name"
+              ]
+            }
+          ],
+          "missing_fact_types": [
+            "claimed_name"
+          ],
           "ready_to_complete": false,
+          "recovery_guidance": {
+            "active": false,
+            "avoid_semantic_actions": [],
+            "instruction": "No recovery intervention is active.",
+            "preferred_evidence_actions": [
+              {
+                "action": "ask_through",
+                "arguments": {
+                  "topic": "identity"
+                },
+                "produces": [
+                  "claimed_name"
+                ]
+              }
+            ],
+            "reason_codes": [],
+            "schema_version": "wangsheng.recovery_guidance.v1",
+            "trailing_steps_without_new_evidence": 0
+          },
           "remaining_requirements": [
             "obtain or select a matching reportable fact; do not invent one",
             "move_to(player) before report"
           ],
-          "schema_version": "wangsheng.completion_progress.v1",
+          "report_would_complete": false,
+          "required_fact_types": [
+            "claimed_name"
+          ],
+          "satisfied_fact_types": [],
+          "schema_version": "wangsheng.completion_progress.v2",
           "stop_after_success": true
         },
         "current_affordances": {
@@ -1411,8 +1583,25 @@
                 "blocked_by": null,
                 "executable_now": true,
                 "note": "actor is near the closed barrier",
+                "recommended_topics": [
+                  "identity"
+                ],
                 "required_arguments": {
                   "barrier_id": "door.front"
+                },
+                "topic_evidence": {
+                  "door_state": [
+                    "door_state"
+                  ],
+                  "identity": [
+                    "claimed_name"
+                  ],
+                  "purpose": [
+                    "visit_purpose"
+                  ],
+                  "request": [
+                    "visitor_request"
+                  ]
                 }
               }
             }
@@ -1504,9 +1693,10 @@
             "target_required": true,
             "targets": {
               "player": {
-                "blocked_by": "TOO_FAR",
+                "accepted_fact_ids": [],
+                "blocked_by": "MISSING_TASK_FACT",
                 "executable_now": false,
-                "requires": "requires actor.location=room.front_hall; use move_to(player) first"
+                "requires": "obtain a reportable fact for ['claimed_name']"
               }
             }
           },
@@ -1693,7 +1883,7 @@
           "time_seconds": 0.0
         }
       },
-      "context_hash": "5f0bf5b13ec35eddecf2b1c3159e8d855a77f6d42b39d23f929c0db532a27625",
+      "context_hash": "7f994af4c28d16c1d38ef96870987d340f9d0d17b806063bc9feaca6bd7c11c9",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -2008,11 +2198,49 @@
           ],
           "completion_action": "report",
           "description": "Report the accessible source-qualified claimed_name fact.",
+          "evidence_action_hints": [
+            {
+              "action": "ask_through",
+              "arguments": {
+                "topic": "identity"
+              },
+              "produces": [
+                "claimed_name"
+              ]
+            }
+          ],
+          "missing_fact_types": [],
           "ready_to_complete": false,
+          "recovery_guidance": {
+            "active": false,
+            "avoid_semantic_actions": [],
+            "instruction": "No recovery intervention is active.",
+            "preferred_evidence_actions": [
+              {
+                "action": "ask_through",
+                "arguments": {
+                  "topic": "identity"
+                },
+                "produces": [
+                  "claimed_name"
+                ]
+              }
+            ],
+            "reason_codes": [],
+            "schema_version": "wangsheng.recovery_guidance.v1",
+            "trailing_steps_without_new_evidence": 0
+          },
           "remaining_requirements": [
             "move_to(player) before report"
           ],
-          "schema_version": "wangsheng.completion_progress.v1",
+          "report_would_complete": false,
+          "required_fact_types": [
+            "claimed_name"
+          ],
+          "satisfied_fact_types": [
+            "claimed_name"
+          ],
+          "schema_version": "wangsheng.completion_progress.v2",
           "stop_after_success": true
         },
         "current_affordances": {
@@ -2026,8 +2254,25 @@
                 "blocked_by": null,
                 "executable_now": true,
                 "note": "actor is near the closed barrier",
+                "recommended_topics": [
+                  "identity"
+                ],
                 "required_arguments": {
                   "barrier_id": "door.front"
+                },
+                "topic_evidence": {
+                  "door_state": [
+                    "door_state"
+                  ],
+                  "identity": [
+                    "claimed_name"
+                  ],
+                  "purpose": [
+                    "visit_purpose"
+                  ],
+                  "request": [
+                    "visitor_request"
+                  ]
                 }
               }
             }
@@ -2119,6 +2364,9 @@
             "target_required": true,
             "targets": {
               "player": {
+                "accepted_fact_ids": [
+                  "fact.claimed-name.a4cde4570dcc"
+                ],
                 "blocked_by": "TOO_FAR",
                 "executable_now": false,
                 "requires": "requires actor.location=room.front_hall; use move_to(player) first"
@@ -2335,7 +2583,7 @@
           "time_seconds": 0.0
         }
       },
-      "context_hash": "563f621a607bc2a061ea19181ade7b841725b156f15419695b388dbb4869857a",
+      "context_hash": "c7edba1eff3f1664f70035976c50e3b78926b734131e64f0e2bdb96d134ba5a0",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -2646,9 +2894,47 @@
           ],
           "completion_action": "report",
           "description": "Report the accessible source-qualified claimed_name fact.",
+          "evidence_action_hints": [
+            {
+              "action": "ask_through",
+              "arguments": {
+                "topic": "identity"
+              },
+              "produces": [
+                "claimed_name"
+              ]
+            }
+          ],
+          "missing_fact_types": [],
           "ready_to_complete": true,
+          "recovery_guidance": {
+            "active": false,
+            "avoid_semantic_actions": [],
+            "instruction": "No recovery intervention is active.",
+            "preferred_evidence_actions": [
+              {
+                "action": "ask_through",
+                "arguments": {
+                  "topic": "identity"
+                },
+                "produces": [
+                  "claimed_name"
+                ]
+              }
+            ],
+            "reason_codes": [],
+            "schema_version": "wangsheng.recovery_guidance.v1",
+            "trailing_steps_without_new_evidence": 1
+          },
           "remaining_requirements": [],
-          "schema_version": "wangsheng.completion_progress.v1",
+          "report_would_complete": true,
+          "required_fact_types": [
+            "claimed_name"
+          ],
+          "satisfied_fact_types": [
+            "claimed_name"
+          ],
+          "schema_version": "wangsheng.completion_progress.v2",
           "stop_after_success": true
         },
         "current_affordances": {
@@ -2752,9 +3038,12 @@
             "target_required": true,
             "targets": {
               "player": {
+                "accepted_fact_ids": [
+                  "fact.claimed-name.a4cde4570dcc"
+                ],
                 "blocked_by": null,
                 "executable_now": true,
-                "note": "actor is near the player"
+                "note": "actor is near the player and a completing fact is available"
               }
             }
           },
@@ -2969,7 +3258,7 @@
           "time_seconds": 0.0
         }
       },
-      "context_hash": "2a76fd5200545a278e5403780d9e1054d7291b9f20e19aa94368da1cc8fd4a19",
+      "context_hash": "ebd9877e0b7c7595ce38b0dcd8e39e90ca45f210dc1cc3df2ec106fab0ac271d",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {

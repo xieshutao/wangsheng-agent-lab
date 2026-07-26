@@ -363,12 +363,12 @@ def _run_dialogue_episode(
     provider_error: ProviderError | None = None
     policy_error: PolicyOutputError | None = None
     try:
-        turn = native_policy.request_turn(context, tool_choice="auto")
-        protocol_valid = len(turn.tool_calls) == 0
+        turn = native_policy.request_dialogue_turn(context)
+        protocol_valid = len(turn.tool_calls) == 0 and isinstance(turn.content, str) and bool(turn.content.strip())
         if not protocol_valid:
             policy_error = PolicyOutputError(
                 "model_unexpected_world_action",
-                "Dialogue-only intent returned one or more world-action tool calls.",
+                "Dialogue-only intent returned an invalid plain-text response.",
                 raw_output=json.dumps(turn.response_message, ensure_ascii=False),
             )
     except ProviderError as exc:

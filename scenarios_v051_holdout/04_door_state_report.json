@@ -1,0 +1,25 @@
+{
+  "scenario_id": "holdout_v051_door_state_report",
+  "task": {
+    "command": "Confirm the front door's current state without changing it, return, and report the state.",
+    "required_report_fact": null,
+    "max_steps": 8,
+    "allowed_actions": ["ask_through", "close", "listen_at", "move_to", "observe", "open", "report", "wait"],
+    "forbidden_actions": ["open"],
+    "hard_constraints": ["door.front.must_remain_closed"],
+    "completion": {"type": "report_predicate", "predicate": "door_state", "value": "closed"}
+  },
+  "scripted_actions": [
+    {"name": "move_to", "target": "door.front", "parameters": {}},
+    {"name": "ask_through", "target": "visitor.xiaoman", "parameters": {"barrier_id": "door.front", "topic": "door_state"}},
+    {"name": "move_to", "target": "player", "parameters": {}},
+    {"name": "report", "target": "player", "parameters": {"text": "The front door is closed.", "facts": [{"subject": "door.front", "predicate": "door_state", "value": "closed", "certainty": "TRUE", "source": "direct_observation"}]}}
+  ],
+  "expected": {
+    "status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "door_state": "closed",
+    "context_must_contain": ["door_state"],
+    "must_observe_codes": ["ASK_SUCCEEDED", "REPORT_RECORDED"]
+  }
+}

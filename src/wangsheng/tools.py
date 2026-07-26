@@ -108,6 +108,16 @@ class ToolRegistry:
                     ReasonCode.INVALID_ARGUMENT.value,
                     "report requires at least one fact selection.",
                 )
+            if has_ids and "text" in action.parameters:
+                return ValidationFailure(
+                    ReasonCode.INVALID_ARGUMENT.value,
+                    "fact_id reports must not include model-authored text; the runtime renders it.",
+                )
+            if has_facts and not isinstance(action.parameters.get("text"), str):
+                return ValidationFailure(
+                    ReasonCode.INVALID_ARGUMENT.value,
+                    "legacy facts reports require text.",
+                )
         return None
 
 
@@ -216,6 +226,7 @@ def default_tool_specs() -> tuple[ToolSpec, ...]:
     report_runtime_schema = _object_schema(
         {
             "text": {"type": "string", "minLength": 1},
+            "tone": {"type": "string", "enum": ["neutral", "gentle", "formal"]},
             "fact_ids": {
                 "type": "array",
                 "minItems": 1,
@@ -223,18 +234,17 @@ def default_tool_specs() -> tuple[ToolSpec, ...]:
             },
             "facts": {"type": "array", "minItems": 1, "items": fact_schema},
         },
-        ("text",),
     )
     report_model_schema = _object_schema(
         {
-            "text": {"type": "string", "minLength": 1},
+            "tone": {"type": "string", "enum": ["neutral", "gentle", "formal"]},
             "fact_ids": {
                 "type": "array",
                 "minItems": 1,
                 "items": {"type": "string", "minLength": 1},
             },
         },
-        ("text", "fact_ids"),
+        ("fact_ids",),
     )
     return (
         ToolSpec(
@@ -307,8 +317,10 @@ def default_tool_specs() -> tuple[ToolSpec, ...]:
         ToolSpec(
             "report",
             "Report grounded information to a nearby target. Select only fact_ids from "
-            "world.reportable_facts; do not create predicates, values, certainty labels, "
-            "or sources. Use completion_progress to select the facts that finish the task.",
+            "world.reportable_facts and optionally a bounded tone. The runtime renders all "
+            "player-visible factual text; do not author report text, predicates, values, "
+            "certainty labels, or sources. Use completion_progress to select facts that "
+            "finish the task.",
             True,
             "communicate",
             report_runtime_schema,
