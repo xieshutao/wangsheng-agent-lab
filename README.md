@@ -2,42 +2,36 @@
 
 Reliability-first framework for AI-controlled game NPCs.
 
-Version 0.4.1 fixes the two defects exposed by the first real DeepSeek V4 Pro run:
+Version 0.4.2 adds the formal multi-step cloud Episode Runner after the v0.4.1 DeepSeek first-action blind test reached 95% protocol validity and 85% semantic pass.
 
-1. task-authorized actions were being presented as if they were executable now;
-2. the model-facing world leaked a canonical entity ID that encoded the visitor's identity.
+The model remains an action proposer. Authoritative world state, permission checks, hard constraints, action execution, memory access, and task completion remain deterministic.
 
-The authoritative world, Gateway, Executor and deterministic evaluator remain separate from the model-facing view.
+## v0.4.2 milestone
 
-## v0.4.1 milestone
-
-- `FullWorldSnapshot` and `ModelVisibleWorld` are now distinct representations
-- hidden canonical IDs are replaced with anonymous model-visible aliases
-- raw visitor identity and simulator response queues never enter model context
-- accessible facts and memories retain source and certainty while using visible aliases
-- one alias-resolution boundary converts model IDs back to canonical IDs before Gateway/Executor
-- `authorized_actions` is separated from `current_affordances`
-- current affordances state whether each tool/target is executable now and why not
-- proximity-dependent tools explicitly expose `TOO_FAR` prerequisites
-- direct observation through a closed opaque door is rejected
-- `move_to` rejects non-navigable external entities
-- tool descriptions now state physical and knowledge prerequisites
-- task calls default to `tool_choice=required`
-- provider requests default to `parallel_tool_calls=false`
-- dialogue-only cases still use `tool_choice=auto`
-- first-action semantic scoring now requires the Gateway to allow the action
-- selected model-visible target and resolved canonical target are both recorded
-- deterministic scenarios, Golden Trace and old demos remain regression-tested
+- `run-cloud-episodes` performs complete model → Gateway → Executor → Observation loops
+- exactly one native tool call is accepted per active Tick
+- task calls use `tool_choice=required`
+- dialogue-only calls use `tool_choice=auto` and must make no world-action call
+- provider and policy protocol failures terminate the formal Episode immediately
+- failed Gateway/Executor results are returned to the model on the next Tick
+- frozen scenario events and max-step limits are reused unchanged
+- a non-empty output directory is rejected to prevent evidence overwrite
+- sanitized request messages, tool schemas, response messages, usage, latency, and hashes are recorded
+- actual hard violations are computed from authoritative state changes
+- hidden canonical target references are detected even when the Gateway could resolve them
+- episode pass, clean pass, objective completion, groundedness, replanning, target errors, provider errors, latency, and Token metrics are emitted
+- post-terminal checks do not make another model request
+- all v0.4.1 first-action, deterministic scenario, Golden Trace, and native-tool tests remain covered
 
 The eight tools remain:
 
 `move_to`, `observe`, `listen_at`, `ask_through`, `open`, `close`, `report`, `wait`
 
-## Install and deterministic regression
+## Install and deterministic verification
 
 ```bash
 python -m pip install -e ".[dev]"
-pytest -q
+python -m pytest -q
 python -m wangsheng.cli run-all-scripted \
   --scenario-dir scenarios \
   --output-dir artifacts/scripted
@@ -45,15 +39,13 @@ python tools/replay_trace.py \
   golden_traces/normal_observe_and_report.json
 ```
 
-Expected local verification for this source release:
+Expected source-package verification:
 
 ```text
-82 tests passed
-20/20 deterministic scenarios
+94 tests passed
+20/20 deterministic scripted scenarios
 0 executed hard violations
 0 incomplete traces
-Golden Trace replay passed
-Golden digest: 14282d3127cffb67f529db1f95e7cf552b3d3b406fbaf4fdf55014fe6587e944
 ```
 
 ## Configure one cloud model
@@ -64,59 +56,71 @@ Keep credentials outside Git:
 export WANGSHENG_CLOUD_BASE_URL="https://provider.example/v1"
 export WANGSHENG_CLOUD_MODEL="replace-with-model-name"
 read -rsp "API key: " WANGSHENG_CLOUD_API_KEY
+echo
 export WANGSHENG_CLOUD_API_KEY
 ```
 
 The runtime does not print or persist the API key.
 
-## Real native-tool smoke test
-
-```bash
-python -m wangsheng.cli cloud-tool-smoke \
-  --scenario-id normal_observe_and_report \
-  --output-dir artifacts/cloud-tool-smoke
-```
-
-Default task configuration now sends:
-
-```text
-tool_choice=required
-parallel_tool_calls=false
-```
-
-Use `--no-send-parallel-tool-calls` only if a provider rejects that field.
-
-## Twenty-scenario first-action experiment
+## First-action experiment
 
 ```bash
 python -m wangsheng.cli run-cloud-first-actions \
   --repeat 1 \
-  --output-dir artifacts/cloud-first-action-20x1
+  --output-dir /tmp/wangsheng-first-action-20x1
 ```
+
+This command measures only the first model action. It does not execute a complete Episode.
+
+## Multi-step Episode experiment
+
+Use a fresh output directory:
+
+```bash
+python -m wangsheng.cli run-cloud-episodes \
+  --base-url "https://api.deepseek.com" \
+  --model "deepseek-v4-pro" \
+  --tool-choice required \
+  --temperature 0 \
+  --top-p 1 \
+  --max-tokens 256 \
+  --timeout 120 \
+  --max-retries 0 \
+  --retry-backoff 0 \
+  --extra-body-json '{"thinking":{"type":"disabled"}}' \
+  --output-dir /tmp/wangsheng-v042-deepseek-20episodes
+```
+
+Default provider behavior sends `parallel_tool_calls=false`. Use `--no-send-parallel-tool-calls` only when a provider rejects that field and record the deviation.
 
 Outputs:
 
-- `provider_config.json` without credentials
-- `results.jsonl` with one record per model turn
-- `results.csv` for analysis
-- `summary.json` with protocol rate, semantic first-action rate, forbidden selections, Gateway rejections, latency and token totals
-
-Do not selectively rerun failures into the same result directory.
-
-## Protocol boundary
-
 ```text
-native API tool_calls
-→ model-visible ActionRequest
-→ alias resolution
-→ Tool Schema
-→ Action Gateway
-→ Executor / UE later
-→ ActionResult
-→ next model turn
+provider_config.json
+experiment_manifest.json
+results.jsonl
+results.csv
+summary.json
+traces/<scenario>.jsonl
+reports/<scenario>.json
 ```
 
-The model may propose an intent, but only Gateway and Executor determine whether and how the world changes.
+Do not selectively rerun failures or reuse a non-empty result directory.
+
+## Runtime boundary
+
+```text
+ModelVisibleWorld + current_affordances
+→ native API tool call
+→ alias resolution
+→ Tool Schema and Gateway
+→ Executor
+→ ActionResult / Observation
+→ next model Tick
+→ Evaluator terminal decision
+```
+
+The model cannot directly write world state or declare task completion.
 
 ## Model-visible versus authoritative state
 
@@ -126,18 +130,25 @@ FullWorldSnapshot
   may contain canonical IDs and simulator-only fields
 
 ModelVisibleWorld
-  only actor-accessible facts, memories, objects and anonymous entities
-  never contains hidden canonical identity fields
+  actor-accessible facts, memories, objects and anonymous entities only
+  excludes hidden identity and simulator control fields
 ```
 
-An anonymous ID such as `visitor.front_001` means only “the currently known visitor entity.” It does not encode a name or verified identity.
+An anonymous ID such as `visitor.front_001` means only that a visitor entity is known. It does not reveal a verified identity.
 
-## What v0.4.1 does not prove yet
+## Evidence limits
 
-- complete multi-step cloud-model task completion
-- failure-result replanning rate
+v0.4.2 makes multi-step validation possible. It does not by itself prove:
+
+- production-ready NPC behavior
 - stable repeated model quality
-- local 9B/GGUF comparison
-- production belief and memory persistence
+- local 9B/GGUF viability
+- long-term relationship and memory coherence
 - Unreal Engine integration
-- voice, animation, LoRA or AIGC integration
+- ordinary-player hardware performance
+
+See `docs/CLOUD_EPISODE_SPEC_V0.4.2.md` for metric definitions and formal-run rules.
+
+## Controlled repository handoff
+
+Hermes must apply the reviewed patch on the exact v0.4.1 base commit and run deterministic verification before any real-model Episode experiment. See `docs/HERMES_V0.4.2_APPLY_AND_VERIFY.md`.

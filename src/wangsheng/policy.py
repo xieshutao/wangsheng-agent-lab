@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 import json
 from typing import Any, Protocol
 
-from .errors import PolicyOutputError
+from .errors import PolicyOutputError, ProviderError
 from .models import Action, PolicyContext
 from .parser import StrictActionParser
 from .prompting import ActionPromptBuilder, ToolCallingPromptBuilder
@@ -72,6 +72,8 @@ class NativeToolCallingPolicy:
     default_tool_choice: str | dict[str, Any] | None = "required"
     turns: list[ToolCallingTurn] = field(default_factory=list)
     last_turn: ToolCallingTurn | None = None
+    last_request: dict[str, Any] | None = None
+    last_error: dict[str, Any] | None = None
 
     def request_turn(
         self,
@@ -82,11 +84,22 @@ class NativeToolCallingPolicy:
         messages = self.prompt_builder.build_messages(context)
         tools = [_api_tool_schema(schema) for schema in context.tool_schemas]
         selected_choice = self.default_tool_choice if tool_choice is None else tool_choice
-        turn = self.provider.complete_tool_call(
-            messages=messages,
-            tools=tools,
-            tool_choice=selected_choice,
-        )
+        self.last_request = {
+            "messages": messages,
+            "tools": tools,
+            "tool_choice": selected_choice,
+        }
+        self.last_error = None
+        self.last_turn = None
+        try:
+            turn = self.provider.complete_tool_call(
+                messages=messages,
+                tools=tools,
+                tool_choice=selected_choice,
+            )
+        except ProviderError as exc:
+            self.last_error = {"code": exc.code, "message": str(exc)}
+            raise
         self.turns.append(turn)
         self.last_turn = turn
         return turn
@@ -127,12 +140,18 @@ class NativeToolCallingPolicy:
 
     @property
     def last_model_metadata(self) -> dict[str, Any] | None:
-        if self.last_turn is None:
+        if self.last_request is None and self.last_turn is None and self.last_error is None:
             return None
-        return {
+        payload: dict[str, Any] = {
             "prompt_version": self.prompt_builder.prompt_version,
-            **self.last_turn.metadata(),
+            "request": self.last_request,
         }
+        if self.last_turn is not None:
+            payload.update(self.last_turn.metadata())
+            payload["response_message"] = self.last_turn.response_message
+        if self.last_error is not None:
+            payload["error"] = dict(self.last_error)
+        return payload
 
 
 def _api_tool_schema(schema: dict[str, Any]) -> dict[str, Any]:

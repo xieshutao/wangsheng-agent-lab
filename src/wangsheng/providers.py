@@ -212,6 +212,7 @@ class OpenAICompatibleToolCallingProvider:
     api_key_env: str = "WANGSHENG_CLOUD_API_KEY"
     timeout_seconds: float = 60.0
     temperature: float = 0.0
+    top_p: float | None = None
     max_tokens: int = 256
     max_retries: int = 2
     retry_backoff_seconds: float = 0.5
@@ -238,6 +239,13 @@ class OpenAICompatibleToolCallingProvider:
             "max_tokens": self.max_tokens,
             "stream": False,
         }
+        if self.top_p is not None:
+            if not 0 <= self.top_p <= 1:
+                raise ProviderError(
+                    "provider_invalid_request",
+                    "top_p must be between 0 and 1 when provided.",
+                )
+            body["top_p"] = self.top_p
         if tool_choice is not None:
             body["tool_choice"] = tool_choice
         if self.send_parallel_tool_calls:
@@ -392,6 +400,7 @@ class OpenAICompatibleToolCallingProvider:
             "api_key_env": self.api_key_env,
             "timeout_seconds": self.timeout_seconds,
             "temperature": self.temperature,
+            "top_p": self.top_p,
             "max_tokens": self.max_tokens,
             "max_retries": self.max_retries,
             "retry_backoff_seconds": self.retry_backoff_seconds,

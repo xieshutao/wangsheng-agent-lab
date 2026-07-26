@@ -24,6 +24,8 @@ class EpisodeEngine:
     active_task: ActiveTask | None = None
     trace_recorder: JsonlTraceRecorder | None = None
     loop_repeat_limit: int = 3
+    terminal_on_policy_error: bool = False
+    terminal_on_provider_error: bool = False
 
     def submit_command(self, spec: TaskSpec) -> ActiveTask:
         if self.active_task is not None and not self.active_task.is_terminal:
@@ -58,9 +60,34 @@ class EpisodeEngine:
             )
             action = self.gateway.canonicalize_action(action=requested, world=self.world)
         except PolicyOutputError as exc:
-            observation = Observation(False, exc.code, str(exc), Action("__invalid_model_output__", parameters={"raw_output": exc.raw_output}, action_id=f"{task.spec.task_id}:a{step + 1:03d}"), source="policy")
+            observation = Observation(
+                False,
+                exc.code,
+                str(exc),
+                Action(
+                    "__invalid_model_output__",
+                    parameters={"raw_output": exc.raw_output},
+                    action_id=f"{task.spec.task_id}:a{step + 1:03d}",
+                ),
+                source="policy",
+            )
+            if self.terminal_on_policy_error:
+                task.status = TaskStatus.FAILED
+                task.terminal_reason = exc.code
         except ProviderError as exc:
-            observation = Observation(False, exc.code, str(exc), Action("__provider_error__", action_id=f"{task.spec.task_id}:a{step + 1:03d}"), source="policy")
+            observation = Observation(
+                False,
+                exc.code,
+                str(exc),
+                Action(
+                    "__provider_error__",
+                    action_id=f"{task.spec.task_id}:a{step + 1:03d}",
+                ),
+                source="policy",
+            )
+            if self.terminal_on_provider_error:
+                task.status = TaskStatus.FAILED
+                task.terminal_reason = exc.code
         else:
             fingerprint = stable_hash({"world": world_before, "action": {"name": action.name, "target": action.target, "parameters": action.parameters}})
             task.fingerprint_counts[fingerprint] = task.fingerprint_counts.get(fingerprint, 0) + 1

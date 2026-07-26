@@ -96,6 +96,7 @@ def test_native_provider_parses_one_tool_call(monkeypatch) -> None:
         model="cloud-model",
         api_key="secret",
         timeout_seconds=9,
+        top_p=1.0,
         max_retries=0,
     )
     turn = provider.complete_tool_call(
@@ -108,6 +109,7 @@ def test_native_provider_parses_one_tool_call(monkeypatch) -> None:
     assert turn.usage.total_tokens == 27
     assert turn.request_id == "chatcmpl-1"
     assert captured["body"]["tool_choice"] == "required"
+    assert captured["body"]["top_p"] == 1.0
     assert captured["body"]["parallel_tool_calls"] is False
     assert captured["body"]["tools"][0]["type"] == "function"
     assert captured["authorization"] == "Bearer secret"
@@ -365,3 +367,23 @@ def test_public_config_redacts_url_credentials_and_query() -> None:
     assert config["base_url"] == "https://example.test/v1"
     assert "password" not in json.dumps(config)
     assert "secret" not in json.dumps(config)
+
+
+def test_native_provider_rejects_invalid_top_p_before_request() -> None:
+    provider = OpenAICompatibleToolCallingProvider(
+        "http://localhost:8000",
+        "model",
+        top_p=1.5,
+        max_retries=0,
+    )
+    with pytest.raises(ProviderError) as exc:
+        provider.complete_tool_call(
+            messages=[{"role": "user", "content": "test"}],
+            tools=[
+                {
+                    "type": "function",
+                    "function": {"name": "wait", "parameters": {}},
+                }
+            ],
+        )
+    assert exc.value.code == "provider_invalid_request"

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .engine import EpisodeEngine
+from .episode_experiment import run_cloud_episode_experiment
 from .evaluator import DoorVisitorEvaluator
 from .executor import SimulatedExecutor
 from .experiment import run_first_action_experiment
@@ -92,6 +93,12 @@ def _add_cloud_provider_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--api-key-env", default="WANGSHENG_CLOUD_API_KEY")
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument(
+        "--top-p",
+        type=float,
+        default=None,
+        help="Optional nucleus-sampling value. Formal v0.4.2 runs use 1.0.",
+    )
     parser.add_argument("--max-tokens", type=int, default=256)
     parser.add_argument("--max-retries", type=int, default=2)
     parser.add_argument("--retry-backoff", type=float, default=0.5)
@@ -143,6 +150,7 @@ def _build_cloud_provider(args: argparse.Namespace) -> OpenAICompatibleToolCalli
         api_key_env=args.api_key_env,
         timeout_seconds=args.timeout,
         temperature=args.temperature,
+        top_p=args.top_p,
         max_tokens=args.max_tokens,
         max_retries=args.max_retries,
         retry_backoff_seconds=args.retry_backoff,
@@ -183,6 +191,20 @@ def _run_cloud_experiment(args: argparse.Namespace, *, strict_smoke: bool) -> in
     return 0
 
 
+def _run_cloud_episodes(args: argparse.Namespace) -> int:
+    provider = _build_cloud_provider(args)
+    summary = run_cloud_episode_experiment(
+        scenario_dir=args.scenario_dir,
+        output_dir=args.output_dir,
+        provider=provider,
+        scenario_ids=args.scenario_id,
+        task_tool_choice=args.tool_choice,
+        provider_config=provider.public_config(),
+    )
+    print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="wangsheng")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -204,6 +226,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     cloud = sub.add_parser("run-cloud-first-actions")
     _add_cloud_experiment_arguments(cloud)
+
+    episodes = sub.add_parser("run-cloud-episodes")
+    _add_cloud_provider_arguments(episodes)
+    # A formal Episode is one evidence-preserving run. Provider retries would
+    # silently turn one model Tick into multiple API attempts, so this command
+    # defaults to zero even though the general cloud client retains its more
+    # permissive compatibility default.
+    episodes.set_defaults(max_retries=0, retry_backoff=0.0, top_p=1.0)
+    episodes.add_argument("--scenario-dir", default="scenarios")
+    episodes.add_argument("--output-dir", default="artifacts/cloud-episodes")
+    episodes.add_argument("--scenario-id", action="append", default=[])
     return parser
 
 
@@ -229,6 +262,8 @@ def main() -> int:
         return _run_cloud_experiment(args, strict_smoke=True)
     if args.command == "run-cloud-first-actions":
         return _run_cloud_experiment(args, strict_smoke=False)
+    if args.command == "run-cloud-episodes":
+        return _run_cloud_episodes(args)
     raise AssertionError(args.command)
 
 

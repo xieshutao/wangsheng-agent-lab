@@ -68,3 +68,11 @@ A chat-only case passes when no world-action tool is called.
 ## Evidence handling
 
 Artifacts remain outside Git. Preserve the full directory and record source commit, exact model, base URL, prompt version, tool version and provider public configuration. Never store API keys.
+
+---
+
+## Multi-step continuation in v0.4.2
+
+The first-action protocol above remains frozen for historical comparison. Complete cloud episodes are governed by `CLOUD_EPISODE_SPEC_V0.4.2.md` and the `run-cloud-episodes` command.
+
+The multi-step runner executes Gateway-approved actions, returns every ActionResult to the next model Tick, computes actual state-transition hard violations, and refuses to write into a non-empty output directory.

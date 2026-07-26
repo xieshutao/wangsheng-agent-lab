@@ -23,7 +23,12 @@ NONDETERMINISTIC_TRACE_FIELDS = frozenset({"timestamp", "duration_ms", "trace_pa
 
 
 def stable_hash(payload: Any) -> str:
-    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
     return sha256(encoded).hexdigest()
 
 
@@ -92,7 +97,13 @@ class JsonlTraceRecorder:
         task: ActiveTask,
         model_metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        executor_status = "not_run" if observation.source != "executor" else ("success" if observation.success else "failure")
+        executor_status = (
+            "not_run"
+            if observation.source != "executor"
+            else "success"
+            if observation.success
+            else "failure"
+        )
         action_request = ActionRequest.from_action(observation.action)
         action_result = ActionResult.from_observation(observation)
         context_payload = {
@@ -146,6 +157,75 @@ class JsonlTraceRecorder:
         self._append(record)
         return record
 
+    def record_dialogue_turn(
+        self,
+        *,
+        context: PolicyContext,
+        model_metadata: dict[str, Any] | None,
+        protocol_valid: bool,
+        world_before: dict[str, Any],
+        world_after: dict[str, Any],
+        task_status: str,
+        terminal_reason: str,
+    ) -> None:
+        context_payload = {
+            "intent": context.intent,
+            "command": context.command,
+            "world": context.world,
+            "observations": context.observations,
+            "tools": context.tool_schemas,
+            "current_affordances": context.current_affordances,
+        }
+        record = {
+            "schema_version": self.schema_version,
+            "episode_id": self.episode_id,
+            "event_type": "dialogue_turn",
+            "sequence": len(self.records),
+            "timestamp": time(),
+            "task_id": context.task_id,
+            "context_hash": stable_hash(context_payload),
+            "context": {
+                "intent": context.intent,
+                "command": context.command,
+                "authorized_actions": list(context.authorized_actions),
+                "forbidden_actions": list(context.forbidden_actions),
+                "current_affordances": context.current_affordances,
+                "world": context.world,
+                "previous_observations": list(context.observations),
+            },
+            "protocol_valid": protocol_valid,
+            "world_before": world_before,
+            "world_after": world_after,
+            "state_delta": state_delta(world_before, world_after),
+            "task_status": task_status,
+            "terminal_reason": terminal_reason,
+        }
+        if model_metadata is not None:
+            record["model"] = model_metadata
+        self._append(record)
+
+    def record_post_terminal_check(
+        self,
+        *,
+        observation: Observation,
+        world_before: dict[str, Any],
+        world_after: dict[str, Any],
+        task: ActiveTask,
+    ) -> None:
+        self._append({
+            "schema_version": self.schema_version,
+            "episode_id": self.episode_id,
+            "event_type": "post_terminal_check",
+            "sequence": len(self.records),
+            "timestamp": time(),
+            "observation": observation.to_dict(),
+            "world_before": world_before,
+            "world_after": world_after,
+            "state_delta": state_delta(world_before, world_after),
+            "task_status": task.status.value,
+            "terminal_reason": task.terminal_reason,
+        })
+
     def record_intent(self, *, intent: Intent, world: WorldState, task_status: str) -> None:
         self._append({
             "schema_version": self.schema_version,
@@ -158,7 +238,14 @@ class JsonlTraceRecorder:
             "task_status": task_status,
         })
 
-    def record_external_event(self, *, name: str, details: dict[str, Any], world: WorldState, task: ActiveTask) -> None:
+    def record_external_event(
+        self,
+        *,
+        name: str,
+        details: dict[str, Any],
+        world: WorldState,
+        task: ActiveTask,
+    ) -> None:
         self._append({
             "schema_version": self.schema_version,
             "episode_id": self.episode_id,
@@ -179,14 +266,48 @@ class JsonlTraceRecorder:
     def validate(self) -> list[str]:
         errors: list[str] = []
         for index, record in enumerate(self.records):
-            required = TICK_REQUIRED_FIELDS if record.get("event_type") == "tick" else TRACE_REQUIRED_FIELDS
+            required = (
+                TICK_REQUIRED_FIELDS
+                if record.get("event_type") == "tick"
+                else TRACE_REQUIRED_FIELDS
+            )
             missing = sorted(required - set(record))
             if missing:
                 errors.append(f"record {index} missing {missing}")
+            if record.get("sequence") != index:
+                errors.append(
+                    f"record {index} sequence expected {index} got {record.get('sequence')}"
+                )
+            if record.get("episode_id") != self.episode_id:
+                errors.append(
+                    f"record {index} episode_id expected {self.episode_id!r} "
+                    f"got {record.get('episode_id')!r}"
+                )
+            if record.get("schema_version") != self.schema_version:
+                errors.append(
+                    f"record {index} schema_version expected {self.schema_version!r} "
+                    f"got {record.get('schema_version')!r}"
+                )
+        if self.path.exists():
+            try:
+                disk_records = load_jsonl(self.path)
+            except (OSError, json.JSONDecodeError) as exc:
+                errors.append(f"trace file unreadable: {exc}")
+            else:
+                if disk_records != self.records:
+                    errors.append("trace file records differ from in-memory records")
+        else:
+            errors.append("trace file is missing")
         return errors
 
 
-def write_episode_summary(path: str | Path, *, task: ActiveTask, world: WorldState, trace_path: str | Path) -> Path:
+def write_episode_summary(
+    path: str | Path,
+    *,
+    task: ActiveTask,
+    world: WorldState,
+    trace_path: str | Path,
+) -> Path:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -202,7 +323,10 @@ def write_episode_summary(path: str | Path, *, task: ActiveTask, world: WorldSta
         "trace_path": str(trace_path),
         "trace_digest": normalized_trace_digest(trace_path) if Path(trace_path).exists() else None,
     }
-    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+    target.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
     return target
 
 
