@@ -34,7 +34,7 @@
 - provider errors: 0 | policy errors: 0
 - total tokens: 179,922 (67.8% reduction from v0.4.2)
 
-**Package**: `results/v043-deepseek-25episodes.tar.gz`
+- package: results/v043-deepseek-25episodes.tar.gz (private — stored at `/root/wangsheng-private-results/`)
 **SHA-256**: `d168a037f95c658c6ade5ecb69f068ae41d8bf9440d67b581dd0c8bad1bd6bbc`
 
 ## Verified v0.4.3 source scope
