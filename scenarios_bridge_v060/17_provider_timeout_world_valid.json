@@ -1,0 +1,10 @@
+{
+  "description": "Provider timeout leaves world valid.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "provider_timeout_world_valid",
+  "scenario_id": "17_provider_timeout_world_valid",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

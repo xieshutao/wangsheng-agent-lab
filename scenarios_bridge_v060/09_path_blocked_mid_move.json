@@ -1,0 +1,10 @@
+{
+  "description": "Path becomes blocked while moving.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "path_blocked_mid_move",
+  "scenario_id": "09_path_blocked_mid_move",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

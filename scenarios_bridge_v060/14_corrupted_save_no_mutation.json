@@ -1,0 +1,10 @@
+{
+  "description": "Corrupted save leaves current world unchanged.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "corrupted_save_no_mutation",
+  "scenario_id": "14_corrupted_save_no_mutation",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

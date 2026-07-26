@@ -1,0 +1,10 @@
+{
+  "description": "Normal move, ask, return, and report lifecycle.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "normal_lifecycle",
+  "scenario_id": "01_normal_lifecycle",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

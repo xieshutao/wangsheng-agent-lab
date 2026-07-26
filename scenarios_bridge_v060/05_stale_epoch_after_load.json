@@ -1,0 +1,10 @@
+{
+  "description": "Old epoch action is rejected after load.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "stale_epoch_after_load",
+  "scenario_id": "05_stale_epoch_after_load",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

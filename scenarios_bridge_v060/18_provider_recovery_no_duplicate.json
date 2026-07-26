@@ -1,0 +1,10 @@
+{
+  "description": "Provider recovery does not duplicate action.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "provider_recovery_no_duplicate",
+  "scenario_id": "18_provider_recovery_no_duplicate",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

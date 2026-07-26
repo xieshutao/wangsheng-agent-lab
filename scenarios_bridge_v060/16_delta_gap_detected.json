@@ -1,0 +1,10 @@
+{
+  "description": "Missing/reordered delta is detected.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "delta_gap_detected",
+  "scenario_id": "16_delta_gap_detected",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

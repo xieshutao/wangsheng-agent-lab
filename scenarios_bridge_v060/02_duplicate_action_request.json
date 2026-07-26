@@ -1,0 +1,10 @@
+{
+  "description": "Duplicate ACTION_REQUESTED is idempotent.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "duplicate_action_request",
+  "scenario_id": "02_duplicate_action_request",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

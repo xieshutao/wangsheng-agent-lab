@@ -1,0 +1,10 @@
+{
+  "description": "Pause freezes virtual action progress.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "pause_freezes_progress",
+  "scenario_id": "07_pause_freezes_progress",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

@@ -1,0 +1,10 @@
+{
+  "description": "Player cancellation stops movement and late completion.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "cancel_during_movement",
+  "scenario_id": "06_cancel_during_movement",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

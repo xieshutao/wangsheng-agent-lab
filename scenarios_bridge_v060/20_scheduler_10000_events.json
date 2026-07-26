@@ -1,0 +1,10 @@
+{
+  "description": "Ten thousand deterministic events preserve stable ordering.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "scheduler_10000_events",
+  "scenario_id": "20_scheduler_10000_events",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

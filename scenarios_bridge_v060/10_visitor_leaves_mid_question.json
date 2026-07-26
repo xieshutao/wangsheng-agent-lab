@@ -1,0 +1,10 @@
+{
+  "description": "Visitor leaves while ask_through is active.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "visitor_leaves_mid_question",
+  "scenario_id": "10_visitor_leaves_mid_question",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

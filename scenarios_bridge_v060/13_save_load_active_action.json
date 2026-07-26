@@ -1,0 +1,10 @@
+{
+  "description": "Active action resumes after load.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "save_load_active_action",
+  "scenario_id": "13_save_load_active_action",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

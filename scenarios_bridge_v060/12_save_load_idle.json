@@ -1,0 +1,10 @@
+{
+  "description": "Idle save/load preserves digest.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "save_load_idle",
+  "scenario_id": "12_save_load_idle",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

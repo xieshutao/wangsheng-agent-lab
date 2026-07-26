@@ -1,0 +1,10 @@
+{
+  "description": "Dialogue-only turn causes no world mutation.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "dialogue_no_world_action",
+  "scenario_id": "19_dialogue_no_world_action",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

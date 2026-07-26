@@ -1,0 +1,10 @@
+{
+  "description": "Paused rejection is not replayed on resume.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "resume_requires_fresh_decision",
+  "scenario_id": "08_resume_requires_fresh_decision",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

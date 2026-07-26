@@ -1,0 +1,10 @@
+{
+  "description": "Stale world version rejects action.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "stale_world_version",
+  "scenario_id": "04_stale_world_version",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}

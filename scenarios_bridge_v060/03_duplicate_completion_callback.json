@@ -1,0 +1,10 @@
+{
+  "description": "Duplicate completion callback causes no double mutation.",
+  "expected": {
+    "hard_integrity_violations": 0,
+    "pass": true
+  },
+  "kind": "duplicate_completion_callback",
+  "scenario_id": "03_duplicate_completion_callback",
+  "schema_version": "wangsheng.bridge_scenario.v0.6"
+}
