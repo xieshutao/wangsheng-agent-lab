@@ -1,0 +1,17 @@
+{
+  "category": "save_load_recovery",
+  "expected": {
+    "task_status": "succeeded",
+    "terminal_reason": "INTENT_CHAT_ONLY",
+    "world_must_change": false
+  },
+  "injections": [],
+  "mode": "dialogue",
+  "scenario_id": "19_dialogue_tool_isolation",
+  "scripted_actions": [],
+  "task": {
+    "command": "The rain sounds different on this roof tonight.",
+    "max_steps": 1
+  },
+  "world": {}
+}

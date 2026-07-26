@@ -6,6 +6,7 @@ from typing import Any
 
 from wangsheng.gateway import Gateway
 from wangsheng.models import Action, ActiveTask, Observation, WorldState
+from wangsheng.reporting import resolve_fact_ids
 from wangsheng.reason_codes import ReasonCode
 from wangsheng.scenarios import door_visitor_world
 
@@ -59,6 +60,18 @@ class HeadlessNpcAdapter:
         rejection = self.gateway.validate(action=canonical, task=task, world=core_world)
         if rejection is not None:
             return None, rejection
+        if canonical.name == "report":
+            fact_ids = list(canonical.parameters.get("fact_ids", []))
+            _, missing = resolve_fact_ids(fact_ids, world=core_world, task=task)
+            if missing:
+                return None, Observation(
+                    False,
+                    ReasonCode.REPORT_INVALID.value,
+                    "Report selected unknown or inaccessible fact_ids.",
+                    canonical,
+                    source="gateway",
+                    evidence={"invalid_fact_ids": missing},
+                )
         arguments = self._bridge_arguments(canonical)
         message = self.bridge_world.make_message(
             MessageKind.ACTION_REQUESTED,
@@ -88,8 +101,25 @@ class HeadlessNpcAdapter:
         return parameters
 
     @staticmethod
-    def observation_from_terminal(message: BridgeMessage, action: Action) -> Observation:
+    def observation_from_terminal(
+        message: BridgeMessage,
+        action: Action,
+        *,
+        world: WorldState | None = None,
+        task: ActiveTask | None = None,
+    ) -> Observation:
         if message.message_kind is MessageKind.ACTION_COMPLETED:
+            evidence = dict(message.payload.get("evidence", {}))
+            if action.name == "report" and world is not None:
+                fact_ids = list(action.parameters.get("fact_ids", []))
+                facts, missing = resolve_fact_ids(fact_ids, world=world, task=task)
+                evidence = {
+                    **evidence,
+                    "fact_ids": fact_ids,
+                    "facts": facts,
+                    "invalid_fact_ids": missing,
+                    "rendered_by": "deterministic_fact_renderer",
+                }
             return Observation(
                 True,
                 "BRIDGE_ACTION_COMPLETED",
@@ -97,7 +127,7 @@ class HeadlessNpcAdapter:
                 action,
                 source="headless_bridge",
                 world_delta=dict(message.payload.get("world_effect", {})),
-                evidence=dict(message.payload.get("evidence", {})),
+                evidence=evidence,
             )
         code = str(message.payload.get("error_code", BridgeErrorCode.INTERNAL_BRIDGE_ERROR.value))
         reason_map = {

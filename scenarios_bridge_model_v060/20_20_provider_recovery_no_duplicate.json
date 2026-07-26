@@ -1,0 +1,65 @@
+{
+  "category": "save_load_recovery",
+  "expected": {
+    "min_provider_errors": 1,
+    "provider_fail_on_calls": [
+      2
+    ],
+    "task_status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "world_must_change": true
+  },
+  "injections": [],
+  "mode": "task",
+  "scenario_id": "20_provider_recovery_no_duplicate",
+  "scripted_actions": [
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "door.front"
+    },
+    {
+      "name": "ask_through",
+      "parameters": {
+        "barrier_id": "door.front",
+        "topic": "identity"
+      },
+      "target": "visitor.xiaoman"
+    },
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "player"
+    },
+    {
+      "name": "report",
+      "parameters": {
+        "fact_type": "claimed_name",
+        "tone": "neutral"
+      },
+      "target": "player"
+    }
+  ],
+  "task": {
+    "allowed_actions": [
+      "ask_through",
+      "close",
+      "listen_at",
+      "move_to",
+      "observe",
+      "open",
+      "report",
+      "wait"
+    ],
+    "command": "Recover from a mid-task provider timeout without duplicating completed actions.",
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ],
+    "max_steps": 14,
+    "required_report_fact": "Xiaoman"
+  },
+  "world": {}
+}

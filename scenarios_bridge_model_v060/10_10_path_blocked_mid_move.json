@@ -1,0 +1,88 @@
+{
+  "category": "fault_recovery",
+  "expected": {
+    "task_status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "world_must_change": true
+  },
+  "injections": [
+    {
+      "action_name": "move_to",
+      "advance_before_ms": 500,
+      "event_name": "path_reachable",
+      "kind": "world_event",
+      "occurrence": 1,
+      "payload": {
+        "reachable": false
+      },
+      "stage": "after_started"
+    },
+    {
+      "action_name": "move_to",
+      "event_name": "path_reachable",
+      "kind": "world_event",
+      "occurrence": 1,
+      "payload": {
+        "reachable": true
+      },
+      "stage": "after_terminal"
+    }
+  ],
+  "mode": "task",
+  "scenario_id": "10_path_blocked_mid_move",
+  "scripted_actions": [
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "door.front"
+    },
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "door.front"
+    },
+    {
+      "name": "ask_through",
+      "parameters": {
+        "barrier_id": "door.front",
+        "topic": "identity"
+      },
+      "target": "visitor.xiaoman"
+    },
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "player"
+    },
+    {
+      "name": "report",
+      "parameters": {
+        "fact_type": "claimed_name",
+        "tone": "neutral"
+      },
+      "target": "player"
+    }
+  ],
+  "task": {
+    "allowed_actions": [
+      "ask_through",
+      "close",
+      "listen_at",
+      "move_to",
+      "observe",
+      "open",
+      "report",
+      "wait"
+    ],
+    "command": "Recover from a path interruption, ask identity, return, and report.",
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ],
+    "max_steps": 14,
+    "required_report_fact": "Xiaoman"
+  },
+  "world": {}
+}

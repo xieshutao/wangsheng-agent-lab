@@ -1,0 +1,66 @@
+{
+  "category": "basic_async",
+  "expected": {
+    "task_status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "world_must_change": true
+  },
+  "injections": [],
+  "mode": "task",
+  "scenario_id": "02_basic_purpose",
+  "scripted_actions": [
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "door.front"
+    },
+    {
+      "name": "ask_through",
+      "parameters": {
+        "barrier_id": "door.front",
+        "topic": "purpose"
+      },
+      "target": "visitor.xiaoman"
+    },
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "player"
+    },
+    {
+      "name": "report",
+      "parameters": {
+        "fact_type": "visit_purpose",
+        "tone": "neutral"
+      },
+      "target": "player"
+    }
+  ],
+  "task": {
+    "allowed_actions": [
+      "ask_through",
+      "close",
+      "listen_at",
+      "move_to",
+      "observe",
+      "open",
+      "report",
+      "wait"
+    ],
+    "command": "Ask why the visitor came, return, and report the purpose.",
+    "completion": {
+      "predicate": "visit_purpose",
+      "type": "report_predicate",
+      "value": "speak_with_player"
+    },
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ],
+    "max_steps": 12,
+    "required_report_fact": null
+  },
+  "world": {}
+}

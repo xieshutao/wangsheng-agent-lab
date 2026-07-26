@@ -1,0 +1,91 @@
+{
+  "category": "fault_recovery",
+  "expected": {
+    "task_status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "world_must_change": true
+  },
+  "injections": [
+    {
+      "action_name": "ask_through",
+      "advance_before_ms": 400,
+      "event_name": "visitor_present",
+      "kind": "world_event",
+      "occurrence": 1,
+      "payload": {
+        "present": false
+      },
+      "stage": "after_started"
+    },
+    {
+      "action_name": "ask_through",
+      "event_name": "visitor_present",
+      "kind": "world_event",
+      "occurrence": 1,
+      "payload": {
+        "present": true
+      },
+      "stage": "after_terminal"
+    }
+  ],
+  "mode": "task",
+  "scenario_id": "11_visitor_leaves_mid_question",
+  "scripted_actions": [
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "door.front"
+    },
+    {
+      "name": "ask_through",
+      "parameters": {
+        "barrier_id": "door.front",
+        "topic": "identity"
+      },
+      "target": "visitor.xiaoman"
+    },
+    {
+      "name": "ask_through",
+      "parameters": {
+        "barrier_id": "door.front",
+        "topic": "identity"
+      },
+      "target": "visitor.xiaoman"
+    },
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "player"
+    },
+    {
+      "name": "report",
+      "parameters": {
+        "fact_type": "claimed_name",
+        "tone": "neutral"
+      },
+      "target": "player"
+    }
+  ],
+  "task": {
+    "allowed_actions": [
+      "ask_through",
+      "close",
+      "listen_at",
+      "move_to",
+      "observe",
+      "open",
+      "report",
+      "wait"
+    ],
+    "command": "Recover after the visitor briefly leaves, then obtain and report identity.",
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ],
+    "max_steps": 14,
+    "required_report_fact": "Xiaoman"
+  },
+  "world": {}
+}

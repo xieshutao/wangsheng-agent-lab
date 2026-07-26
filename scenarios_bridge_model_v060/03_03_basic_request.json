@@ -1,0 +1,66 @@
+{
+  "category": "basic_async",
+  "expected": {
+    "task_status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "world_must_change": true
+  },
+  "injections": [],
+  "mode": "task",
+  "scenario_id": "03_basic_request",
+  "scripted_actions": [
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "door.front"
+    },
+    {
+      "name": "ask_through",
+      "parameters": {
+        "barrier_id": "door.front",
+        "topic": "request"
+      },
+      "target": "visitor.xiaoman"
+    },
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "player"
+    },
+    {
+      "name": "report",
+      "parameters": {
+        "fact_type": "visitor_request",
+        "tone": "neutral"
+      },
+      "target": "player"
+    }
+  ],
+  "task": {
+    "allowed_actions": [
+      "ask_through",
+      "close",
+      "listen_at",
+      "move_to",
+      "observe",
+      "open",
+      "report",
+      "wait"
+    ],
+    "command": "Ask what the visitor requests, return, and report the request.",
+    "completion": {
+      "predicate": "visitor_request",
+      "type": "report_predicate",
+      "value": "notify_player_of_arrival"
+    },
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ],
+    "max_steps": 12,
+    "required_report_fact": null
+  },
+  "world": {}
+}

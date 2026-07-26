@@ -1,0 +1,48 @@
+{
+  "category": "fault_recovery",
+  "expected": {
+    "task_status": "cancelled",
+    "terminal_reason": "TASK_CANCELLED",
+    "world_must_change": true
+  },
+  "injections": [
+    {
+      "action_name": "move_to",
+      "kind": "cancel_task",
+      "late_completion": true,
+      "occurrence": 1,
+      "stage": "after_started"
+    }
+  ],
+  "mode": "task",
+  "scenario_id": "12_cancel_during_move",
+  "scripted_actions": [
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "door.front"
+    }
+  ],
+  "task": {
+    "allowed_actions": [
+      "ask_through",
+      "close",
+      "listen_at",
+      "move_to",
+      "observe",
+      "open",
+      "report",
+      "wait"
+    ],
+    "command": "Begin checking the door, but obey a player cancellation.",
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ],
+    "max_steps": 12,
+    "required_report_fact": "Xiaoman"
+  },
+  "world": {}
+}

@@ -1,0 +1,69 @@
+{
+  "category": "save_load_recovery",
+  "expected": {
+    "task_status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "world_must_change": true
+  },
+  "injections": [
+    {
+      "action_name": "move_to",
+      "advance_before_load_ms": 100,
+      "kind": "save_load",
+      "occurrence": 1,
+      "stage": "after_started"
+    }
+  ],
+  "mode": "task",
+  "scenario_id": "18_load_invalidates_old_epoch",
+  "scripted_actions": [
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "door.front"
+    },
+    {
+      "name": "ask_through",
+      "parameters": {
+        "barrier_id": "door.front",
+        "topic": "identity"
+      },
+      "target": "visitor.xiaoman"
+    },
+    {
+      "name": "move_to",
+      "parameters": {},
+      "target": "player"
+    },
+    {
+      "name": "report",
+      "parameters": {
+        "fact_type": "claimed_name",
+        "tone": "neutral"
+      },
+      "target": "player"
+    }
+  ],
+  "task": {
+    "allowed_actions": [
+      "ask_through",
+      "close",
+      "listen_at",
+      "move_to",
+      "observe",
+      "open",
+      "report",
+      "wait"
+    ],
+    "command": "Complete identity reporting across an active-action save and load.",
+    "forbidden_actions": [
+      "open"
+    ],
+    "hard_constraints": [
+      "door.front.must_remain_closed"
+    ],
+    "max_steps": 14,
+    "required_report_fact": "Xiaoman"
+  },
+  "world": {}
+}
