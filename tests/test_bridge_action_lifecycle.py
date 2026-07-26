@@ -93,3 +93,96 @@ def test_cancelled_action_ignores_late_completion() -> None:
     assert world.actions.records["cancel.1"].status is ActionStatus.CANCELLED
     assert world.world_version == version
     assert world.entities["npc.qingyan"]["location"] == "anchor.player"
+
+
+def test_terminal_action_cache_is_fifo_bounded() -> None:
+    world = HeadlessGameWorld(
+        terminal_action_cache_limit=3,
+        request_cache_limit=8,
+    )
+    for index in range(5):
+        action_id = f"bounded.{index}"
+        world.request_action(
+            action_id=action_id,
+            action_name="wait",
+            arguments={"duration_ms": 1},
+        )
+        world.advance(1)
+
+    assert not world.actions.active_records
+    assert list(world.actions.terminal_records) == [
+        "bounded.2",
+        "bounded.3",
+        "bounded.4",
+    ]
+    state = world.gameplay_state()
+    assert state["active_actions"] == {}
+    assert "terminal_action_cache" not in state
+
+
+def test_retained_terminal_action_remains_idempotent() -> None:
+    world = HeadlessGameWorld(terminal_action_cache_limit=4)
+    world.request_action(
+        action_id="terminal.duplicate",
+        action_name="wait",
+        arguments={"duration_ms": 1},
+    )
+    world.advance(1)
+    record = world.actions.get("terminal.duplicate")
+    assert record is not None
+    version_before = world.world_version
+    mutation_before = world.mutation_count
+
+    response = world.request_action(
+        action_id="terminal.duplicate",
+        action_name="wait",
+        arguments={"duration_ms": 1},
+        message_id="request.terminal.duplicate.second",
+        based_on_world_version=record.based_on_world_version,
+    )[-1]
+
+    assert response.message_kind is MessageKind.ACTION_COMPLETED
+    assert response.payload["duplicate"] is True
+    assert world.world_version == version_before
+    assert world.mutation_count == mutation_before
+
+
+def test_request_cache_is_fifo_bounded() -> None:
+    world = HeadlessGameWorld(request_cache_limit=3)
+    for index in range(6):
+        world.request_action(
+            action_id=f"request-cache.{index}",
+            action_name="wait",
+            arguments={"duration_ms": 1},
+            message_id=f"request-cache.message.{index}",
+        )
+        world.advance(1)
+    assert world.request_cache_size == 3
+
+
+def test_report_history_is_bounded_in_live_state() -> None:
+    world = HeadlessGameWorld(report_history_limit=3)
+    world.facts.append(
+        {
+            "fact_id": "fact.bridge.claimed_name.001",
+            "subject": "visitor.xiaoman",
+            "predicate": "claimed_name",
+            "value": "Xiaoman",
+            "source": "visitor_statement",
+            "certainty": "CLAIMED",
+        }
+    )
+    for index in range(5):
+        world.request_action(
+            action_id=f"report-history.{index}",
+            action_name="report",
+            arguments={
+                "fact_ids": ["fact.bridge.claimed_name.001"],
+                "tone": f"tone-{index}",
+            },
+        )
+        world.advance(600)
+
+    assert len(world.reports) == 3
+    assert [item["tone"] for item in world.reports] == ["tone-2", "tone-3", "tone-4"]
+    assert len(world.gameplay_state()["reports"]) == 3

@@ -51,3 +51,25 @@ def test_save_json_round_trip() -> None:
     world = HeadlessGameWorld()
     save = world.export_save()
     assert SaveGame.from_json(save.to_json()) == save
+
+
+def test_save_load_starts_a_fresh_epoch_local_terminal_cache() -> None:
+    world = HeadlessGameWorld(terminal_action_cache_limit=3)
+    for index in range(5):
+        world.request_action(
+            action_id=f"save-cache.{index}",
+            action_name="wait",
+            arguments={"duration_ms": 1},
+        )
+        world.advance(1)
+
+    old_epoch = world.world_epoch
+    save = world.export_save()
+    assert len(world.actions.terminal_records) == 3
+    world.load_save(save)
+
+    assert world.world_epoch != old_epoch
+    assert world.actions.terminal_cache_limit == 3
+    assert not world.actions.terminal_records
+    assert not world.actions.active_records
+    assert world.state_digest() == save.gameplay_digest

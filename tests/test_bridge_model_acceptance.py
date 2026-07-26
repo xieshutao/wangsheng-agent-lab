@@ -125,3 +125,8 @@ def test_short_soak_keeps_infrastructure_safe(tmp_path: Path) -> None:
         fault_schedule={"cancel": 1, "world_event": 1, "pause_resume": 1, "save_load": 1, "provider_timeout": 1},
     )
     assert summary["all_infrastructure_gates_passed"] is True
+    assert summary["max_active_actions"] <= 1
+    assert summary["max_terminal_action_cache"] <= summary["terminal_action_cache_limit"]
+    assert summary["max_request_cache"] <= summary["request_cache_limit"]
+    assert summary["max_report_history"] <= summary["report_history_limit"]
+    assert summary["max_heard_event_history"] <= summary["heard_event_history_limit"]

@@ -77,8 +77,11 @@ trap 'rm -rf "$ROOT"' EXIT
   > "$ROOT/bridge-scenarios-console.json"
 "$PY" tools/run_bridge_soak.py \
   --scheduler-events 10000 \
-  --action-lifecycles 1000 \
+  --action-lifecycles 10000 \
   --save-load-cycles 100 \
+  --terminal-action-cache-limit 256 \
+  --request-cache-limit 512 \
+  --report-history-limit 32 \
   --output "$ROOT/bridge-soak.json" \
   > "$ROOT/bridge-soak-console.json"
 
@@ -94,12 +97,40 @@ if scenario_summary.get("scenario_count") != 20 or not scenario_summary.get("all
     raise SystemExit(f"bridge scenarios failed: {scenario_summary}")
 if not soak_summary.get("passed"):
     raise SystemExit(f"bridge soak failed: {soak_summary}")
+required = {
+    "scheduler_events_completed": 10000,
+    "action_lifecycles_completed": 10000,
+    "save_load_cycles_completed": 100,
+    "active_actions_final": 0,
+    "terminal_cache_clear_mismatches": 0,
+}
+for key, expected in required.items():
+    if soak_summary.get(key) != expected:
+        raise SystemExit(f"bridge soak {key} mismatch: {soak_summary}")
+if soak_summary["max_active_actions"] > 1:
+    raise SystemExit(f"bridge active action bound failed: {soak_summary}")
+if soak_summary["max_terminal_action_cache"] > soak_summary["terminal_action_cache_limit"]:
+    raise SystemExit(f"bridge terminal cache bound failed: {soak_summary}")
+if soak_summary["max_request_cache"] > soak_summary["request_cache_limit"]:
+    raise SystemExit(f"bridge request cache bound failed: {soak_summary}")
+if soak_summary["max_report_history"] > soak_summary["report_history_limit"]:
+    raise SystemExit(f"bridge report history bound failed: {soak_summary}")
+if soak_summary["max_save_bytes"] > 131072:
+    raise SystemExit(f"bridge save size bound failed: {soak_summary}")
 print("bridge_scenarios=20/20")
 print(
     "bridge_soak="
     f"{soak_summary['scheduler_events_completed']} scheduler events, "
-    f"{soak_summary['action_lifecycles_completed']} action lifecycles, "
+    f"{soak_summary['action_lifecycles_completed']} single-world action lifecycles, "
     f"{soak_summary['save_load_cycles_completed']} save/load cycles"
+)
+print(
+    "bridge_live_bounds="
+    f"active<={soak_summary['max_active_actions']}, "
+    f"terminal={soak_summary['max_terminal_action_cache']}/{soak_summary['terminal_action_cache_limit']}, "
+    f"requests={soak_summary['max_request_cache']}/{soak_summary['request_cache_limit']}, "
+    f"reports={soak_summary['max_report_history']}/{soak_summary['report_history_limit']}, "
+    f"max_save_bytes={soak_summary['max_save_bytes']}"
 )
 print(f"bridge_soak_elapsed_ms={soak_summary['elapsed_ms']}")
 PY

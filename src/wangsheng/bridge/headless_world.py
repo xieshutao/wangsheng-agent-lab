@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import deque
+from collections import OrderedDict, deque
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any, Callable
@@ -33,6 +33,10 @@ class HeadlessGameWorld:
     transport: InMemoryTransport | None = None
     trace_transport: JsonlTraceTransport | None = None
     retained_message_limit: int = 2048
+    request_cache_limit: int = 2048
+    terminal_action_cache_limit: int = 256
+    report_history_limit: int = 128
+    heard_event_history_limit: int = 128
     world_epoch: str = "epoch.0001"
     world_version: int = 0
     task_generation: int = 1
@@ -51,11 +55,27 @@ class HeadlessGameWorld:
     _epoch_counter: int = 1
     _event_counter: int = 0
     _retained_messages: deque[BridgeMessage] = field(init=False)
-    _request_cache: dict[str, tuple[str, tuple[BridgeMessage, ...]]] = field(default_factory=dict)
+    _request_cache: OrderedDict[str, tuple[str, tuple[BridgeMessage, ...]]] = field(default_factory=OrderedDict)
     _mutation_count: int = 0
 
     def __post_init__(self) -> None:
+        if self.retained_message_limit <= 0:
+            raise ValueError("retained_message_limit must be positive")
+        if self.request_cache_limit <= 0:
+            raise ValueError("request_cache_limit must be positive")
+        if self.terminal_action_cache_limit <= 0:
+            raise ValueError("terminal_action_cache_limit must be positive")
+        if self.report_history_limit <= 0:
+            raise ValueError("report_history_limit must be positive")
+        if self.heard_event_history_limit <= 0:
+            raise ValueError("heard_event_history_limit must be positive")
         self._retained_messages = deque(maxlen=self.retained_message_limit)
+        if not isinstance(self._request_cache, OrderedDict):
+            self._request_cache = OrderedDict(self._request_cache)
+        self.actions.terminal_cache_limit = self.terminal_action_cache_limit
+        self.actions._prune_terminal_cache()
+        self.reports = list(self.reports[-self.report_history_limit :])
+        self.heard_events = list(self.heard_events[-self.heard_event_history_limit :])
         if not self.entities:
             self.entities = {
                 "player": {
@@ -117,7 +137,7 @@ class HeadlessGameWorld:
             "facts": deepcopy(self.facts),
             "reports": deepcopy(self.reports),
             "heard_events": list(self.heard_events),
-            "active_actions": self.actions.to_dict(now_ms=self.virtual_time_ms),
+            "active_actions": self.actions.active_to_dict(now_ms=self.virtual_time_ms),
             "scheduler": self.scheduler.snapshot(),
             "task_generation": self.task_generation,
             "active_task_id": self.active_task_id,
@@ -299,7 +319,7 @@ class HeadlessGameWorld:
                 "Request session_id/world_id does not match the active bridge.",
                 correlation_id=incoming.message_id,
             )
-            self._request_cache[incoming.message_id] = (request_key, (response,))
+            self._remember_request(incoming.message_id, request_key, (response,))
             return (response,)
 
         normalized = self._emit(
@@ -344,8 +364,23 @@ class HeadlessGameWorld:
                     action_id=normalized.action_id,
                 ),
             )
-        self._request_cache[incoming.message_id] = (request_key, tuple(responses))
+        self._remember_request(incoming.message_id, request_key, tuple(responses))
         return tuple(responses)
+
+    def _remember_request(
+        self,
+        message_id: str,
+        fingerprint: str,
+        responses: tuple[BridgeMessage, ...],
+    ) -> None:
+        self._request_cache[message_id] = (fingerprint, responses)
+        self._request_cache.move_to_end(message_id)
+        while len(self._request_cache) > self.request_cache_limit:
+            self._request_cache.popitem(last=False)
+
+    @property
+    def request_cache_size(self) -> int:
+        return len(self._request_cache)
 
     @staticmethod
     def _request_fingerprint(message: BridgeMessage) -> str:
@@ -440,7 +475,7 @@ class HeadlessGameWorld:
             tick_id=request.tick_id,
             requested_at_ms=self.virtual_time_ms,
         )
-        existing = self.actions.records.get(action_id)
+        existing = self.actions.get(action_id)
         if existing is not None:
             if existing.request_fingerprint() != record.request_fingerprint():
                 raise BridgeProtocolError(
@@ -704,7 +739,7 @@ class HeadlessGameWorld:
             )
             return
         action_id = str(event.payload.get("action_id", ""))
-        record = self.actions.records.get(action_id)
+        record = self.actions.get(action_id)
         if record is None or record.status.terminal:
             return
         if event.event_kind == "action_expire":
@@ -770,7 +805,7 @@ class HeadlessGameWorld:
             elif action == "listen_at":
                 text = "A person is waiting outside the closed front door."
                 if text not in self.heard_events:
-                    self.heard_events.append(text)
+                    self._append_heard_event(text)
                 evidence = {"predicate": "presence", "value": "waiting_outside"}
             elif action == "ask_through":
                 fact = self._fact_for_topic(str(args["topic"]))
@@ -783,7 +818,7 @@ class HeadlessGameWorld:
                     "tone": str(args.get("tone", "neutral")),
                     "rendered_by": "deterministic_fact_renderer",
                 }
-                self.reports.append(report)
+                self._append_report(report)
                 evidence = dict(report)
             elif action == "open":
                 self.door["open"] = True
@@ -816,6 +851,16 @@ class HeadlessGameWorld:
             task_id=record.task_id,
             tick_id=record.tick_id,
         )
+
+    def _append_report(self, report: dict[str, Any]) -> None:
+        self.reports.append(deepcopy(report))
+        if len(self.reports) > self.report_history_limit:
+            del self.reports[: len(self.reports) - self.report_history_limit]
+
+    def _append_heard_event(self, event: str) -> None:
+        self.heard_events.append(event)
+        if len(self.heard_events) > self.heard_event_history_limit:
+            del self.heard_events[: len(self.heard_events) - self.heard_event_history_limit]
 
     def _fact_for_topic(self, topic: str) -> dict[str, Any]:
         fact_number = len(self.facts) + 1
@@ -880,7 +925,7 @@ class HeadlessGameWorld:
 
     def _process_action_cancel(self, request: BridgeMessage) -> tuple[BridgeMessage, ...]:
         action_id = request.action_id or str(request.payload.get("action_id", ""))
-        record = self.actions.records.get(action_id)
+        record = self.actions.get(action_id)
         if record is None:
             return (
                 self._emit_protocol_error(
@@ -1123,9 +1168,13 @@ class HeadlessGameWorld:
         self.door = deepcopy(state["door"])
         self.observation_objects = deepcopy(state["observation_objects"])
         self.facts = deepcopy(state.get("facts", []))
-        self.reports = deepcopy(state.get("reports", []))
-        self.heard_events = list(state.get("heard_events", []))
-        self.actions = ActionLedger.from_dict(state.get("active_actions", {}))
+        self.reports = deepcopy(state.get("reports", []))[-self.report_history_limit :]
+        self.heard_events = list(state.get("heard_events", []))[-self.heard_event_history_limit :]
+        self.actions = ActionLedger.from_state(
+            active_payload=state.get("active_actions", {}),
+            terminal_payload=None,
+            terminal_cache_limit=self.terminal_action_cache_limit,
+        )
         self.scheduler = DeterministicScheduler.from_snapshot(state["scheduler"])
         self.task_generation = int(state["task_generation"])
         self.active_task_id = state.get("active_task_id")
@@ -1133,7 +1182,15 @@ class HeadlessGameWorld:
         self._event_counter = int(counters.get("event_counter", 0))
 
     def reset(self) -> tuple[BridgeMessage, BridgeMessage]:
-        fresh = HeadlessGameWorld(session_id=self.session_id, world_id=self.world_id)
+        fresh = HeadlessGameWorld(
+            session_id=self.session_id,
+            world_id=self.world_id,
+            retained_message_limit=self.retained_message_limit,
+            request_cache_limit=self.request_cache_limit,
+            terminal_action_cache_limit=self.terminal_action_cache_limit,
+            report_history_limit=self.report_history_limit,
+            heard_event_history_limit=self.heard_event_history_limit,
+        )
         self._epoch_counter += 1
         self.world_epoch = f"epoch.{self._epoch_counter:04d}"
         self.world_version = 0

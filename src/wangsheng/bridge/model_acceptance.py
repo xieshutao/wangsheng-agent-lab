@@ -753,6 +753,31 @@ def run_model_bridge_soak(
     }
     trace = ScenarioTrace(output / "soak_trace.jsonl")
     world = HeadlessGameWorld(trace_transport=JsonlTraceTransport(output / "bridge_trace.jsonl"))
+    initial_save_bytes = len(world.export_save().to_json().encode("utf-8"))
+    max_save_bytes = initial_save_bytes
+    max_active_actions = 0
+    max_terminal_action_cache = 0
+    max_request_cache = 0
+    max_report_history = 0
+    max_heard_event_history = 0
+
+    def sample_live_bounds() -> None:
+        nonlocal max_save_bytes, max_active_actions, max_terminal_action_cache
+        nonlocal max_request_cache, max_report_history, max_heard_event_history
+        max_active_actions = max(max_active_actions, len(world.actions.active_records))
+        max_terminal_action_cache = max(
+            max_terminal_action_cache,
+            len(world.actions.terminal_records),
+        )
+        max_request_cache = max(max_request_cache, world.request_cache_size)
+        max_report_history = max(max_report_history, len(world.reports))
+        max_heard_event_history = max(max_heard_event_history, len(world.heard_events))
+        max_save_bytes = max(
+            max_save_bytes,
+            len(world.export_save().to_json().encode("utf-8")),
+        )
+
+    sample_live_bounds()
     adapter = HeadlessNpcAdapter(world)
     evaluator = DoorVisitorEvaluator()
     call_counter = 0
@@ -813,6 +838,7 @@ def run_model_bridge_soak(
             trace.append("provider_timeout", {"slot": slot})
             if world.state_digest() != before:
                 violations["provider_failure_corrupted_world"] += 1
+            sample_live_bounds()
             continue
 
         context = _build_context(current_task, adapter.project_core_world(), policy)
@@ -823,6 +849,7 @@ def run_model_bridge_soak(
             trace.append("model_error", {"type": type(exc).__name__, "message": str(exc)})
             if world.state_digest() != before:
                 violations["provider_failure_corrupted_world"] += 1
+            sample_live_bounds()
             continue
         if not action.action_id:
             action = replace(action, action_id=f"soak.action.{call_counter:08d}")
@@ -834,9 +861,11 @@ def run_model_bridge_soak(
         )
         if rejection is not None:
             _finish_task_step(current_task, evaluator, adapter, rejection)
+            sample_live_bounds()
             continue
         assert request is not None
         responses = world.handle(request)
+        sample_live_bounds()
         started_action = any(item.message_kind is MessageKind.ACTION_STARTED for item in responses)
         if started_action:
             if slot in fault_slots["cancel"]:
@@ -849,6 +878,7 @@ def run_model_bridge_soak(
                     world.simulate_completion_callback(request.action_id)
                 if world.state_digest() != digest:
                     violations["post_cancel_mutation"] += 1
+                sample_live_bounds()
                 continue
             if slot in fault_slots["pause_resume"]:
                 injected["pause_resume"] += 1
@@ -879,10 +909,37 @@ def run_model_bridge_soak(
         if world.door.get("open"):
             violations["hard_violation"] += 1
         trace.append("decision", {"slot": slot, "task_status": current_task.status.value, "world_digest": world.state_digest()})
+        sample_live_bounds()
 
+    sample_live_bounds()
     for kind, expected_count in effective_schedule.items():
         if injected[kind] != expected_count:
             violations[f"fault_count_mismatch:{kind}"] += abs(injected[kind] - expected_count)
+
+    active_actions_final = len(world.actions.active_records)
+    terminal_action_cache_final = len(world.actions.terminal_records)
+    request_cache_final = world.request_cache_size
+    report_history_final = len(world.reports)
+    heard_event_history_final = len(world.heard_events)
+    final_save_bytes = len(world.export_save().to_json().encode("utf-8"))
+    if active_actions_final > 1 or max_active_actions > 1:
+        violations["active_action_bound_exceeded"] += 1
+    if terminal_action_cache_final > world.actions.terminal_cache_limit:
+        violations["terminal_action_cache_bound_exceeded"] += 1
+    if max_terminal_action_cache > world.actions.terminal_cache_limit:
+        violations["terminal_action_cache_peak_exceeded"] += 1
+    if request_cache_final > world.request_cache_limit:
+        violations["request_cache_bound_exceeded"] += 1
+    if max_request_cache > world.request_cache_limit:
+        violations["request_cache_peak_exceeded"] += 1
+    if report_history_final > world.report_history_limit:
+        violations["report_history_bound_exceeded"] += 1
+    if max_report_history > world.report_history_limit:
+        violations["report_history_peak_exceeded"] += 1
+    if heard_event_history_final > world.heard_event_history_limit:
+        violations["heard_event_history_bound_exceeded"] += 1
+    if max_heard_event_history > world.heard_event_history_limit:
+        violations["heard_event_history_peak_exceeded"] += 1
 
     report = {
         "schema_version": "wangsheng.bridge_model_soak.v1",
@@ -895,6 +952,23 @@ def run_model_bridge_soak(
         "faults_injected": dict(injected),
         "violations": dict(violations),
         "all_infrastructure_gates_passed": not violations,
+        "active_actions_final": active_actions_final,
+        "max_active_actions": max_active_actions,
+        "terminal_action_cache_final": terminal_action_cache_final,
+        "max_terminal_action_cache": max_terminal_action_cache,
+        "terminal_action_cache_limit": world.actions.terminal_cache_limit,
+        "request_cache_final": request_cache_final,
+        "max_request_cache": max_request_cache,
+        "request_cache_limit": world.request_cache_limit,
+        "report_history_final": report_history_final,
+        "max_report_history": max_report_history,
+        "report_history_limit": world.report_history_limit,
+        "heard_event_history_final": heard_event_history_final,
+        "max_heard_event_history": max_heard_event_history,
+        "heard_event_history_limit": world.heard_event_history_limit,
+        "initial_save_bytes": initial_save_bytes,
+        "final_save_bytes": final_save_bytes,
+        "max_save_bytes": max_save_bytes,
         "final_world_digest": world.state_digest(),
     }
     _write_json(output / "summary.json", report)

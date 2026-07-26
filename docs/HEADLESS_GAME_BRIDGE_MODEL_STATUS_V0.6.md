@@ -1,6 +1,6 @@
 # v0.6 Model-in-the-loop Acceptance Status
 
-Implementation status: ready for deterministic review; no real model called during code generation.
+Implementation status: pre-freeze bounded-state fix implemented; replacement formal model run not yet executed.
 
 ## Added components
 
@@ -14,11 +14,16 @@ Implementation status: ready for deterministic review; no real model called duri
 
 ## Offline acceptance
 
-- complete pytest suite: 154 passed
+- pre-fix complete pytest suite: 154 passed
+- bounded-state fix suite: 159 passed
 - reference model paths: 20/20
 - short fault-injected soak: passed
 - original v0.6 bridge scenarios and soak remain covered by the full suite
 
+## Pre-freeze audit result
+
+The first formal 20-scenario and 30-minute run passed behaviorally, but audit found unbounded terminal-action and report histories plus incomplete shell-runner provenance. Its archive remains valid pre-fix capability evidence, not final freeze evidence. See `V0.6_PRE_FREEZE_AUDIT_AND_BOUNDED_STATE_FIX.md`.
+
 ## Required next action
 
-Apply this implementation to the exact v0.6 implementation commit, run deterministic acceptance, commit and push an implementation branch. Only after the resulting commit is frozen should the Hengyuan RTX 4090 formal package be generated and executed.
+Commit and verify the bounded-state patch, then generate a new Hengyuan RTX 4090 runner fixed to that exact commit. The replacement runner must archive its own source, full preflight logs, Git evidence and formal lock. Rerun 20 scenarios plus the 30-minute soak once; do not merge `main` or tag `v0.6` until the replacement archive passes independent audit.

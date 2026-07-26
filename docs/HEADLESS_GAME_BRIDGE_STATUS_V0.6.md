@@ -1,6 +1,6 @@
 # WangSheng Headless Game Bridge v0.6 Status
 
-**Implementation status:** deterministic reference implementation ready for frozen validation
+**Implementation status:** bounded-state pre-freeze candidate; formal model rerun required
 **Parent SPEC commit:** `4aaf1bd1ed6f17fd72f0ebcbfe2e1db10b8bb816`
 **Target version:** `0.6.0`
 
@@ -8,19 +8,20 @@
 
 - strict canonical protocol envelope and structured error taxonomy;
 - deterministic virtual clock and stable-priority scheduler;
-- action lifecycle ledger with one terminal state and actor exclusivity;
-- message/action idempotency and conflict detection;
+- action lifecycle ledger with one terminal state, actor exclusivity and a bounded epoch-local terminal idempotency cache;
+- bounded message/action idempotency windows and conflict detection;
 - stale epoch/version/task-generation rejection;
 - minimal authoritative front-hall world;
 - asynchronous movement, observation, listening, questioning, reporting and waiting;
 - mid-action path/visitor interruption;
 - pause/resume, cancellation, deadlines and provider-outage events;
 - canonical snapshots, ordered deltas and digest replay;
-- save/load with active-action continuation and epoch invalidation;
+- save/load with active-action continuation, epoch invalidation and terminal-cache reset;
 - in-memory and JSONL trace/replay transports;
 - detached adapter to existing Gateway and NPC Core world representation;
 - 20 deterministic bridge scenarios;
-- accelerated 10,000-event / 1,000-action / 100-save-load soak runner.
+- bounded recent report/heard-event histories;
+- accelerated 10,000-event / 10,000-single-world-action / 100-save-load soak runner.
 
 ## Frozen compatibility boundary
 
@@ -47,4 +48,4 @@ UE5, public networking, multiple controlled NPCs, combat, inventory, trading, lo
 
 ## Next milestone after acceptance
 
-Implement a thin UE5 adapter that emits and consumes the same protocol without changing the bridge or model-facing contracts.
+Rerun the Qwen3-4B 20-scenario + 30-minute model-in-the-loop acceptance against the bounded-state commit, audit the private archive, then freeze v0.6. The memory-versioning v0.7 milestone follows after freeze.

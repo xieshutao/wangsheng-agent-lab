@@ -49,7 +49,7 @@ REQUESTED -> ACCEPTED -> STARTED -> COMPLETED
                                   -> EXPIRED
 ```
 
-A terminal state is immutable. An actor may have at most one active world action. Repeated identical message/action IDs are idempotent; conflicting reuse is a structured protocol error.
+A terminal state is immutable. An actor may have at most one active world action. Repeated identical message/action IDs are idempotent inside bounded epoch-local retention windows; conflicting reuse inside those windows is a structured protocol error. Clients must generate globally unique IDs and must never intentionally recycle an ID after eviction.
 
 Reference durations:
 
@@ -107,18 +107,30 @@ Applying ordered deltas after a snapshot must reproduce the authoritative final 
 
 ## 8. Save/load
 
-Saves contain canonical gameplay state only: entities, world components, virtual time, active actions and remaining durations, scheduled events, task generation and deterministic counters. They exclude model clients, network requests, process IDs and wall-clock timestamps.
+Saves contain canonical gameplay state only: entities, world components, virtual time, active actions and remaining durations, scheduled events, task generation and deterministic counters. They exclude terminal-action idempotency cache, request cache, model clients, network requests, process IDs and wall-clock timestamps. Load creates a new world epoch and clears epoch-local caches, making all pre-load requests stale.
 
 Load creates a new epoch, restores the digest and invalidates all pre-load decisions. Corrupted/incompatible saves fail before active-world mutation.
 
-## 9. Reference transports
+## 9. Bounded live-state retention
+
+The default reference implementation uses these deterministic bounds:
+
+- retained bridge messages: 2048;
+- request-response idempotency cache: 2048;
+- terminal action idempotency cache: 256;
+- recent reports: 128;
+- recent heard events: 128.
+
+Append-only JSONL Trace is the permanent audit history. Live world snapshots and saves must not accumulate an unbounded event or terminal-action history. Cache eviction is FIFO and deterministic.
+
+## 10. Reference transports
 
 - `InMemoryTransport`: ordered deterministic test transport with explicit fault injection.
 - `JsonlTraceTransport`: append-only canonical JSONL recording and replay.
 
 No public network listener is implemented in v0.6.
 
-## 10. Structured error codes
+## 11. Structured error codes
 
 ```text
 PROTOCOL_VERSION_UNSUPPORTED SCHEMA_INVALID UNKNOWN_MESSAGE_KIND

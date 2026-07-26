@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import ChainMap, OrderedDict
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -137,12 +139,44 @@ class ActionRecord:
 
 @dataclass(slots=True)
 class ActionLedger:
-    records: dict[str, ActionRecord] = field(default_factory=dict)
+    """Bounded live action state with a deterministic terminal idempotency window.
+
+    ``active_records`` contains only non-terminal actions. Completed, failed,
+    cancelled, expired, and rejected actions are moved into ``terminal_records``.
+    The terminal cache is FIFO-bounded so the authoritative live world cannot
+    retain an unbounded action history; the JSONL bridge trace remains the
+    permanent audit history.
+    """
+
+    active_records: dict[str, ActionRecord] = field(default_factory=dict)
+    terminal_records: OrderedDict[str, ActionRecord] = field(default_factory=OrderedDict)
+    terminal_cache_limit: int = 256
+
+    def __post_init__(self) -> None:
+        if self.terminal_cache_limit <= 0:
+            raise ValueError("terminal_cache_limit must be positive")
+        if not isinstance(self.terminal_records, OrderedDict):
+            self.terminal_records = OrderedDict(self.terminal_records)
+        self._prune_terminal_cache()
+
+    @property
+    def records(self) -> Mapping[str, ActionRecord]:
+        """Compatibility read view over active plus retained terminal actions."""
+        return ChainMap(self.active_records, self.terminal_records)
+
+    def get(self, action_id: str) -> ActionRecord | None:
+        record = self.active_records.get(action_id)
+        if record is not None:
+            return record
+        return self.terminal_records.get(action_id)
 
     def register(self, record: ActionRecord) -> tuple[ActionRecord, bool]:
-        existing = self.records.get(record.action_id)
+        existing = self.get(record.action_id)
         if existing is None:
-            self.records[record.action_id] = record
+            if record.status.terminal:
+                self._remember_terminal(record)
+            else:
+                self.active_records[record.action_id] = record
             return record, True
         if existing.request_fingerprint() != record.request_fingerprint():
             raise BridgeProtocolError(
@@ -160,7 +194,9 @@ class ActionLedger:
         code: str | None = None,
         payload: dict[str, Any] | None = None,
     ) -> ActionRecord:
-        record = self.records[action_id]
+        record = self.get(action_id)
+        if record is None:
+            raise KeyError(action_id)
         if record.status is target:
             return record
         if record.status.terminal:
@@ -180,12 +216,14 @@ class ActionLedger:
             record.terminal_at_ms = now_ms
             record.terminal_code = code
             record.terminal_payload = dict(payload or {})
+            self.active_records.pop(action_id, None)
+            self._remember_terminal(record)
         return record
 
     def active_for_actor(self, actor_id: str) -> ActionRecord | None:
         active = [
             record
-            for record in self.records.values()
+            for record in self.active_records.values()
             if record.actor_id == actor_id
             and record.status in {ActionStatus.ACCEPTED, ActionStatus.STARTED}
         ]
@@ -196,17 +234,76 @@ class ActionLedger:
             )
         return active[0] if active else None
 
+    def active_to_dict(self, *, now_ms: int) -> dict[str, Any]:
+        return {
+            action_id: record.to_dict(now_ms=now_ms)
+            for action_id, record in sorted(self.active_records.items())
+        }
+
+    def terminal_cache_to_list(self, *, now_ms: int) -> list[dict[str, Any]]:
+        return [record.to_dict(now_ms=now_ms) for record in self.terminal_records.values()]
+
     def to_dict(self, *, now_ms: int) -> dict[str, Any]:
+        """Legacy merged serialization retained for diagnostics only."""
         return {
             action_id: record.to_dict(now_ms=now_ms)
             for action_id, record in sorted(self.records.items())
         }
 
+    def _remember_terminal(self, record: ActionRecord) -> None:
+        self.terminal_records[record.action_id] = record
+        self.terminal_records.move_to_end(record.action_id)
+        self._prune_terminal_cache()
+
+    def _prune_terminal_cache(self) -> None:
+        while len(self.terminal_records) > self.terminal_cache_limit:
+            self.terminal_records.popitem(last=False)
+
+    @classmethod
+    def from_state(
+        cls,
+        *,
+        active_payload: dict[str, Any] | None,
+        terminal_payload: list[dict[str, Any]] | dict[str, Any] | None,
+        terminal_cache_limit: int = 256,
+    ) -> "ActionLedger":
+        ledger = cls(terminal_cache_limit=terminal_cache_limit)
+        for action_id, payload in (active_payload or {}).items():
+            record = ActionRecord.from_dict(payload)
+            if record.action_id != action_id:
+                raise ValueError("active action key does not match record action_id")
+            if record.status.terminal:
+                ledger._remember_terminal(record)
+            else:
+                ledger.active_records[action_id] = record
+
+        if isinstance(terminal_payload, dict):
+            # Backward-compatible order for pre-fix snapshots.
+            terminal_items = [
+                ActionRecord.from_dict(payload)
+                for _, payload in sorted(terminal_payload.items())
+            ]
+            terminal_items.sort(
+                key=lambda item: (
+                    item.terminal_at_ms if item.terminal_at_ms is not None else -1,
+                    item.action_id,
+                )
+            )
+        else:
+            terminal_items = [
+                ActionRecord.from_dict(payload)
+                for payload in (terminal_payload or [])
+            ]
+        for record in terminal_items:
+            if not record.status.terminal:
+                raise ValueError("terminal action cache contains a non-terminal record")
+            ledger._remember_terminal(record)
+        return ledger
+
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "ActionLedger":
-        return cls(
-            {
-                action_id: ActionRecord.from_dict(record)
-                for action_id, record in payload.items()
-            }
+        """Backward-compatible loader for the old merged action dictionary."""
+        return cls.from_state(
+            active_payload=payload,
+            terminal_payload=None,
         )

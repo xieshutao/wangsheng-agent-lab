@@ -24,3 +24,9 @@ def test_bridge_soak_small_contract() -> None:
     assert summary["invalid_lifecycle_transitions"] == 0
     assert summary["save_digest_mismatches"] == 0
     assert summary["retained_message_count"] <= summary["retained_message_limit"]
+    assert summary["max_active_actions"] <= 1
+    assert summary["active_actions_final"] == 0
+    assert summary["max_terminal_action_cache"] <= summary["terminal_action_cache_limit"]
+    assert summary["max_request_cache"] <= summary["request_cache_limit"]
+    assert summary["max_report_history"] <= summary["report_history_limit"]
+    assert summary["terminal_cache_clear_mismatches"] == 0
