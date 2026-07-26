@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-import json
 from time import perf_counter
 
 from .errors import PolicyOutputError, ProviderError
@@ -10,8 +9,10 @@ from .executor import SimulatedExecutor
 from .gateway import Gateway
 from .models import Action, ActiveTask, Observation, PolicyContext, TaskSpec, TaskStatus, WorldState
 from .policy import Policy
+from .progress import compact_observations, semantic_action_fingerprint
 from .reason_codes import ReasonCode
-from .trace import JsonlTraceRecorder, stable_hash
+from .reporting import completion_progress, model_visible_reportable_facts
+from .trace import JsonlTraceRecorder
 
 
 @dataclass(slots=True)
@@ -26,6 +27,7 @@ class EpisodeEngine:
     loop_repeat_limit: int = 3
     terminal_on_policy_error: bool = False
     terminal_on_provider_error: bool = False
+    observation_window: int = 3
 
     def submit_command(self, spec: TaskSpec) -> ActiveTask:
         if self.active_task is not None and not self.active_task.is_terminal:
@@ -43,7 +45,13 @@ class EpisodeEngine:
     def tick(self) -> Observation:
         task = self._require_task()
         if task.is_terminal:
-            return Observation(False, ReasonCode.TASK_TERMINAL.value, "No tick after terminal task.", Action("wait", parameters={"seconds": 0}), source="runtime")
+            return Observation(
+                False,
+                ReasonCode.TASK_TERMINAL.value,
+                "No tick after terminal task.",
+                Action("wait", parameters={"seconds": 0}),
+                source="runtime",
+            )
 
         step = task.step_count
         context = self.build_context(task)
@@ -81,18 +89,33 @@ class EpisodeEngine:
                 str(exc),
                 Action(
                     "__provider_error__",
+                    parameters={"details": dict(exc.details)},
                     action_id=f"{task.spec.task_id}:a{step + 1:03d}",
                 ),
                 source="policy",
+                evidence=dict(exc.details),
             )
             if self.terminal_on_provider_error:
                 task.status = TaskStatus.FAILED
                 task.terminal_reason = exc.code
         else:
-            fingerprint = stable_hash({"world": world_before, "action": {"name": action.name, "target": action.target, "parameters": action.parameters}})
+            fingerprint = semantic_action_fingerprint(action, self.world)
             task.fingerprint_counts[fingerprint] = task.fingerprint_counts.get(fingerprint, 0) + 1
             if task.fingerprint_counts[fingerprint] >= self.loop_repeat_limit:
-                observation = Observation(False, ReasonCode.LOOP_DETECTED.value, "The same action was repeated in the same world state.", action, source="runtime")
+                observation = Observation(
+                    False,
+                    ReasonCode.LOOP_DETECTED.value,
+                    "A semantically equivalent action was repeated without new world or evidence progress.",
+                    action,
+                    source="runtime",
+                    evidence={
+                        "repeat_count": task.fingerprint_counts[fingerprint],
+                        "retryable": False,
+                        "required_change_before_retry": (
+                            "change the selected action or obtain new evidence before retrying"
+                        ),
+                    },
+                )
                 task.status = TaskStatus.FAILED
                 task.terminal_reason = ReasonCode.LOOP_DETECTED.value
             else:
@@ -102,7 +125,7 @@ class EpisodeEngine:
                     gateway_status = "rejected"
                 else:
                     gateway_status = "allowed"
-                    observation = self.executor.execute(action=action, world=self.world)
+                    observation = self.executor.execute(action=action, world=self.world, task=task)
 
         task.step_count += 1
         task.observations.append(observation)
@@ -130,18 +153,28 @@ class EpisodeEngine:
         return task
 
     def build_context(self, task: ActiveTask) -> PolicyContext:
-        allowed = frozenset(name for name in task.spec.allowed_actions if self.gateway.registry.get(name))
+        allowed = frozenset(
+            name for name in task.spec.allowed_actions if self.gateway.registry.get(name)
+        )
+        recent_observations, history_summary = compact_observations(
+            task.observations,
+            window=self.observation_window,
+        )
+        world_payload = self.world.context_snapshot()
+        world_payload["reportable_facts"] = model_visible_reportable_facts(self.world, task)
         return PolicyContext(
             command=task.spec.command,
             task_id=task.spec.task_id,
             step_count=task.step_count,
             available_actions=tuple(sorted(allowed)),
             forbidden_actions=tuple(sorted(task.spec.forbidden_actions)),
-            world=self.world.context_snapshot(),
-            observations=tuple(observation.to_dict() for observation in task.observations),
+            world=world_payload,
+            observations=recent_observations,
             tool_schemas=self.gateway.registry.function_schemas(allowed),
             intent=task.spec.intent.to_dict() if task.spec.intent else {},
             current_affordances=self.gateway.current_affordances(task=task, world=self.world),
+            history_summary=history_summary,
+            completion_progress=completion_progress(task, self.world),
         )
 
     def _require_task(self) -> ActiveTask:

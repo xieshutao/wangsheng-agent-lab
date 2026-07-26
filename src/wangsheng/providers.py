@@ -370,9 +370,16 @@ class OpenAICompatibleToolCallingProvider:
             try:
                 arguments = json.loads(raw_arguments)
             except json.JSONDecodeError as exc:
+                excerpt = raw_arguments[:512]
                 raise ProviderError(
                     "provider_invalid_tool_arguments",
                     f"tool_calls[{index}] arguments are not valid JSON.",
+                    details={
+                        "tool_call_index": index,
+                        "argument_excerpt": excerpt,
+                        "json_error_position": exc.pos,
+                        "json_error_message": exc.msg,
+                    },
                 ) from exc
         elif isinstance(raw_arguments, dict):
             arguments = dict(raw_arguments)
@@ -380,11 +387,19 @@ class OpenAICompatibleToolCallingProvider:
             raise ProviderError(
                 "provider_invalid_tool_arguments",
                 f"tool_calls[{index}] arguments must be a JSON string or object.",
+                details={
+                    "tool_call_index": index,
+                    "argument_type": type(raw_arguments).__name__,
+                },
             )
         if not isinstance(arguments, dict):
             raise ProviderError(
                 "provider_invalid_tool_arguments",
                 f"tool_calls[{index}] arguments must decode to an object.",
+                details={
+                    "tool_call_index": index,
+                    "decoded_type": type(arguments).__name__,
+                },
             )
         return NativeToolCall(call_id=call_id, name=name, arguments=arguments)
 

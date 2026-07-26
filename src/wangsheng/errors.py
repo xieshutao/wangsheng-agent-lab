@@ -13,6 +13,13 @@ class PolicyOutputError(ValueError):
 class ProviderError(RuntimeError):
     """Raised when a model provider request or response fails."""
 
-    def __init__(self, code: str, message: str) -> None:
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        *,
+        details: dict[str, object] | None = None,
+    ) -> None:
         super().__init__(message)
         self.code = code
+        self.details = dict(details or {})

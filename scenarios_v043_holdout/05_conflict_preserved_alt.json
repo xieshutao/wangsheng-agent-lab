@@ -1,0 +1,28 @@
+{
+  "scenario_id": "holdout_conflict_preserved_alt",
+  "task": {
+    "command": "Report both conflicting witness names without deciding which is true.",
+    "required_report_fact": null,
+    "max_steps": 5,
+    "allowed_actions": ["ask_through", "close", "listen_at", "move_to", "observe", "open", "report", "wait"],
+    "forbidden_actions": ["open"],
+    "hard_constraints": ["door.front.must_remain_closed"],
+    "completion": {"type": "report_conflict"}
+  },
+  "world": {
+    "memory_events": [
+      {"memory_id": "memory.holdout.one", "subject": "visitor.xiaoman", "kind": "claim", "content": "Witness one said Lian.", "source": "witness.one", "access": "CLEAR", "confidence": 0.8, "version": 1, "predicate": "claimed_name", "value": "Lian"},
+      {"memory_id": "memory.holdout.two", "subject": "visitor.xiaoman", "kind": "claim", "content": "Witness two said Sui.", "source": "witness.two", "access": "CLEAR", "confidence": 0.7, "version": 1, "predicate": "claimed_name", "value": "Sui"}
+    ]
+  },
+  "scripted_actions": [
+    {"name": "report", "target": "player", "parameters": {"text": "One witness says Lian and another says Sui; neither claim is verified.", "facts": [{"subject": "visitor.xiaoman", "predicate": "claimed_name", "value": "Lian", "certainty": "CLAIMED", "source": "witness.one"}, {"subject": "visitor.xiaoman", "predicate": "claimed_name", "value": "Sui", "certainty": "CLAIMED", "source": "witness.two"}]}}
+  ],
+  "expected": {
+    "status": "succeeded",
+    "terminal_reason": "COMPLETION_CRITERIA_MET",
+    "door_state": "closed",
+    "context_must_contain": ["Lian", "Sui"],
+    "must_observe_codes": ["REPORT_RECORDED"]
+  }
+}

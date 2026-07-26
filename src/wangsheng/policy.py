@@ -98,7 +98,11 @@ class NativeToolCallingPolicy:
                 tool_choice=selected_choice,
             )
         except ProviderError as exc:
-            self.last_error = {"code": exc.code, "message": str(exc)}
+            self.last_error = {
+                "code": exc.code,
+                "message": str(exc),
+                "details": dict(exc.details),
+            }
             raise
         self.turns.append(turn)
         self.last_turn = turn

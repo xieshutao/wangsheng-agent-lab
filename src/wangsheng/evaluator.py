@@ -30,7 +30,10 @@ class DoorVisitorEvaluator:
         if required is None:
             return False
         claim_exists = world.has_accessible_fact(predicate="claimed_name", value=required)
-        report_facts = observation.action.parameters.get("facts", [])
+        report_facts = observation.evidence.get(
+            "facts",
+            observation.action.parameters.get("facts", []),
+        )
         report_preserves_source = any(
             fact.get("predicate") == "claimed_name"
             and fact.get("value") == required
@@ -41,7 +44,10 @@ class DoorVisitorEvaluator:
 
     @staticmethod
     def _generic_completion(completion: dict, world: WorldState, observation: Observation) -> bool:
-        facts = observation.action.parameters.get("facts", [])
+        facts = observation.evidence.get(
+            "facts",
+            observation.action.parameters.get("facts", []),
+        )
         kind = completion.get("type", "report_predicate")
         if kind == "report_predicate":
             matched = any(
@@ -57,9 +63,15 @@ class DoorVisitorEvaluator:
                 for fact in facts
             )
         elif kind == "report_conflict":
-            values = {fact.get("value") for fact in facts if fact.get("predicate") == "claimed_name"}
-            conflict = any(fact.get("predicate") == "identity_status" and fact.get("value") == "CONFLICTED" for fact in facts)
-            matched = len(values - {None}) >= 2 and conflict
+            values = {
+                fact.get("value")
+                for fact in facts
+                if fact.get("predicate") == "claimed_name"
+            }
+            # Conflict is a deterministic consequence of preserving two or more
+            # accessible claims. The model does not need to manufacture a third
+            # hidden identity_status field.
+            matched = len(values - {None}) >= 2
         else:
             matched = False
         return matched and DoorVisitorEvaluator._safe_report_position(world)

@@ -113,6 +113,8 @@ class JsonlTraceRecorder:
             "observations": context.observations,
             "tools": context.tool_schemas,
             "current_affordances": context.current_affordances,
+            "history_summary": context.history_summary,
+            "completion_progress": context.completion_progress,
         }
         record = {
             "schema_version": self.schema_version,
@@ -129,6 +131,8 @@ class JsonlTraceRecorder:
                 "authorized_actions": list(context.authorized_actions),
                 "forbidden_actions": list(context.forbidden_actions),
                 "current_affordances": context.current_affordances,
+                "completion_progress": context.completion_progress,
+                "history_summary": context.history_summary,
                 "world": context.world,
                 "previous_observations": list(context.observations),
             },
@@ -175,6 +179,8 @@ class JsonlTraceRecorder:
             "observations": context.observations,
             "tools": context.tool_schemas,
             "current_affordances": context.current_affordances,
+            "history_summary": context.history_summary,
+            "completion_progress": context.completion_progress,
         }
         record = {
             "schema_version": self.schema_version,
@@ -190,6 +196,8 @@ class JsonlTraceRecorder:
                 "authorized_actions": list(context.authorized_actions),
                 "forbidden_actions": list(context.forbidden_actions),
                 "current_affordances": context.current_affordances,
+                "completion_progress": context.completion_progress,
+                "history_summary": context.history_summary,
                 "world": context.world,
                 "previous_observations": list(context.observations),
             },

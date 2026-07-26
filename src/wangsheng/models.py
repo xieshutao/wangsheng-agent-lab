@@ -361,6 +361,8 @@ class PolicyContext:
     tool_schemas: tuple[dict[str, Any], ...] = ()
     intent: dict[str, Any] = field(default_factory=dict)
     current_affordances: dict[str, Any] = field(default_factory=dict)
+    history_summary: dict[str, Any] = field(default_factory=dict)
+    completion_progress: dict[str, Any] = field(default_factory=dict)
 
     @property
     def authorized_actions(self) -> tuple[str, ...]:

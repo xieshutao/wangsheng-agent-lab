@@ -17,11 +17,13 @@ class ToolSpec:
     timeout_seconds: float
     cancellable: bool
     produces_memory: bool = False
-    schema_version: str = "wangsheng.tool.v2"
+    model_parameters_schema: dict[str, Any] | None = None
+    schema_version: str = "wangsheng.tool.v3"
 
     def function_schema(self) -> dict[str, Any]:
-        properties = dict(self.parameters_schema.get("properties", {}))
-        required = list(self.parameters_schema.get("required", []))
+        exposed_schema = self.model_parameters_schema or self.parameters_schema
+        properties = dict(exposed_schema.get("properties", {}))
+        required = list(exposed_schema.get("required", []))
         if self.target_required:
             properties = {"target_id": {"type": "string", "minLength": 1}, **properties}
             required = ["target_id", *required]
@@ -92,6 +94,20 @@ class ToolRegistry:
         problem = validate_json_object(action.parameters, spec.parameters_schema)
         if problem:
             return ValidationFailure(ReasonCode.INVALID_ARGUMENT.value, problem)
+        if action.name == "report":
+            has_ids = isinstance(action.parameters.get("fact_ids"), list)
+            has_facts = isinstance(action.parameters.get("facts"), list)
+            if has_ids == has_facts:
+                return ValidationFailure(
+                    ReasonCode.INVALID_ARGUMENT.value,
+                    "report requires exactly one of fact_ids or legacy facts.",
+                )
+            selected = action.parameters.get("fact_ids") if has_ids else action.parameters.get("facts")
+            if not selected:
+                return ValidationFailure(
+                    ReasonCode.INVALID_ARGUMENT.value,
+                    "report requires at least one fact selection.",
+                )
         return None
 
 
@@ -180,6 +196,46 @@ def default_tool_specs() -> tuple[ToolSpec, ...]:
         },
         ("subject", "predicate", "value", "certainty", "source"),
     )
+    ask_runtime_schema = _object_schema(
+        {
+            "barrier_id": {"type": "string", "minLength": 1},
+            "topic": {"type": "string", "minLength": 1},
+        },
+        ("barrier_id", "topic"),
+    )
+    ask_model_schema = _object_schema(
+        {
+            "barrier_id": {"type": "string", "minLength": 1},
+            "topic": {
+                "type": "string",
+                "enum": ["identity", "purpose", "request", "door_state"],
+            },
+        },
+        ("barrier_id", "topic"),
+    )
+    report_runtime_schema = _object_schema(
+        {
+            "text": {"type": "string", "minLength": 1},
+            "fact_ids": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"type": "string", "minLength": 1},
+            },
+            "facts": {"type": "array", "minItems": 1, "items": fact_schema},
+        },
+        ("text",),
+    )
+    report_model_schema = _object_schema(
+        {
+            "text": {"type": "string", "minLength": 1},
+            "fact_ids": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"type": "string", "minLength": 1},
+            },
+        },
+        ("text", "fact_ids"),
+    )
     return (
         ToolSpec(
             "move_to",
@@ -216,21 +272,16 @@ def default_tool_specs() -> tuple[ToolSpec, ...]:
         ),
         ToolSpec(
             "ask_through",
-            "Ask a known external entity through a closed physical barrier. Requires the "
-            "actor to be near barrier_id; use anonymous model-visible entity IDs exactly "
-            "as supplied.",
+            "Ask one structured question through a closed barrier. Select exactly one "
+            "topic enum: identity, purpose, request, or door_state. Repeating the same "
+            "topic without new evidence is not progress.",
             True,
             "communicate",
-            _object_schema(
-                {
-                    "barrier_id": {"type": "string", "minLength": 1},
-                    "topic": {"type": "string", "minLength": 1},
-                },
-                ("barrier_id", "topic"),
-            ),
+            ask_runtime_schema,
             15.0,
             True,
             True,
+            ask_model_schema,
         ),
         ToolSpec(
             "open",
@@ -255,25 +306,21 @@ def default_tool_specs() -> tuple[ToolSpec, ...]:
         ),
         ToolSpec(
             "report",
-            "Report only grounded facts and sources to a nearby target. Use "
-            "identity_status=UNKNOWN when no accessible claimed_name exists; never infer "
-            "identity from an anonymous entity ID.",
+            "Report grounded information to a nearby target. Select only fact_ids from "
+            "world.reportable_facts; do not create predicates, values, certainty labels, "
+            "or sources. Use completion_progress to select the facts that finish the task.",
             True,
             "communicate",
-            _object_schema(
-                {
-                    "text": {"type": "string", "minLength": 1},
-                    "facts": {"type": "array", "minItems": 1, "items": fact_schema},
-                },
-                ("text", "facts"),
-            ),
+            report_runtime_schema,
             15.0,
             True,
             True,
+            report_model_schema,
         ),
         ToolSpec(
             "wait",
-            "Wait for a bounded duration when no safer immediate action is executable.",
+            "Wait for a bounded duration only when completion_progress is not ready and "
+            "no action can currently create new evidence.",
             False,
             "wait",
             _object_schema(

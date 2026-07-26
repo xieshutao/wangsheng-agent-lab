@@ -1,5 +1,5 @@
 {
-  "expected_digest": "14282d3127cffb67f529db1f95e7cf552b3d3b406fbaf4fdf55014fe6587e944",
+  "expected_digest": "1199369719bde4a4230aa6271e741c5856a406590910e20fab61c47f0461f3f9",
   "records": [
     {
       "action": {
@@ -45,6 +45,17 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "completion_progress": {
+          "accepted_fact_ids": [],
+          "completion_action": "report",
+          "description": "Report the accessible source-qualified claimed_name fact.",
+          "ready_to_complete": false,
+          "remaining_requirements": [
+            "obtain or select a matching reportable fact; do not invent one"
+          ],
+          "schema_version": "wangsheng.completion_progress.v1",
+          "stop_after_success": true
+        },
         "current_affordances": {
           "ask_through": {
             "executable_now": false,
@@ -164,6 +175,15 @@
         "forbidden_actions": [
           "open"
         ],
+        "history_summary": {
+          "detail_window": 0,
+          "latest_failure": null,
+          "older_code_counts": {},
+          "older_failure_counts": {},
+          "older_result_count": 0,
+          "schema_version": "wangsheng.history_summary.v1",
+          "total_prior_results": 0
+        },
         "intent": {
           "intent_id": "intent.normal_observe_and_report",
           "kind": "task",
@@ -226,11 +246,22 @@
             "location": "room.front_hall",
             "target_id": "player"
           },
+          "reportable_facts": [
+            {
+              "certainty": "UNKNOWN",
+              "derived": true,
+              "fact_id": "fact.identity-status.unknown",
+              "predicate": "identity_status",
+              "source": "identity_rule",
+              "subject": "visitor.front_001",
+              "value": "UNKNOWN"
+            }
+          ],
           "schema_version": "wangsheng.model_visible_world.v1",
           "time_seconds": 0.0
         }
       },
-      "context_hash": "e22f02951763410a733141fa26ae50459405e17df5e107207e581cee5210dda6",
+      "context_hash": "379bd476dbce18da0b8ffb213d81651aad66342b2370a1fa0b4e5fda9197a92d",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -425,6 +456,17 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "completion_progress": {
+          "accepted_fact_ids": [],
+          "completion_action": "report",
+          "description": "Report the accessible source-qualified claimed_name fact.",
+          "ready_to_complete": false,
+          "remaining_requirements": [
+            "obtain or select a matching reportable fact; do not invent one"
+          ],
+          "schema_version": "wangsheng.completion_progress.v1",
+          "stop_after_success": true
+        },
         "current_affordances": {
           "ask_through": {
             "executable_now": false,
@@ -544,6 +586,15 @@
         "forbidden_actions": [
           "open"
         ],
+        "history_summary": {
+          "detail_window": 1,
+          "latest_failure": null,
+          "older_code_counts": {},
+          "older_failure_counts": {},
+          "older_result_count": 0,
+          "schema_version": "wangsheng.history_summary.v1",
+          "total_prior_results": 1
+        },
         "intent": {
           "intent_id": "intent.normal_observe_and_report",
           "kind": "task",
@@ -629,11 +680,22 @@
             "location": "room.front_hall",
             "target_id": "player"
           },
+          "reportable_facts": [
+            {
+              "certainty": "UNKNOWN",
+              "derived": true,
+              "fact_id": "fact.identity-status.unknown",
+              "predicate": "identity_status",
+              "source": "identity_rule",
+              "subject": "visitor.front_001",
+              "value": "UNKNOWN"
+            }
+          ],
           "schema_version": "wangsheng.model_visible_world.v1",
           "time_seconds": 0.0
         }
       },
-      "context_hash": "ac1b572c0ed3a198c01cd77024a0a1261e38a5d4f9a73f99009e5a003d3d737e",
+      "context_hash": "79ab2e5677ec7fdfbf34876e748ae07db357e2cb21d404cf9cf91dd798196210",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -808,7 +870,9 @@
       "action_result": {
         "action_id": "normal_observe_and_report:a003",
         "evidence": {
-          "source": "auditory",
+          "predicate": "presence",
+          "source": "auditory_observation",
+          "value": "waiting_outside_closed_front_door",
           "visitor_present": true
         },
         "message": "A person is waiting outside the closed front door.",
@@ -830,6 +894,18 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "completion_progress": {
+          "accepted_fact_ids": [],
+          "completion_action": "report",
+          "description": "Report the accessible source-qualified claimed_name fact.",
+          "ready_to_complete": false,
+          "remaining_requirements": [
+            "obtain or select a matching reportable fact; do not invent one",
+            "move_to(player) before report"
+          ],
+          "schema_version": "wangsheng.completion_progress.v1",
+          "stop_after_success": true
+        },
         "current_affordances": {
           "ask_through": {
             "executable_now": true,
@@ -952,6 +1028,15 @@
         "forbidden_actions": [
           "open"
         ],
+        "history_summary": {
+          "detail_window": 2,
+          "latest_failure": null,
+          "older_code_counts": {},
+          "older_failure_counts": {},
+          "older_result_count": 0,
+          "schema_version": "wangsheng.history_summary.v1",
+          "total_prior_results": 2
+        },
         "intent": {
           "intent_id": "intent.normal_observe_and_report",
           "kind": "task",
@@ -1058,11 +1143,22 @@
             "location": "room.front_hall",
             "target_id": "player"
           },
+          "reportable_facts": [
+            {
+              "certainty": "UNKNOWN",
+              "derived": true,
+              "fact_id": "fact.identity-status.unknown",
+              "predicate": "identity_status",
+              "source": "identity_rule",
+              "subject": "visitor.front_001",
+              "value": "UNKNOWN"
+            }
+          ],
           "schema_version": "wangsheng.model_visible_world.v1",
           "time_seconds": 0.0
         }
       },
-      "context_hash": "3ebdf3e2d4e8cddd071f14b5d4f967f39029730f320ea1d2b985a20f9830c19c",
+      "context_hash": "160f4d54dfb696ca366241814f25c51c9d2acb2a3509d5f4b0f8fd91ad3c9743",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -1085,7 +1181,9 @@
         },
         "code": "HEARD_VISITOR",
         "evidence": {
-          "source": "auditory",
+          "predicate": "presence",
+          "source": "auditory_observation",
+          "value": "waiting_outside_closed_front_door",
           "visitor_present": true
         },
         "message": "A person is waiting outside the closed front door.",
@@ -1096,6 +1194,19 @@
       "schema_version": "wangsheng.trace.v3",
       "sequence": 2,
       "state_delta": {
+        "conversation_facts": {
+          "from": [],
+          "to": [
+            {
+              "certainty": "TRUE",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "subject": "visitor.xiaoman",
+              "value": "waiting_outside_closed_front_door",
+              "verified": true
+            }
+          ]
+        },
         "heard_events": {
           "from": [],
           "to": [
@@ -1125,7 +1236,16 @@
             "wait"
           ]
         },
-        "conversation_facts": [],
+        "conversation_facts": [
+          {
+            "certainty": "TRUE",
+            "predicate": "presence",
+            "source": "auditory_observation",
+            "subject": "visitor.xiaoman",
+            "value": "waiting_outside_closed_front_door",
+            "verified": true
+          }
+        ],
         "emotional_residue": [],
         "forced_action_results": {},
         "heard_events": [
@@ -1245,6 +1365,7 @@
           "predicate": "claimed_name",
           "source": "visitor_statement",
           "subject": "visitor.xiaoman",
+          "topic": "identity",
           "value": "Xiaoman",
           "verified": false
         },
@@ -1267,6 +1388,18 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "completion_progress": {
+          "accepted_fact_ids": [],
+          "completion_action": "report",
+          "description": "Report the accessible source-qualified claimed_name fact.",
+          "ready_to_complete": false,
+          "remaining_requirements": [
+            "obtain or select a matching reportable fact; do not invent one",
+            "move_to(player) before report"
+          ],
+          "schema_version": "wangsheng.completion_progress.v1",
+          "stop_after_success": true
+        },
         "current_affordances": {
           "ask_through": {
             "executable_now": true,
@@ -1389,6 +1522,15 @@
         "forbidden_actions": [
           "open"
         ],
+        "history_summary": {
+          "detail_window": 3,
+          "latest_failure": null,
+          "older_code_counts": {},
+          "older_failure_counts": {},
+          "older_result_count": 0,
+          "schema_version": "wangsheng.history_summary.v1",
+          "total_prior_results": 3
+        },
         "intent": {
           "intent_id": "intent.normal_observe_and_report",
           "kind": "task",
@@ -1451,7 +1593,9 @@
             },
             "code": "HEARD_VISITOR",
             "evidence": {
-              "source": "auditory",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "value": "waiting_outside_closed_front_door",
               "visitor_present": true
             },
             "message": "A person is waiting outside the closed front door.",
@@ -1478,7 +1622,16 @@
               "wait"
             ]
           },
-          "conversation_facts": [],
+          "conversation_facts": [
+            {
+              "certainty": "TRUE",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "subject": "visitor.front_001",
+              "value": "waiting_outside_closed_front_door",
+              "verified": true
+            }
+          ],
           "emotional_residue": [],
           "entities": {
             "visitor.front_001": {
@@ -1516,11 +1669,31 @@
             "location": "room.front_hall",
             "target_id": "player"
           },
+          "reportable_facts": [
+            {
+              "certainty": "UNKNOWN",
+              "derived": true,
+              "fact_id": "fact.identity-status.unknown",
+              "predicate": "identity_status",
+              "source": "identity_rule",
+              "subject": "visitor.front_001",
+              "value": "UNKNOWN"
+            },
+            {
+              "certainty": "TRUE",
+              "derived": false,
+              "fact_id": "fact.presence.ac0cfac2a73a",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "subject": "visitor.front_001",
+              "value": "waiting_outside_closed_front_door"
+            }
+          ],
           "schema_version": "wangsheng.model_visible_world.v1",
           "time_seconds": 0.0
         }
       },
-      "context_hash": "2471a750f633e70af8f662f03df6f00133b02659697d0d84512abbc66a7ec28e",
+      "context_hash": "5f0bf5b13ec35eddecf2b1c3159e8d855a77f6d42b39d23f929c0db532a27625",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -1535,9 +1708,9 @@
         {
           "access": "CLEAR",
           "confidence": 0.85,
-          "content": "The visitor claimed the name Xiaoman.",
+          "content": "The visitor claims to be Xiaoman.",
           "kind": "claim",
-          "memory_id": "memory.claim.001",
+          "memory_id": "memory.claimed_name.001",
           "predicate": "claimed_name",
           "schema_version": "wangsheng.memory_event.v1",
           "source": "visitor_statement",
@@ -1562,6 +1735,7 @@
           "predicate": "claimed_name",
           "source": "visitor_statement",
           "subject": "visitor.xiaoman",
+          "topic": "identity",
           "value": "Xiaoman",
           "verified": false
         },
@@ -1574,8 +1748,25 @@
       "sequence": 3,
       "state_delta": {
         "conversation_facts": {
-          "from": [],
+          "from": [
+            {
+              "certainty": "TRUE",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "subject": "visitor.xiaoman",
+              "value": "waiting_outside_closed_front_door",
+              "verified": true
+            }
+          ],
           "to": [
+            {
+              "certainty": "TRUE",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "subject": "visitor.xiaoman",
+              "value": "waiting_outside_closed_front_door",
+              "verified": true
+            },
             {
               "certainty": "CLAIMED",
               "predicate": "claimed_name",
@@ -1592,9 +1783,9 @@
             {
               "access": "CLEAR",
               "confidence": 0.85,
-              "content": "The visitor claimed the name Xiaoman.",
+              "content": "The visitor claims to be Xiaoman.",
               "kind": "claim",
-              "memory_id": "memory.claim.001",
+              "memory_id": "memory.claimed_name.001",
               "predicate": "claimed_name",
               "schema_version": "wangsheng.memory_event.v1",
               "source": "visitor_statement",
@@ -1633,6 +1824,14 @@
         },
         "conversation_facts": [
           {
+            "certainty": "TRUE",
+            "predicate": "presence",
+            "source": "auditory_observation",
+            "subject": "visitor.xiaoman",
+            "value": "waiting_outside_closed_front_door",
+            "verified": true
+          },
+          {
             "certainty": "CLAIMED",
             "predicate": "claimed_name",
             "source": "visitor_statement",
@@ -1650,9 +1849,9 @@
           {
             "access": "CLEAR",
             "confidence": 0.85,
-            "content": "The visitor claimed the name Xiaoman.",
+            "content": "The visitor claims to be Xiaoman.",
             "kind": "claim",
-            "memory_id": "memory.claim.001",
+            "memory_id": "memory.claimed_name.001",
             "predicate": "claimed_name",
             "schema_version": "wangsheng.memory_event.v1",
             "source": "visitor_statement",
@@ -1710,7 +1909,16 @@
             "wait"
           ]
         },
-        "conversation_facts": [],
+        "conversation_facts": [
+          {
+            "certainty": "TRUE",
+            "predicate": "presence",
+            "source": "auditory_observation",
+            "subject": "visitor.xiaoman",
+            "value": "waiting_outside_closed_front_door",
+            "verified": true
+          }
+        ],
         "emotional_residue": [],
         "forced_action_results": {},
         "heard_events": [
@@ -1794,6 +2002,19 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "completion_progress": {
+          "accepted_fact_ids": [
+            "fact.claimed-name.a4cde4570dcc"
+          ],
+          "completion_action": "report",
+          "description": "Report the accessible source-qualified claimed_name fact.",
+          "ready_to_complete": false,
+          "remaining_requirements": [
+            "move_to(player) before report"
+          ],
+          "schema_version": "wangsheng.completion_progress.v1",
+          "stop_after_success": true
+        },
         "current_affordances": {
           "ask_through": {
             "executable_now": true,
@@ -1916,6 +2137,17 @@
         "forbidden_actions": [
           "open"
         ],
+        "history_summary": {
+          "detail_window": 3,
+          "latest_failure": null,
+          "older_code_counts": {
+            "OBSERVED": 1
+          },
+          "older_failure_counts": {},
+          "older_result_count": 1,
+          "schema_version": "wangsheng.history_summary.v1",
+          "total_prior_results": 4
+        },
         "intent": {
           "intent_id": "intent.normal_observe_and_report",
           "kind": "task",
@@ -1924,28 +2156,6 @@
           "text": "Confirm who is outside without opening the door."
         },
         "previous_observations": [
-          {
-            "action": {
-              "action_id": "normal_observe_and_report:a001",
-              "name": "observe",
-              "parameters": {},
-              "target": "door.front"
-            },
-            "code": "OBSERVED",
-            "evidence": {
-              "object_type": "door",
-              "properties": {
-                "locked": false,
-                "reachable": true
-              },
-              "state": "closed",
-              "target_id": "door.front"
-            },
-            "message": "Observed 'door.front'.",
-            "source": "executor",
-            "success": true,
-            "world_delta": {}
-          },
           {
             "action": {
               "action_id": "normal_observe_and_report:a002",
@@ -1978,7 +2188,9 @@
             },
             "code": "HEARD_VISITOR",
             "evidence": {
-              "source": "auditory",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "value": "waiting_outside_closed_front_door",
               "visitor_present": true
             },
             "message": "A person is waiting outside the closed front door.",
@@ -2002,6 +2214,7 @@
               "predicate": "claimed_name",
               "source": "visitor_statement",
               "subject": "visitor.xiaoman",
+              "topic": "identity",
               "value": "Xiaoman",
               "verified": false
             },
@@ -2031,6 +2244,14 @@
           },
           "conversation_facts": [
             {
+              "certainty": "TRUE",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "subject": "visitor.front_001",
+              "value": "waiting_outside_closed_front_door",
+              "verified": true
+            },
+            {
               "certainty": "CLAIMED",
               "predicate": "claimed_name",
               "source": "visitor_statement",
@@ -2054,9 +2275,9 @@
             {
               "access": "CLEAR",
               "confidence": 0.85,
-              "content": "The visitor claimed the name Xiaoman.",
+              "content": "The visitor claims to be Xiaoman.",
               "kind": "claim",
-              "memory_id": "memory.claim.001",
+              "memory_id": "memory.claimed_name.001",
               "predicate": "claimed_name",
               "schema_version": "wangsheng.memory_event.v1",
               "source": "visitor_statement",
@@ -2090,11 +2311,31 @@
             "location": "room.front_hall",
             "target_id": "player"
           },
+          "reportable_facts": [
+            {
+              "certainty": "CLAIMED",
+              "derived": false,
+              "fact_id": "fact.claimed-name.a4cde4570dcc",
+              "predicate": "claimed_name",
+              "source": "visitor_statement",
+              "subject": "visitor.front_001",
+              "value": "Xiaoman"
+            },
+            {
+              "certainty": "TRUE",
+              "derived": false,
+              "fact_id": "fact.presence.ac0cfac2a73a",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "subject": "visitor.front_001",
+              "value": "waiting_outside_closed_front_door"
+            }
+          ],
           "schema_version": "wangsheng.model_visible_world.v1",
           "time_seconds": 0.0
         }
       },
-      "context_hash": "e9f50553475f5e2839c1122436aff08048fa1a61ea56579a43c8bb8feb176e9b",
+      "context_hash": "563f621a607bc2a061ea19181ade7b841725b156f15419695b388dbb4869857a",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -2109,9 +2350,9 @@
         {
           "access": "CLEAR",
           "confidence": 0.85,
-          "content": "The visitor claimed the name Xiaoman.",
+          "content": "The visitor claims to be Xiaoman.",
           "kind": "claim",
-          "memory_id": "memory.claim.001",
+          "memory_id": "memory.claimed_name.001",
           "predicate": "claimed_name",
           "schema_version": "wangsheng.memory_event.v1",
           "source": "visitor_statement",
@@ -2173,6 +2414,14 @@
         },
         "conversation_facts": [
           {
+            "certainty": "TRUE",
+            "predicate": "presence",
+            "source": "auditory_observation",
+            "subject": "visitor.xiaoman",
+            "value": "waiting_outside_closed_front_door",
+            "verified": true
+          },
+          {
             "certainty": "CLAIMED",
             "predicate": "claimed_name",
             "source": "visitor_statement",
@@ -2190,9 +2439,9 @@
           {
             "access": "CLEAR",
             "confidence": 0.85,
-            "content": "The visitor claimed the name Xiaoman.",
+            "content": "The visitor claims to be Xiaoman.",
             "kind": "claim",
-            "memory_id": "memory.claim.001",
+            "memory_id": "memory.claimed_name.001",
             "predicate": "claimed_name",
             "schema_version": "wangsheng.memory_event.v1",
             "source": "visitor_statement",
@@ -2252,6 +2501,14 @@
         },
         "conversation_facts": [
           {
+            "certainty": "TRUE",
+            "predicate": "presence",
+            "source": "auditory_observation",
+            "subject": "visitor.xiaoman",
+            "value": "waiting_outside_closed_front_door",
+            "verified": true
+          },
+          {
             "certainty": "CLAIMED",
             "predicate": "claimed_name",
             "source": "visitor_statement",
@@ -2269,9 +2526,9 @@
           {
             "access": "CLEAR",
             "confidence": 0.85,
-            "content": "The visitor claimed the name Xiaoman.",
+            "content": "The visitor claims to be Xiaoman.",
             "kind": "claim",
-            "memory_id": "memory.claim.001",
+            "memory_id": "memory.claimed_name.001",
             "predicate": "claimed_name",
             "schema_version": "wangsheng.memory_event.v1",
             "source": "visitor_statement",
@@ -2351,6 +2608,7 @@
       "action_result": {
         "action_id": "normal_observe_and_report:a006",
         "evidence": {
+          "fact_ids": [],
           "facts": [
             {
               "certainty": "CLAIMED",
@@ -2382,6 +2640,17 @@
           "wait"
         ],
         "command": "Confirm the visitor's claimed identity, preserve uncertainty, keep the front door closed, return, and report.",
+        "completion_progress": {
+          "accepted_fact_ids": [
+            "fact.claimed-name.a4cde4570dcc"
+          ],
+          "completion_action": "report",
+          "description": "Report the accessible source-qualified claimed_name fact.",
+          "ready_to_complete": true,
+          "remaining_requirements": [],
+          "schema_version": "wangsheng.completion_progress.v1",
+          "stop_after_success": true
+        },
         "current_affordances": {
           "ask_through": {
             "executable_now": false,
@@ -2501,6 +2770,18 @@
         "forbidden_actions": [
           "open"
         ],
+        "history_summary": {
+          "detail_window": 3,
+          "latest_failure": null,
+          "older_code_counts": {
+            "ARRIVED": 1,
+            "OBSERVED": 1
+          },
+          "older_failure_counts": {},
+          "older_result_count": 2,
+          "schema_version": "wangsheng.history_summary.v1",
+          "total_prior_results": 5
+        },
         "intent": {
           "intent_id": "intent.normal_observe_and_report",
           "kind": "task",
@@ -2509,49 +2790,6 @@
           "text": "Confirm who is outside without opening the door."
         },
         "previous_observations": [
-          {
-            "action": {
-              "action_id": "normal_observe_and_report:a001",
-              "name": "observe",
-              "parameters": {},
-              "target": "door.front"
-            },
-            "code": "OBSERVED",
-            "evidence": {
-              "object_type": "door",
-              "properties": {
-                "locked": false,
-                "reachable": true
-              },
-              "state": "closed",
-              "target_id": "door.front"
-            },
-            "message": "Observed 'door.front'.",
-            "source": "executor",
-            "success": true,
-            "world_delta": {}
-          },
-          {
-            "action": {
-              "action_id": "normal_observe_and_report:a002",
-              "name": "move_to",
-              "parameters": {
-                "acceptance_radius": 80
-              },
-              "target": "door.front"
-            },
-            "code": "ARRIVED",
-            "evidence": {},
-            "message": "Arrived at 'door.front'.",
-            "source": "executor",
-            "success": true,
-            "world_delta": {
-              "actor.location": {
-                "from": "room.front_hall",
-                "to": "area.front_door"
-              }
-            }
-          },
           {
             "action": {
               "action_id": "normal_observe_and_report:a003",
@@ -2563,7 +2801,9 @@
             },
             "code": "HEARD_VISITOR",
             "evidence": {
-              "source": "auditory",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "value": "waiting_outside_closed_front_door",
               "visitor_present": true
             },
             "message": "A person is waiting outside the closed front door.",
@@ -2587,6 +2827,7 @@
               "predicate": "claimed_name",
               "source": "visitor_statement",
               "subject": "visitor.xiaoman",
+              "topic": "identity",
               "value": "Xiaoman",
               "verified": false
             },
@@ -2637,6 +2878,14 @@
           },
           "conversation_facts": [
             {
+              "certainty": "TRUE",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "subject": "visitor.front_001",
+              "value": "waiting_outside_closed_front_door",
+              "verified": true
+            },
+            {
               "certainty": "CLAIMED",
               "predicate": "claimed_name",
               "source": "visitor_statement",
@@ -2660,9 +2909,9 @@
             {
               "access": "CLEAR",
               "confidence": 0.85,
-              "content": "The visitor claimed the name Xiaoman.",
+              "content": "The visitor claims to be Xiaoman.",
               "kind": "claim",
-              "memory_id": "memory.claim.001",
+              "memory_id": "memory.claimed_name.001",
               "predicate": "claimed_name",
               "schema_version": "wangsheng.memory_event.v1",
               "source": "visitor_statement",
@@ -2696,11 +2945,31 @@
             "location": "room.front_hall",
             "target_id": "player"
           },
+          "reportable_facts": [
+            {
+              "certainty": "CLAIMED",
+              "derived": false,
+              "fact_id": "fact.claimed-name.a4cde4570dcc",
+              "predicate": "claimed_name",
+              "source": "visitor_statement",
+              "subject": "visitor.front_001",
+              "value": "Xiaoman"
+            },
+            {
+              "certainty": "TRUE",
+              "derived": false,
+              "fact_id": "fact.presence.ac0cfac2a73a",
+              "predicate": "presence",
+              "source": "auditory_observation",
+              "subject": "visitor.front_001",
+              "value": "waiting_outside_closed_front_door"
+            }
+          ],
           "schema_version": "wangsheng.model_visible_world.v1",
           "time_seconds": 0.0
         }
       },
-      "context_hash": "bae8a3baac6aea9024ef1689023e27b157a7211844f7af69e7179cce53fb19f5",
+      "context_hash": "2a76fd5200545a278e5403780d9e1054d7291b9f20e19aa94368da1cc8fd4a19",
       "episode_id": "normal_observe_and_report",
       "event_type": "tick",
       "executor": {
@@ -2715,9 +2984,9 @@
         {
           "access": "CLEAR",
           "confidence": 0.85,
-          "content": "The visitor claimed the name Xiaoman.",
+          "content": "The visitor claims to be Xiaoman.",
           "kind": "claim",
-          "memory_id": "memory.claim.001",
+          "memory_id": "memory.claimed_name.001",
           "predicate": "claimed_name",
           "schema_version": "wangsheng.memory_event.v1",
           "source": "visitor_statement",
@@ -2746,6 +3015,7 @@
         },
         "code": "REPORT_RECORDED",
         "evidence": {
+          "fact_ids": [],
           "facts": [
             {
               "certainty": "CLAIMED",
@@ -2770,6 +3040,7 @@
           "from": [],
           "to": [
             {
+              "fact_ids": [],
               "facts": [
                 {
                   "certainty": "CLAIMED",
@@ -2809,6 +3080,14 @@
         },
         "conversation_facts": [
           {
+            "certainty": "TRUE",
+            "predicate": "presence",
+            "source": "auditory_observation",
+            "subject": "visitor.xiaoman",
+            "value": "waiting_outside_closed_front_door",
+            "verified": true
+          },
+          {
             "certainty": "CLAIMED",
             "predicate": "claimed_name",
             "source": "visitor_statement",
@@ -2826,9 +3105,9 @@
           {
             "access": "CLEAR",
             "confidence": 0.85,
-            "content": "The visitor claimed the name Xiaoman.",
+            "content": "The visitor claims to be Xiaoman.",
             "kind": "claim",
-            "memory_id": "memory.claim.001",
+            "memory_id": "memory.claimed_name.001",
             "predicate": "claimed_name",
             "schema_version": "wangsheng.memory_event.v1",
             "source": "visitor_statement",
@@ -2864,6 +3143,7 @@
         "player_location": "room.front_hall",
         "reports": [
           {
+            "fact_ids": [],
             "facts": [
               {
                 "certainty": "CLAIMED",
@@ -2902,6 +3182,14 @@
         },
         "conversation_facts": [
           {
+            "certainty": "TRUE",
+            "predicate": "presence",
+            "source": "auditory_observation",
+            "subject": "visitor.xiaoman",
+            "value": "waiting_outside_closed_front_door",
+            "verified": true
+          },
+          {
             "certainty": "CLAIMED",
             "predicate": "claimed_name",
             "source": "visitor_statement",
@@ -2919,9 +3207,9 @@
           {
             "access": "CLEAR",
             "confidence": 0.85,
-            "content": "The visitor claimed the name Xiaoman.",
+            "content": "The visitor claims to be Xiaoman.",
             "kind": "claim",
-            "memory_id": "memory.claim.001",
+            "memory_id": "memory.claimed_name.001",
             "predicate": "claimed_name",
             "schema_version": "wangsheng.memory_event.v1",
             "source": "visitor_statement",
@@ -2965,5 +3253,5 @@
   ],
   "scenario_id": "normal_observe_and_report",
   "scenario_path": "scenarios/01_normal_observe_and_report.json",
-  "schema_version": "wangsheng.golden_trace.v1"
+  "schema_version": "wangsheng.golden_trace.v2"
 }
