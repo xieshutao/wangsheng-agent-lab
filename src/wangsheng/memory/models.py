@@ -370,6 +370,10 @@ class ManifestationDelta:
     derived_evidence_family_id: str
     applied_tick: int
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "before_value", freeze_value(self.before_value))
+        object.__setattr__(self, "after_value", freeze_value(self.after_value))
+
 
 @dataclass(frozen=True, slots=True)
 class WorldAcknowledgement:
@@ -410,6 +414,10 @@ class BranchResult:
     manifestation_state: Mapping[str, Any]
     active_connection_claims: tuple[Claim, ...]
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "manifestation_state", freeze_value(self.manifestation_state))
+        object.__setattr__(self, "active_connection_claims", tuple(self.active_connection_claims))
+
 
 @dataclass(frozen=True, slots=True)
 class ReplayVerification:
@@ -418,6 +426,9 @@ class ReplayVerification:
     replay_digest: str
     state_match: bool
     branch_digests: Mapping[str, str]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "branch_digests", freeze_value(self.branch_digests))
 
 
 @dataclass(frozen=True, slots=True)
