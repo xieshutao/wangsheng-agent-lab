@@ -1,6 +1,18 @@
 # v0.6 Model-in-the-loop Acceptance Status
 
-Implementation status: pre-freeze bounded-state fix implemented; replacement formal model run not yet executed.
+Implementation status: **FROZEN** at commit `171807342291f7e5d7d2d89ae125a523b22ff032`.
+
+Formal model-in-the-loop acceptance completed 2026-07-27. Archive SHA-256: `b0f60eecb0cd30f44a7c5caf1587de495d495068ac90a4c79031601280a31728`.
+
+## Formal Qwen3-4B results
+
+- 20 scenarios: **20/20 passed**
+- 30-minute soak: **1800.003 seconds, 872 tasks, 65/65 faults, 0 violations**
+- State boundedness: terminal cache 78/256, active actions max 1, save payload ~16 KB
+- Post-soak contract: **5/5 passed**
+- Hard violations / hallucinated targets / knowledge violations / protocol errors: **0**
+
+See `V0.6_FORMAL_EXPERIMENT_REPORT.md` for full details.
 
 ## Added components
 

@@ -1,6 +1,6 @@
 # WangSheng Headless Game Bridge v0.6 Status
 
-**Implementation status:** bounded-state pre-freeze candidate; formal model rerun required
+**Implementation status:** FROZEN at commit `171807342291f7e5d7d2d89ae125a523b22ff032`
 **Parent SPEC commit:** `4aaf1bd1ed6f17fd72f0ebcbfe2e1db10b8bb816`
 **Target version:** `0.6.0`
 
