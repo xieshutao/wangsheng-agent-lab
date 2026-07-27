@@ -28,11 +28,15 @@ class MemoryErrorCode(StrEnum):
     LIVE_STATE_BOUND_EXCEEDED = "LIVE_STATE_BOUND_EXCEEDED"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class MemoryKernelError(Exception):
     code: MemoryErrorCode
     message: str
     details: Mapping[str, Any] = MappingProxyType({})
+
+    def __post_init__(self) -> None:
+        self.details = MappingProxyType(dict(self.details))
+        Exception.__init__(self, self.message)
 
     def __str__(self) -> str:
         return f"{self.code}: {self.message}"

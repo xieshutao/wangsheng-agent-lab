@@ -1,13 +1,50 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import StrEnum
+from enum import Enum, StrEnum
 from types import MappingProxyType
 from typing import Any, Mapping
 
 
 UNKNOWN = "UNKNOWN"
 SCHEMA_VERSION = "0.7"
+
+
+def freeze_value(value: Any) -> Any:
+    """Recursively detach mutable caller-owned values from domain objects.
+
+    The memory kernel treats committed facts, observations and memory content as
+    immutable value objects. ``frozen=True`` alone is insufficient when a field
+    contains a dict/list, so all nested containers are copied and frozen here.
+    """
+
+    if isinstance(value, Mapping):
+        return MappingProxyType({key: freeze_value(item) for key, item in value.items()})
+    if isinstance(value, (list, tuple)):
+        return tuple(freeze_value(item) for item in value)
+    if isinstance(value, (set, frozenset)):
+        return tuple(sorted((freeze_value(item) for item in value), key=repr))
+    return value
+
+
+def primitive_value(value: Any) -> Any:
+    """Convert domain values into canonical JSON-compatible primitives."""
+
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, Mapping):
+        return {
+            str(key): primitive_value(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
+    if isinstance(value, (tuple, list)):
+        return [primitive_value(item) for item in value]
+    if hasattr(value, "__dataclass_fields__"):
+        return {
+            name: primitive_value(getattr(value, name))
+            for name in value.__dataclass_fields__
+        }
+    return value
 
 
 class SourceKind(StrEnum):
@@ -95,6 +132,10 @@ class Claim:
     polarity: Polarity = Polarity.AFFIRM
     qualifiers: Mapping[str, Any] = field(default_factory=lambda: MappingProxyType({}))
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "object_id_or_value", freeze_value(self.object_id_or_value))
+        object.__setattr__(self, "qualifiers", freeze_value(self.qualifiers))
+
 
 @dataclass(frozen=True, slots=True)
 class CanonicalEvent:
@@ -109,6 +150,11 @@ class CanonicalEvent:
     caused_by_action_id: str | None
     schema_version: str
     event_digest: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "actor_ids", tuple(self.actor_ids))
+        object.__setattr__(self, "target_ids", tuple(self.target_ids))
+        object.__setattr__(self, "payload", freeze_value(self.payload))
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,6 +173,10 @@ class ObservationDraft:
     derived_from_acknowledgement_id: str | None = None
     inference_rule_id: str | None = None
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "source_event_ids", tuple(self.source_event_ids))
+        object.__setattr__(self, "source_observation_ids", tuple(self.source_observation_ids))
+
 
 @dataclass(frozen=True, slots=True)
 class Observation:
@@ -144,6 +194,10 @@ class Observation:
     world_version_seen: int
     derived_from_acknowledgement_id: str | None = None
     inference_rule_id: str | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "source_event_ids", tuple(self.source_event_ids))
+        object.__setattr__(self, "source_observation_ids", tuple(self.source_observation_ids))
 
 
 @dataclass(frozen=True, slots=True)
@@ -171,6 +225,11 @@ class MemoryVersion:
     created_tick: int
     rewrite_reason_code: str | None
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "parent_version_ids", tuple(self.parent_version_ids))
+        object.__setattr__(self, "observation_ids", tuple(self.observation_ids))
+        object.__setattr__(self, "initial_emotion_residue", tuple(self.initial_emotion_residue))
+
 
 @dataclass(frozen=True, slots=True)
 class MemoryStateSnapshot:
@@ -182,6 +241,9 @@ class MemoryStateSnapshot:
     emotion_residue: tuple[EmotionalResidue, ...]
     last_transition_event_id: str
     last_transition_tick: int
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "emotion_residue", tuple(self.emotion_residue))
 
 
 @dataclass(frozen=True, slots=True)
@@ -199,6 +261,9 @@ class ForgettingEvent:
     emotion_deltas: tuple[EmotionalResidue, ...]
     world_tick: int
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "emotion_deltas", tuple(self.emotion_deltas))
+
 
 @dataclass(frozen=True, slots=True)
 class MemoryQueryResult:
@@ -207,6 +272,9 @@ class MemoryQueryResult:
     version_state: VersionState
     claim: Claim | None
     emotion_residue: tuple[EmotionalResidue, ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "emotion_residue", tuple(self.emotion_residue))
 
 
 @dataclass(frozen=True, slots=True)
