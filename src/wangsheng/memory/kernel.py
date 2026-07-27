@@ -10,14 +10,19 @@ from typing import Any, Mapping, Sequence
 
 from .errors import MemoryErrorCode, MemoryKernelError
 from .models import (
+    UNKNOWN,
     AccessState,
+    AcknowledgementOutcome,
     BranchResult,
     CanonicalEvent,
     Claim,
+    ConflictType,
+    ConnectionVersion,
     EmotionalResidue,
     ForgettingEvent,
     ForgettingMode,
     KernelConfig,
+    MemoryConflict,
     MemoryQueryResult,
     MemoryStateSnapshot,
     MemoryVersion,
@@ -25,6 +30,10 @@ from .models import (
     NameRecordDraft,
     Observation,
     ObservationDraft,
+    PermissionLevel,
+    Polarity,
+    RecognitionScope,
+    RecordStatus,
     ReplayVerification,
     SourceKind,
     StressSummary,
@@ -35,6 +44,68 @@ from .models import (
 
 
 P1_NOT_IMPLEMENTED = "V0.7_P1_CONTRACT_ONLY"
+
+
+_PERMISSION_RANK = {
+    PermissionLevel.L1_WITNESS: 1,
+    PermissionLevel.L2_BELONGING: 2,
+    PermissionLevel.L3_LIMITED_CONTINUITY: 3,
+    PermissionLevel.L4_PUBLIC_INSTITUTION: 4,
+}
+
+_PREDICATE_MIN_PERMISSION = {
+    "SELF_IDENTIFIED_AS": PermissionLevel.L1_WITNESS,
+    "HAS_OLD_CONNECTION_TO": PermissionLevel.L1_WITNESS,
+    "HAS_NO_CLEAR_MEMORY_OF": PermissionLevel.L1_WITNESS,
+    "WAS_KNOCKED": PermissionLevel.L1_WITNESS,
+    "PROTECTED_VISITOR_OF": PermissionLevel.L2_BELONGING,
+    "EXCLUSIVE_OCCUPANT_OF": PermissionLevel.L2_BELONGING,
+    "SOLE_OFFICE_HOLDER_OF": PermissionLevel.L2_BELONGING,
+    "CLAIMS_CAPACITY_SLOT_IN": PermissionLevel.L2_BELONGING,
+    "CONTINUES_OLD_RESIDENT_CONNECTION": PermissionLevel.L3_LIMITED_CONTINUITY,
+    "CURRENT_PERSON_USES_NAME_XIAOMAN": PermissionLevel.L3_LIMITED_CONTINUITY,
+    "NAME_RECOGNIZED_HISTORY_UNRESOLVED": PermissionLevel.L3_LIMITED_CONTINUITY,
+}
+
+_L3_PREDICATES = {
+    "CONTINUES_OLD_RESIDENT_CONNECTION",
+    "CURRENT_PERSON_USES_NAME_XIAOMAN",
+    "NAME_RECOGNIZED_HISTORY_UNRESOLVED",
+}
+
+_CONSENT_REQUIRED_PREDICATES = {
+    "PROTECTED_VISITOR_OF",
+    "EXCLUSIVE_OCCUPANT_OF",
+    "SOLE_OFFICE_HOLDER_OF",
+    "CLAIMS_CAPACITY_SLOT_IN",
+    *_L3_PREDICATES,
+}
+
+_LOGICALLY_SINGLE_VALUED_PREDICATES = {
+    "SELF_IDENTIFIED_AS",
+    "PERMANENT_RESIDENT_OF",
+    "CONTINUES_OLD_RESIDENT_CONNECTION",
+    "CURRENT_PERSON_USES_NAME_XIAOMAN",
+}
+
+_CONFLICT_MITIGATIONS = {
+    ConflictType.LOGICAL_EXCLUSION: (
+        "PLAN_PROSPECTIVE_REPLACEMENT",
+    ),
+    ConflictType.PHYSICAL_EXCLUSIVITY: (
+        "PLAN_REASSIGN_RESOURCE",
+        "PLAN_PROSPECTIVE_REPLACEMENT",
+    ),
+    ConflictType.INSTITUTIONAL_EXCLUSIVITY: (
+        "PLAN_TRANSFER_OFFICE",
+        "PLAN_PROSPECTIVE_REPLACEMENT",
+    ),
+    ConflictType.DECLARED_CAPACITY_COMPETITION: (
+        "PLAN_EXPAND_CAPACITY",
+        "PLAN_RELEASE_CAPACITY",
+        "PLAN_PROSPECTIVE_REPLACEMENT",
+    ),
+}
 
 
 def _canonical_json(value: Any) -> str:
@@ -122,6 +193,17 @@ class MemoryVersioningKernel:
         self._forgetting_events: deque[ForgettingEvent] = deque(
             maxlen=self.config.recent_forgetting_events_cache
         )
+        self._name_records: list[NameRecord] = []
+        self._name_records_by_id: dict[str, NameRecord] = {}
+        self._conflicts: list[MemoryConflict] = []
+        self._conflicts_by_id: dict[str, MemoryConflict] = {}
+        self._connection_versions: list[ConnectionVersion] = []
+        self._connection_versions_by_id: dict[str, ConnectionVersion] = {}
+        self._active_connection_version_ids: list[str] = []
+        self._acknowledgements: deque[WorldAcknowledgement] = deque(
+            maxlen=self.config.recent_acknowledgement_cache
+        )
+        self._acknowledgements_by_id: dict[str, WorldAcknowledgement] = {}
         self._history_trace: list[Mapping[str, Any]] = []
         self._id_counters: dict[str, int] = defaultdict(int)
 
@@ -703,13 +785,398 @@ class MemoryVersioningKernel:
         *,
         detected_tick: int,
     ) -> tuple[MemoryStateSnapshot, ...]:
-        self._missing()
+        ids = tuple(memory_version_ids)
+        if len(ids) < 2 or len(set(ids)) != len(ids):
+            raise self._error(
+                MemoryErrorCode.CONFLICT_UNSUPPORTED_TYPE,
+                "contradiction requires at least two distinct memory versions",
+                memory_version_ids=ids,
+            )
+        versions = tuple(self.get_memory_version(item) for item in ids)
+        owner_ids = {item.owner_id for item in versions}
+        if len(owner_ids) != 1:
+            raise self._error(
+                MemoryErrorCode.MEMORY_KNOWLEDGE_LEAK,
+                "contradiction registration is actor-local",
+                memory_version_ids=ids,
+                owner_ids=tuple(sorted(owner_ids)),
+            )
+        anchor = versions[0].claim
+        for version in versions[1:]:
+            if not self._claims_logically_exclusive(anchor, version.claim):
+                raise self._error(
+                    MemoryErrorCode.CONFLICT_UNSUPPORTED_TYPE,
+                    "memory claims are not logically exclusive",
+                    memory_version_ids=ids,
+                )
+        previous_states = tuple(self.get_memory_state(item) for item in ids)
+        if all(state.version_state == VersionState.CONTRADICTED for state in previous_states):
+            return previous_states
+        if any(state.version_state != VersionState.ACTIVE for state in previous_states):
+            raise self._error(
+                MemoryErrorCode.MEMORY_INVALID_TRANSITION,
+                "only active memory versions can enter a new contradiction set",
+                memory_version_ids=ids,
+                version_states=tuple(state.version_state for state in previous_states),
+            )
+        updated_states = tuple(
+            replace(
+                state,
+                state_revision=state.state_revision + 1,
+                version_state=VersionState.CONTRADICTED,
+                last_transition_event_id=f"memory-contradiction:{detected_tick}:{index + 1}",
+                last_transition_tick=detected_tick,
+            )
+            for index, state in enumerate(previous_states)
+        )
+        for state in updated_states:
+            self._memory_states[state.memory_version_id] = state
+        self._append_trace(
+            "MEMORY_CONTRADICTION_REGISTERED",
+            {"memory_version_ids": ids, "detected_tick": detected_tick},
+        )
+        return updated_states
+
+    @staticmethod
+    def _claims_logically_exclusive(left: Claim, right: Claim) -> bool:
+        if (
+            left.subject_id != right.subject_id
+            or left.predicate != right.predicate
+            or left.time_scope != right.time_scope
+            or left.recognition_scope != right.recognition_scope
+        ):
+            return False
+        if left.polarity != right.polarity and Polarity.UNKNOWN not in (left.polarity, right.polarity):
+            return left.object_id_or_value == right.object_id_or_value
+        return (
+            left.predicate in _LOGICALLY_SINGLE_VALUED_PREDICATES
+            and left.polarity == right.polarity == Polarity.AFFIRM
+            and left.object_id_or_value != right.object_id_or_value
+        )
+
+    def _validated_record_sources(
+        self,
+        draft: NameRecordDraft,
+    ) -> tuple[tuple[MemoryVersion, ...], tuple[Observation, ...]]:
+        if not draft.source_memory_version_ids and not draft.source_observation_ids:
+            raise self._error(
+                MemoryErrorCode.RECORD_SCHEMA_INCOMPLETE,
+                "NameRecord requires at least one memory or observation source",
+            )
+        memories: list[MemoryVersion] = []
+        observations: list[Observation] = []
+        for memory_id in draft.source_memory_version_ids:
+            memories.append(self.get_memory_version(memory_id))
+        for observation_id in draft.source_observation_ids:
+            observation = self._observations_by_id.get(observation_id)
+            if observation is None:
+                raise self._error(
+                    MemoryErrorCode.MEMORY_UNKNOWN_SOURCE,
+                    "NameRecord references an unknown observation",
+                    observation_id=observation_id,
+                )
+            observations.append(observation)
+        source_observation_ids = {
+            observation_id
+            for memory in memories
+            for observation_id in memory.observation_ids
+        }
+        source_observation_ids.update(item.observation_id for item in observations)
+        source_observations = tuple(self._observations_by_id[item] for item in sorted(source_observation_ids))
+        return tuple(memories), source_observations
+
+    def _validate_record_structure(self, draft: NameRecordDraft) -> None:
+        claim = draft.claim
+        if (
+            not claim.subject_id
+            or not claim.predicate
+            or claim.object_id_or_value in (None, UNKNOWN, "")
+            or not claim.time_scope
+        ):
+            raise self._error(
+                MemoryErrorCode.RECORD_SCHEMA_INCOMPLETE,
+                "formal NameRecord requires all five structured claim elements",
+            )
+        if draft.recognition_scope != claim.recognition_scope:
+            raise self._error(
+                MemoryErrorCode.RECORD_SCHEMA_INCOMPLETE,
+                "record scope and claim scope must match",
+            )
+        if draft.recognition_scope != RecognitionScope.HALL_LOCAL:
+            raise self._error(
+                MemoryErrorCode.RECORD_PERMISSION_EXCEEDED,
+                "v0.7 P1-P5 only support HALL_LOCAL recognition",
+                recognition_scope=draft.recognition_scope,
+            )
+        required = _PREDICATE_MIN_PERMISSION.get(claim.predicate)
+        if required is None:
+            raise self._error(
+                MemoryErrorCode.RECORD_PERMISSION_EXCEEDED,
+                "predicate has no v0.7 permission rule",
+                predicate=claim.predicate,
+            )
+        if _PERMISSION_RANK[draft.permission_level] < _PERMISSION_RANK[required]:
+            raise self._error(
+                MemoryErrorCode.RECORD_PERMISSION_EXCEEDED,
+                "record permission is below the predicate minimum",
+                predicate=claim.predicate,
+                supplied=draft.permission_level,
+                required=required,
+            )
+        if draft.permission_level == PermissionLevel.L4_PUBLIC_INSTITUTION:
+            raise self._error(
+                MemoryErrorCode.RECORD_PERMISSION_EXCEEDED,
+                "L4 public institution recognition is out of v0.7 scope",
+            )
+        if claim.time_scope in {"PAST_ALWAYS", "RETROACTIVE", "BEFORE_D1"}:
+            raise self._error(
+                MemoryErrorCode.RECORD_ATTEMPTS_PAST_REWRITE,
+                "NameRecord cannot retroactively replace occurrence history",
+                time_scope=claim.time_scope,
+            )
+
+    def _acknowledgement_is_same_or_descendant(
+        self,
+        candidate_acknowledgement_id: str,
+        ancestor_acknowledgement_id: str,
+    ) -> bool:
+        if candidate_acknowledgement_id == ancestor_acknowledgement_id:
+            return True
+        pending = [candidate_acknowledgement_id]
+        visited: set[str] = set()
+        while pending:
+            acknowledgement_id = pending.pop()
+            if acknowledgement_id in visited:
+                continue
+            visited.add(acknowledgement_id)
+            acknowledgement = self._acknowledgements_by_id.get(acknowledgement_id)
+            if acknowledgement is None:
+                continue
+            record = self._name_records_by_id.get(acknowledgement.name_record_id)
+            if record is None:
+                continue
+            for parent_id in record.parent_acknowledgement_ids:
+                if parent_id == ancestor_acknowledgement_id:
+                    return True
+                pending.append(parent_id)
+        return False
+
+    def _validate_record_source_families(
+        self,
+        draft: NameRecordDraft,
+        observations: Sequence[Observation],
+    ) -> None:
+        families = tuple(draft.source_family_ids)
+        if not families or any(not item for item in families):
+            raise self._error(
+                MemoryErrorCode.RECORD_SCHEMA_INCOMPLETE,
+                "NameRecord requires non-empty source families",
+            )
+        if len(set(families)) != len(families):
+            raise self._error(
+                MemoryErrorCode.EVIDENCE_SOURCE_FAMILY_DUPLICATE,
+                "duplicate copies from one source family do not count as independent support",
+                source_family_ids=families,
+            )
+        observed_families = {item.source_family_id for item in observations}
+        if not observed_families.issubset(set(families)):
+            raise self._error(
+                MemoryErrorCode.MEMORY_UNKNOWN_SOURCE,
+                "declared source families omit referenced observation provenance",
+                missing_source_family_ids=tuple(sorted(observed_families - set(families))),
+            )
+        parent_ids = set(draft.parent_acknowledgement_ids)
+        for observation in observations:
+            derived_id = observation.derived_from_acknowledgement_id
+            if derived_id is None:
+                continue
+            if any(
+                self._acknowledgement_is_same_or_descendant(derived_id, parent_id)
+                for parent_id in parent_ids
+            ):
+                raise self._error(
+                    MemoryErrorCode.EVIDENCE_SELF_PROVING,
+                    "manifested evidence cannot prove its parent or ancestor acknowledgement",
+                    observation_id=observation.observation_id,
+                    acknowledgement_id=derived_id,
+                    parent_acknowledgement_ids=tuple(sorted(parent_ids)),
+                )
+
+    def _validate_record_consent_and_evidence(
+        self,
+        draft: NameRecordDraft,
+        observations: Sequence[Observation],
+    ) -> None:
+        claim = draft.claim
+        if claim.predicate in _CONSENT_REQUIRED_PREDICATES and claim.subject_id not in draft.consenting_actor_ids:
+            raise self._error(
+                MemoryErrorCode.RECORD_CONSENT_REQUIRED,
+                "this identity, belonging or exclusivity claim requires the current subject's consent",
+                subject_id=claim.subject_id,
+                predicate=claim.predicate,
+            )
+        if claim.predicate == "CONTINUES_OLD_RESIDENT_CONNECTION":
+            independent_families = {
+                item.source_family_id
+                for item in observations
+                if item.derived_from_acknowledgement_id is None
+            }
+            body_supported = any(
+                item.claim.predicate in {"BODY_CONTINUITY_SUPPORTED", "CURRENT_BODY_MATCHES_OLD_RESIDENT"}
+                or bool(item.claim.qualifiers.get("body_continuity_supported", False))
+                for item in observations
+            )
+            if not body_supported or len(independent_families) < 2:
+                raise self._error(
+                    MemoryErrorCode.MEMORY_UNKNOWN_SOURCE,
+                    "old-resident continuation requires body support and two independent source families",
+                    body_supported=body_supported,
+                    independent_source_family_count=len(independent_families),
+                )
 
     def create_name_record(self, draft: NameRecordDraft) -> NameRecord:
-        self._missing()
+        self._validate_record_structure(draft)
+        _, observations = self._validated_record_sources(draft)
+        self._validate_record_source_families(draft, observations)
+        self._validate_record_consent_and_evidence(draft, observations)
+        record = NameRecord(
+            name_record_id=self._next_id("name-record"),
+            source_memory_version_ids=draft.source_memory_version_ids,
+            source_observation_ids=draft.source_observation_ids,
+            source_family_ids=draft.source_family_ids,
+            claim=draft.claim,
+            permission_level=draft.permission_level,
+            record_status=RecordStatus.CONFIRMED if draft.confirmed_by_player else RecordStatus.DRAFT,
+            confirmed_by_player=draft.confirmed_by_player,
+            consenting_actor_ids=draft.consenting_actor_ids,
+            effective_from_tick=draft.effective_from_tick,
+            recognition_scope=draft.recognition_scope,
+            mitigation_plan_ids=draft.mitigation_plan_ids,
+            created_tick=draft.created_tick,
+            parent_acknowledgement_ids=draft.parent_acknowledgement_ids,
+        )
+        self._name_records.append(record)
+        self._name_records_by_id[record.name_record_id] = record
+        self._append_trace("NAME_RECORD_CREATED", {"name_record": record})
+        return record
 
     def get_name_record(self, name_record_id: str) -> NameRecord:
-        self._missing()
+        try:
+            return self._name_records_by_id[name_record_id]
+        except KeyError as exc:
+            raise self._error(
+                MemoryErrorCode.MEMORY_UNKNOWN_SOURCE,
+                "NameRecord does not exist",
+                name_record_id=name_record_id,
+            ) from exc
+
+    @staticmethod
+    def _physical_resource_key(claim: Claim) -> str | None:
+        if claim.predicate == "EXCLUSIVE_OCCUPANT_OF":
+            return f"physical:{claim.object_id_or_value}"
+        return None
+
+    @staticmethod
+    def _institutional_resource_key(claim: Claim) -> str | None:
+        if claim.predicate == "SOLE_OFFICE_HOLDER_OF":
+            return f"institutional:{claim.object_id_or_value}"
+        return None
+
+    @staticmethod
+    def _capacity_resource_key(claim: Claim) -> str | None:
+        if claim.predicate != "CLAIMS_CAPACITY_SLOT_IN":
+            return None
+        resource = claim.qualifiers.get("resource_key", claim.object_id_or_value)
+        return f"capacity:{resource}"
+
+    def _classify_connection_conflict(
+        self,
+        candidate: Claim,
+        existing: Claim,
+    ) -> tuple[ConflictType, str] | None:
+        if self._claims_logically_exclusive(candidate, existing):
+            return (
+                ConflictType.LOGICAL_EXCLUSION,
+                f"logical:{candidate.subject_id}:{candidate.predicate}:{candidate.time_scope}",
+            )
+        candidate_key = self._physical_resource_key(candidate)
+        existing_key = self._physical_resource_key(existing)
+        if candidate_key is not None and candidate_key == existing_key and candidate.subject_id != existing.subject_id:
+            return ConflictType.PHYSICAL_EXCLUSIVITY, candidate_key
+        candidate_key = self._institutional_resource_key(candidate)
+        existing_key = self._institutional_resource_key(existing)
+        if candidate_key is not None and candidate_key == existing_key and candidate.subject_id != existing.subject_id:
+            return ConflictType.INSTITUTIONAL_EXCLUSIVITY, candidate_key
+        candidate_key = self._capacity_resource_key(candidate)
+        existing_key = self._capacity_resource_key(existing)
+        if candidate_key is not None and candidate_key == existing_key and candidate.subject_id != existing.subject_id:
+            declared_capacity = int(candidate.qualifiers.get("declared_capacity", 1))
+            existing_capacity = int(existing.qualifiers.get("declared_capacity", declared_capacity))
+            if declared_capacity <= 1 or existing_capacity <= 1:
+                return ConflictType.DECLARED_CAPACITY_COMPETITION, candidate_key
+        return None
+
+    def _prospective_conflicts(
+        self,
+        record: NameRecord,
+        *,
+        detected_tick: int,
+    ) -> tuple[tuple[MemoryConflict, ConnectionVersion], ...]:
+        result: list[tuple[MemoryConflict, ConnectionVersion]] = []
+        next_index = len(self._conflicts) + 1
+        capacity_key = self._capacity_resource_key(record.claim)
+        capacity_connections: list[ConnectionVersion] = []
+        for connection_id in self._active_connection_version_ids:
+            existing = self._connection_versions_by_id[connection_id]
+            if capacity_key is not None and self._capacity_resource_key(existing.claim) == capacity_key:
+                capacity_connections.append(existing)
+                continue
+            classified = self._classify_connection_conflict(record.claim, existing.claim)
+            if classified is None:
+                continue
+            conflict_type, resource_key = classified
+            conflict = MemoryConflict(
+                conflict_id=f"conflict.v070.{next_index:08d}",
+                conflict_type=conflict_type,
+                candidate_ids=(existing.based_on_name_record_id, record.name_record_id),
+                resource_key=resource_key,
+                detected_tick=detected_tick,
+                required_mitigation_types=_CONFLICT_MITIGATIONS[conflict_type],
+                resolution_status="PENDING",
+            )
+            result.append((conflict, existing))
+            next_index += 1
+        if capacity_key is not None:
+            declared_capacity = int(record.claim.qualifiers.get("declared_capacity", 1))
+            if declared_capacity < 1:
+                raise self._error(
+                    MemoryErrorCode.RECORD_SCHEMA_INCOMPLETE,
+                    "declared capacity must be a positive integer",
+                    declared_capacity=declared_capacity,
+                )
+            occupied_subjects = {item.claim.subject_id for item in capacity_connections}
+            occupied_subjects.add(record.claim.subject_id)
+            if len(occupied_subjects) > declared_capacity:
+                representative = capacity_connections[0]
+                conflict = MemoryConflict(
+                    conflict_id=f"conflict.v070.{next_index:08d}",
+                    conflict_type=ConflictType.DECLARED_CAPACITY_COMPETITION,
+                    candidate_ids=tuple(
+                        item.based_on_name_record_id for item in capacity_connections
+                    ) + (record.name_record_id,),
+                    resource_key=capacity_key,
+                    detected_tick=detected_tick,
+                    required_mitigation_types=_CONFLICT_MITIGATIONS[
+                        ConflictType.DECLARED_CAPACITY_COMPETITION
+                    ],
+                    resolution_status="PENDING",
+                )
+                result.append((conflict, representative))
+        return tuple(result)
+
+    @staticmethod
+    def _mitigation_satisfies(record: NameRecord, conflict: MemoryConflict) -> bool:
+        return bool(set(record.mitigation_plan_ids).intersection(conflict.required_mitigation_types))
 
     def acknowledge_name_record(
         self,
@@ -717,16 +1184,157 @@ class MemoryVersioningKernel:
         *,
         world_tick: int,
     ) -> WorldAcknowledgement:
-        self._missing()
+        record = self.get_name_record(name_record_id)
+        if record.record_status != RecordStatus.CONFIRMED or not record.confirmed_by_player:
+            raise self._error(
+                MemoryErrorCode.RECORD_SCHEMA_INCOMPLETE,
+                "only a player-confirmed NameRecord can be acknowledged",
+                name_record_id=name_record_id,
+                record_status=record.record_status,
+            )
+        conflicts = self._prospective_conflicts(record, detected_tick=world_tick)
+        missing = tuple(
+            conflict
+            for conflict, _ in conflicts
+            if not self._mitigation_satisfies(record, conflict)
+        )
+        if missing:
+            first = missing[0]
+            raise self._error(
+                MemoryErrorCode.CONFLICT_MITIGATION_REQUIRED,
+                "typed connection conflict requires an explicit mitigation plan",
+                conflict_type=first.conflict_type,
+                resource_key=first.resource_key,
+                required_mitigation_types=first.required_mitigation_types,
+            )
+
+        # All validation is complete above. From this point mutations form one
+        # deterministic in-memory transaction with no user callbacks.
+        conflict_records = tuple(replace(item, resolution_status="MITIGATED") for item, _ in conflicts)
+        superseded_ids: list[str] = []
+        superseding_plans = {
+            "PLAN_PROSPECTIVE_REPLACEMENT",
+            "PLAN_REASSIGN_RESOURCE",
+            "PLAN_TRANSFER_OFFICE",
+            "PLAN_RELEASE_CAPACITY",
+        }
+        if conflicts and set(record.mitigation_plan_ids).intersection(superseding_plans):
+            superseded_ids.extend(existing.connection_version_id for _, existing in conflicts)
+        superseded_ids = list(dict.fromkeys(superseded_ids))
+        outcome = (
+            AcknowledgementOutcome.PROSPECTIVELY_REPLACED
+            if superseded_ids
+            else AcknowledgementOutcome.ESTABLISHED
+        )
+        acknowledgement_id = self._next_id("acknowledgement")
+        connection_id = self._next_id("connection-version")
+        superseded_connections = tuple(
+            self._connection_versions_by_id[item] for item in superseded_ids
+        )
+        if superseded_connections:
+            connection_lineage_id = superseded_connections[0].connection_lineage_id
+            version_no = max(item.version_no for item in superseded_connections) + 1
+        else:
+            connection_lineage_id = self._next_id("connection-lineage")
+            version_no = 1
+        connection = ConnectionVersion(
+            connection_lineage_id=connection_lineage_id,
+            connection_version_id=connection_id,
+            version_no=version_no,
+            claim=record.claim,
+            status="ACTIVE",
+            based_on_name_record_id=record.name_record_id,
+            effective_from_tick=max(world_tick, record.effective_from_tick),
+            effective_until_tick=None,
+            scope=record.recognition_scope,
+            supersedes_connection_version_ids=tuple(superseded_ids),
+        )
+        acknowledgement = WorldAcknowledgement(
+            acknowledgement_id=acknowledgement_id,
+            name_record_id=record.name_record_id,
+            outcome=outcome,
+            created_connection_version_ids=(connection_id,),
+            superseded_connection_version_ids=tuple(superseded_ids),
+            conflict_ids=tuple(item.conflict_id for item in conflict_records),
+            manifestation_delta_ids=(),
+            audit_reasons=(
+                "STRUCTURE_VALID",
+                "PERMISSION_VALID",
+                "SOURCE_PROVENANCE_VALID",
+                "CONSENT_VALID",
+                "CONFLICTS_MITIGATED" if conflicts else "NO_TYPED_CONFLICT",
+            ),
+            world_tick=world_tick,
+        )
+
+        for superseded_id in superseded_ids:
+            old = self._connection_versions_by_id[superseded_id]
+            updated = replace(old, status="SUPERSEDED", effective_until_tick=connection.effective_from_tick)
+            self._connection_versions_by_id[superseded_id] = updated
+            index = self._connection_versions.index(old)
+            self._connection_versions[index] = updated
+            self._active_connection_version_ids.remove(superseded_id)
+        for conflict in conflict_records:
+            self._conflicts.append(conflict)
+            self._conflicts_by_id[conflict.conflict_id] = conflict
+            self._id_counters["conflict"] += 1
+        self._connection_versions.append(connection)
+        self._connection_versions_by_id[connection.connection_version_id] = connection
+        self._active_connection_version_ids.append(connection.connection_version_id)
+        updated_record = replace(record, record_status=RecordStatus.ACKNOWLEDGED)
+        self._name_records_by_id[record.name_record_id] = updated_record
+        record_index = self._name_records.index(record)
+        self._name_records[record_index] = updated_record
+        self._acknowledgements.append(acknowledgement)
+        self._acknowledgements_by_id[acknowledgement.acknowledgement_id] = acknowledgement
+        self._append_trace(
+            "WORLD_ACKNOWLEDGEMENT_COMMITTED",
+            {
+                "acknowledgement": acknowledgement,
+                "connection": connection,
+                "conflicts": conflict_records,
+            },
+        )
+        return acknowledgement
 
     def active_connection_claims(self) -> tuple[Claim, ...]:
-        self._missing()
+        return tuple(
+            self._connection_versions_by_id[item].claim
+            for item in self._active_connection_version_ids
+            if self._connection_versions_by_id[item].status == "ACTIVE"
+        )
 
     def manifestation_state(self) -> Mapping[str, Any]:
         self._missing()
 
     def state_digest(self) -> str:
-        self._missing()
+        return _sha256(
+            {
+                "events": self._events,
+                "observations": self._observations,
+                "memory_versions": tuple(
+                    self._memory_versions[key] for key in sorted(self._memory_versions)
+                ),
+                "memory_states": tuple(
+                    self._memory_states[key] for key in sorted(self._memory_states)
+                ),
+                "forgetting_events": tuple(self._forgetting_events),
+                # Pending DRAFT/CONFIRMED records are ledger candidates, not yet
+                # authoritative world state. Excluding them keeps a rejected
+                # acknowledgement atomic from the world-state digest while the
+                # append-only audit ledger still preserves the candidate.
+                "name_records": tuple(
+                    item
+                    for item in self._name_records
+                    if item.record_status
+                    in (RecordStatus.ACKNOWLEDGED, RecordStatus.WITHDRAWN, RecordStatus.SUPERSEDED)
+                ),
+                "conflicts": tuple(self._conflicts),
+                "connection_versions": tuple(self._connection_versions),
+                "active_connection_version_ids": tuple(self._active_connection_version_ids),
+                "acknowledgements": tuple(self._acknowledgements),
+            }
+        )
 
     def save_state(self) -> bytes:
         self._missing()

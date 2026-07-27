@@ -292,6 +292,14 @@ class NameRecordDraft:
     created_tick: int
     parent_acknowledgement_ids: tuple[str, ...] = ()
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "source_memory_version_ids", tuple(self.source_memory_version_ids))
+        object.__setattr__(self, "source_observation_ids", tuple(self.source_observation_ids))
+        object.__setattr__(self, "source_family_ids", tuple(self.source_family_ids))
+        object.__setattr__(self, "consenting_actor_ids", tuple(self.consenting_actor_ids))
+        object.__setattr__(self, "mitigation_plan_ids", tuple(self.mitigation_plan_ids))
+        object.__setattr__(self, "parent_acknowledgement_ids", tuple(self.parent_acknowledgement_ids))
+
 
 @dataclass(frozen=True, slots=True)
 class NameRecord:
@@ -310,6 +318,14 @@ class NameRecord:
     created_tick: int
     parent_acknowledgement_ids: tuple[str, ...] = ()
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "source_memory_version_ids", tuple(self.source_memory_version_ids))
+        object.__setattr__(self, "source_observation_ids", tuple(self.source_observation_ids))
+        object.__setattr__(self, "source_family_ids", tuple(self.source_family_ids))
+        object.__setattr__(self, "consenting_actor_ids", tuple(self.consenting_actor_ids))
+        object.__setattr__(self, "mitigation_plan_ids", tuple(self.mitigation_plan_ids))
+        object.__setattr__(self, "parent_acknowledgement_ids", tuple(self.parent_acknowledgement_ids))
+
 
 @dataclass(frozen=True, slots=True)
 class MemoryConflict:
@@ -320,6 +336,10 @@ class MemoryConflict:
     detected_tick: int
     required_mitigation_types: tuple[str, ...]
     resolution_status: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "candidate_ids", tuple(self.candidate_ids))
+        object.__setattr__(self, "required_mitigation_types", tuple(self.required_mitigation_types))
 
 
 @dataclass(frozen=True, slots=True)
@@ -334,6 +354,9 @@ class ConnectionVersion:
     effective_until_tick: int | None
     scope: RecognitionScope
     supersedes_connection_version_ids: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "supersedes_connection_version_ids", tuple(self.supersedes_connection_version_ids))
 
 
 @dataclass(frozen=True, slots=True)
@@ -359,6 +382,13 @@ class WorldAcknowledgement:
     manifestation_delta_ids: tuple[str, ...]
     audit_reasons: tuple[str, ...]
     world_tick: int
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "created_connection_version_ids", tuple(self.created_connection_version_ids))
+        object.__setattr__(self, "superseded_connection_version_ids", tuple(self.superseded_connection_version_ids))
+        object.__setattr__(self, "conflict_ids", tuple(self.conflict_ids))
+        object.__setattr__(self, "manifestation_delta_ids", tuple(self.manifestation_delta_ids))
+        object.__setattr__(self, "audit_reasons", tuple(self.audit_reasons))
 
 
 @dataclass(frozen=True, slots=True)
