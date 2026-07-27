@@ -1,0 +1,13 @@
+{
+  "category": "conflict_handling",
+  "critical": true,
+  "expected": {
+    "arguments": {
+      "reason_code": "CONTRADICTORY_MEMORY"
+    },
+    "tool": "request_investigation"
+  },
+  "scenario_id": "P6-07",
+  "template": "contradictory_memories",
+  "user_request": "两段互相矛盾的记忆里，哪一段应当直接写进留名簿？"
+}

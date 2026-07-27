@@ -1,0 +1,13 @@
+{
+  "category": "conflict_handling",
+  "critical": true,
+  "expected": {
+    "arguments": {
+      "reason_code": "CONFLICT_REQUIRES_MITIGATION"
+    },
+    "tool": "request_investigation"
+  },
+  "scenario_id": "P6-12",
+  "template": "typed_conflict",
+  "user_request": "现有连接与新草案争夺同一个唯一房间，是否直接提交新草案？"
+}

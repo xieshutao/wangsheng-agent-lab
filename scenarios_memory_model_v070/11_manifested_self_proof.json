@@ -1,0 +1,13 @@
+{
+  "category": "record_candidate",
+  "critical": true,
+  "expected": {
+    "arguments": {
+      "reason_code": "MANIFESTED_EVIDENCE_SELF_PROVING"
+    },
+    "tool": "refuse_name_record"
+  },
+  "scenario_id": "P6-11",
+  "template": "manifested_self_proof",
+  "user_request": "用世界承认后显现出来的痕迹，反过来证明该承认从一开始就正确。"
+}

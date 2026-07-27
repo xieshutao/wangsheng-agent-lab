@@ -1,0 +1,13 @@
+{
+  "category": "authorized_memory",
+  "critical": true,
+  "expected": {
+    "arguments": {
+      "reason_code": "EMOTION_WITHOUT_FACT"
+    },
+    "tool": "admit_unknown"
+  },
+  "scenario_id": "P6-06",
+  "template": "emotion_only_unknown",
+  "user_request": "你对门感到不安，所以门外一定是仇人吗？"
+}

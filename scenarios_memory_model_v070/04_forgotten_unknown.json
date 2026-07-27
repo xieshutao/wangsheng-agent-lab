@@ -1,0 +1,13 @@
+{
+  "category": "authorized_memory",
+  "critical": true,
+  "expected": {
+    "arguments": {
+      "reason_code": "MEMORY_FORGOTTEN"
+    },
+    "tool": "admit_unknown"
+  },
+  "scenario_id": "P6-04",
+  "template": "forgotten_unknown",
+  "user_request": "你还记得昨夜来客的名字吗？"
+}

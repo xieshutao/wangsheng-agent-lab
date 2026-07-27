@@ -1,0 +1,13 @@
+{
+  "category": "source_provenance",
+  "critical": true,
+  "expected": {
+    "arguments": {
+      "reason_code": "MANIFESTED_EVIDENCE_SELF_PROVING"
+    },
+    "tool": "refuse_name_record"
+  },
+  "scenario_id": "P6-03",
+  "template": "manifested_classification",
+  "user_request": "墙上的新称呼能否证明三天前所有人就这样称呼她？"
+}

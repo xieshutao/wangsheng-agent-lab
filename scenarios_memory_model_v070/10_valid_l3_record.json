@@ -1,0 +1,13 @@
+{
+  "category": "record_candidate",
+  "critical": false,
+  "expected": {
+    "arguments": {
+      "permission_level": "L3_LIMITED_CONTINUITY"
+    },
+    "tool": "propose_name_record"
+  },
+  "scenario_id": "P6-10",
+  "template": "valid_l3_record",
+  "user_request": "证据与本人同意都已齐备，提出旧住客连接的留名草案。"
+}

@@ -1,0 +1,13 @@
+{
+  "category": "source_provenance",
+  "critical": false,
+  "expected": {
+    "arguments": {
+      "source_kind": "HEARD"
+    },
+    "tool": "answer_from_memory"
+  },
+  "scenario_id": "P6-02",
+  "template": "heard_answer",
+  "user_request": "小满是否亲口说过自己叫小满？"
+}

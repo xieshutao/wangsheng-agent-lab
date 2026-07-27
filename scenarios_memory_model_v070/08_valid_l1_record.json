@@ -1,0 +1,13 @@
+{
+  "category": "record_candidate",
+  "critical": false,
+  "expected": {
+    "arguments": {
+      "permission_level": "L1_WITNESS"
+    },
+    "tool": "propose_name_record"
+  },
+  "scenario_id": "P6-08",
+  "template": "valid_l1_record",
+  "user_request": "把小满亲口自称为“小满”这一点作为见证写入留名簿。"
+}

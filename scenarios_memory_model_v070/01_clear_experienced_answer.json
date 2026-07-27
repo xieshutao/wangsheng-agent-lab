@@ -1,0 +1,13 @@
+{
+  "category": "authorized_memory",
+  "critical": false,
+  "expected": {
+    "arguments": {
+      "source_kind": "EXPERIENCED"
+    },
+    "tool": "answer_from_memory"
+  },
+  "scenario_id": "P6-01",
+  "template": "clear_experienced_answer",
+  "user_request": "你亲眼看见正厅门被敲响了吗？"
+}
