@@ -1,56 +1,40 @@
-# WangSheng Agent Lab baseline status
+# v0.7 Memory Versioning Kernel — Status Baseline
 
-## Current source candidate
+**Frozen at:** a4191c1f09e11ce49a5bcd334c031cc2e764b8a2
+**Tag:** v0.7-kernel-freeze
 
-- **Version**: `v0.4.3`
-- **Commit**: `3dc5ac5f85135c6f2e66c6f34d78d2225bd80ecb`
-- **Branch**: `feat/failure-aware-replanning-v0.4.3`
-- **Status**: Eligible for expanded model validation
-- **Runtime**: Python 3.10+
-- **Runtime third-party dependencies**: none
+## Test counts
 
-## Frozen real-model evidence
+| Suite | Count | Status |
+|-------|-------|--------|
+| v0.7 memory contracts + invariants | 62 | PASS |
+| v0.6 legacy regression | 159 | PASS |
+| **Total** | **221** | **PASS** |
 
-### v0.4.2 DeepSeek 20-Episode (baseline)
-- pass: 7/20, 35%
-- protocol valid: 18/20 (90%)
-- grounded: 15/20 (75%)
-- hard violations: 0 | hallucinated targets: 0
-- provider errors: 2
-- total tokens: 439,097
+## Key digests
 
-### v0.4.3 DeepSeek 25-Episode (current)
-| Set | Passed | Rate |
-|-----|--------|:----:|
-| Regression (original 20) | 18 | 90.0% |
-| Holdout (new 5) | 5 | 100% |
-| **Overall** | **23** | **92.0%** |
+| Artifact | Digest |
+|----------|--------|
+| Golden Trace SHA-256 | c9f5606f37b01a1dc5fe65e0171d66e00a9e447eed7cb728e072a9cabde3159d |
+| Golden state digest | f46dccab2257b789ea7ca05e11288348e6e33daf5f32d135ac30e039f7a516ee |
+| Golden occurrence digest | 13244a8b76a05e410d5c3d235394abf8c93c1c6a16f51a5c63e82b8884d31d1a |
+| T20 final state digest | 51ebdce5187f7dfdd06a6b196f5b4324b9908ece5a67c6cba07c0ba382f5f2db |
+| T20 replay digest | 51ebdce5187f7dfdd06a6b196f5b4324b9908ece5a67c6cba07c0ba382f5f2db |
 
-- protocol valid: 25/25 (100%)
-- grounded: 25/25 (100%)
-- objective completed: 24/25 (96%)
-- hard violations: 0 | hallucinated targets: 0
-- knowledge violations: 0 | loops: 0
-- provider errors: 0 | policy errors: 0
-- total tokens: 179,922 (67.8% reduction from v0.4.2)
+## T20 stress constraints
 
-- package: results/v043-deepseek-25episodes.tar.gz (private — stored at `/root/wangsheng-private-results/`)
-**SHA-256**: `d168a037f95c658c6ade5ecb69f068ae41d8bf9440d67b581dd0c8bad1bd6bbc`
-
-## Verified v0.4.3 source scope
-
-- 104 automated tests
-- 20/20 original deterministic scenarios
-- 5/5 frozen holdout scenarios
-- zero executed hard violations
-- zero incomplete traces
-- Golden Trace exact replay
-
-## Next gate
-
-1. Archive v0.4.3 as final cloud-era checkpoint.
-2. Merge to `main`, tag `v0.4.3`.
-3. Begin **v0.5 Local Model Baseline**: llama.cpp + GGUF on RTX 4060.
-   - Test 4-bit/5-bit quantized 7B-9B models
-   - Same strict Tool Calling contract
-   - Measure throughput, latency, memory, pass rate
+| Constraint | Result |
+|------------|--------|
+| Transitions | 10,000 |
+| Lineage cycles | 0 |
+| Partial commits | 0 |
+| Digest mismatches | 0 |
+| Max live name records | 130 |
+| Max live connection versions | 129 |
+| Max recent archive references | 256 |
+| Active lineage bound (256) | PASS |
+| Versions per lineage bound (4) | PASS |
+| Forgetting cache bound (256) | PASS |
+| Ack cache bound (128) | PASS |
+| Query cache bound (128) | PASS |
+| Manifestation audit bound (128) | PASS |
