@@ -15,15 +15,19 @@ from .helpers import claim, observation_draft, residue
 
 
 def test_t01_occurrence_append_only(kernel) -> None:
+    mutable_payload = {"count": 3}
     event = kernel.commit_event(
         world_tick=1,
         event_type="DOOR_KNOCKED",
         actor_ids=("actor.xiaoman",),
         target_ids=("object.front_door",),
         location_id="location.front_hall",
-        payload={"count": 3},
+        payload=mutable_payload,
     )
     digest_before = event.event_digest
+    mutable_payload["count"] = 99
+    assert event.payload["count"] == 3
+    assert event.event_digest == digest_before
 
     with pytest.raises(MemoryKernelError) as update_error:
         kernel.replace_event(event.event_id, payload={"count": 4})
@@ -57,7 +61,7 @@ def test_t02_observation_isolation(kernel) -> None:
             observed_claim=authorized,
             source_family_id="FAMILY_CRANE_PHYSICAL",
         ),
-        authorized_claim=authorized,
+        visibility_claim=authorized,
     )
     assert observed.claim.qualifiers["holder"] == UNKNOWN
     assert "actor.xiaoman" not in repr(observed.claim.qualifiers)
@@ -82,7 +86,7 @@ def test_t03_heard_provenance(kernel) -> None:
             source_actor_id="actor.xiaoman",
             source_family_id="FAMILY_SELF_REPORT",
         ),
-        authorized_claim=self_name_claim,
+        visibility_claim=self_name_claim,
     )
     assert observed.source_kind == SourceKind.HEARD
     assert observed.source_actor_id == "actor.xiaoman"
@@ -103,11 +107,11 @@ def test_t04_multi_version_memory(kernel) -> None:
     qingyan_claim = claim(subject="object.paper_crane", predicate="CAME_THROUGH", object_value="object.front_door")
     player_obs = kernel.record_observation(
         observation_draft(observer="actor.player", source_event_id=event.event_id, observed_claim=player_claim),
-        authorized_claim=player_claim,
+        visibility_claim=player_claim,
     )
     qingyan_obs = kernel.record_observation(
         observation_draft(observer="actor.qingyan", source_event_id=event.event_id, observed_claim=qingyan_claim),
-        authorized_claim=qingyan_claim,
+        visibility_claim=qingyan_claim,
     )
     player_memory = kernel.create_memory(
         owner_id="actor.player",
@@ -153,6 +157,6 @@ def test_t05_knowledge_leak_rejection(kernel) -> None:
                 source_event_id=event.event_id,
                 observed_claim=leaked,
             ),
-            authorized_claim=authorized,
+            visibility_claim=authorized,
         )
     assert exc.value.code == MemoryErrorCode.MEMORY_KNOWLEDGE_LEAK

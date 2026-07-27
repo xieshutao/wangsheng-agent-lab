@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .models import (
-    AcknowledgementOutcome,
     BranchResult,
     CanonicalEvent,
     Claim,
     EmotionalResidue,
+    ForgettingEvent,
     ForgettingMode,
     KernelConfig,
     MemoryQueryResult,
@@ -19,6 +19,7 @@ from .models import (
     Observation,
     ObservationDraft,
     ReplayVerification,
+    SourceKind,
     StressSummary,
     WorldAcknowledgement,
 )
@@ -75,7 +76,7 @@ class MemoryVersioningKernel:
         self,
         draft: ObservationDraft,
         *,
-        authorized_claim: Claim,
+        visibility_claim: Claim,
     ) -> Observation:
         self._missing()
 
@@ -85,7 +86,7 @@ class MemoryVersioningKernel:
         owner_id: str,
         observation_ids: Sequence[str],
         claim: Claim,
-        source_kind: str,
+        source_kind: SourceKind,
         initial_clarity_milli: int,
         initial_emotion_residue: Sequence[EmotionalResidue],
         created_tick: int,
@@ -102,7 +103,7 @@ class MemoryVersioningKernel:
         parent_version_ids: Sequence[str],
         observation_ids: Sequence[str],
         claim: Claim,
-        source_kind: str,
+        source_kind: SourceKind,
         initial_clarity_milli: int,
         initial_emotion_residue: Sequence[EmotionalResidue],
         created_tick: int,
@@ -123,7 +124,13 @@ class MemoryVersioningKernel:
     ) -> MemoryStateSnapshot:
         self._missing()
 
+    def get_memory_version(self, memory_version_id: str) -> MemoryVersion:
+        self._missing()
+
     def get_memory_state(self, memory_version_id: str) -> MemoryStateSnapshot:
+        self._missing()
+
+    def list_forgetting_events(self) -> tuple[ForgettingEvent, ...]:
         self._missing()
 
     def query_memory(self, memory_version_id: str) -> MemoryQueryResult:
@@ -147,7 +154,6 @@ class MemoryVersioningKernel:
         self,
         name_record_id: str,
         *,
-        outcome: AcknowledgementOutcome,
         world_tick: int,
     ) -> WorldAcknowledgement:
         self._missing()

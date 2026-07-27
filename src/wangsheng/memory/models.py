@@ -125,6 +125,7 @@ class ObservationDraft:
     acquired_tick: int
     world_version_seen: int
     derived_from_acknowledgement_id: str | None = None
+    inference_rule_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -142,6 +143,7 @@ class Observation:
     acquired_tick: int
     world_version_seen: int
     derived_from_acknowledgement_id: str | None = None
+    inference_rule_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -180,6 +182,22 @@ class MemoryStateSnapshot:
     emotion_residue: tuple[EmotionalResidue, ...]
     last_transition_event_id: str
     last_transition_tick: int
+
+
+@dataclass(frozen=True, slots=True)
+class ForgettingEvent:
+    forgetting_event_id: str
+    target_memory_version_id: str
+    previous_state_revision: int
+    new_state_revision: int
+    mode: ForgettingMode
+    reason_code: str
+    before_clarity_milli: int
+    after_clarity_milli: int
+    before_access_state: AccessState
+    after_access_state: AccessState
+    emotion_deltas: tuple[EmotionalResidue, ...]
+    world_tick: int
 
 
 @dataclass(frozen=True, slots=True)

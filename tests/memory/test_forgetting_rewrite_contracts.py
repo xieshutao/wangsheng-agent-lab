@@ -21,7 +21,7 @@ def _memory_with_residue(kernel):
             source_event_id=event.event_id,
             observed_claim=observed_claim,
         ),
-        authorized_claim=observed_claim,
+        visibility_claim=observed_claim,
     )
     memory = kernel.create_memory(
         owner_id="actor.qingyan",
@@ -47,6 +47,9 @@ def test_t06_fact_only_forgetting(kernel) -> None:
         world_tick=2,
     )
     result = kernel.query_memory(memory.memory_version_id)
+    forgetting_event = kernel.list_forgetting_events()[-1]
+    assert forgetting_event.target_memory_version_id == memory.memory_version_id
+    assert forgetting_event.new_state_revision == state.state_revision
     assert state.access_state == AccessState.FORGOTTEN
     assert result.claim is None
     assert len(result.emotion_residue) == 1
@@ -65,6 +68,9 @@ def test_t07_full_forgetting(kernel) -> None:
         world_tick=2,
     )
     result = kernel.query_memory(memory.memory_version_id)
+    forgetting_event = kernel.list_forgetting_events()[-1]
+    assert forgetting_event.target_memory_version_id == memory.memory_version_id
+    assert forgetting_event.new_state_revision == state.state_revision
     assert state.access_state == AccessState.FORGOTTEN
     assert result.claim is None
     assert result.emotion_residue == ()

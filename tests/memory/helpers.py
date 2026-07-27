@@ -40,6 +40,7 @@ def observation_draft(
     source_actor_id: str | None = None,
     source_family_id: str = "FAMILY_DAY1",
     derived_from_acknowledgement_id: str | None = None,
+    inference_rule_id: str | None = None,
 ) -> ObservationDraft:
     return ObservationDraft(
         observer_id=observer,
@@ -54,6 +55,7 @@ def observation_draft(
         acquired_tick=1,
         world_version_seen=1,
         derived_from_acknowledgement_id=derived_from_acknowledgement_id,
+        inference_rule_id=inference_rule_id,
     )
 
 

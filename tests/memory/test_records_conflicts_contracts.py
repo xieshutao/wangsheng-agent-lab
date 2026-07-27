@@ -13,6 +13,7 @@ from wangsheng.memory import (
     RecognitionScope,
     RecordStatus,
     SourceKind,
+    Polarity,
     VersionState,
 )
 
@@ -38,7 +39,7 @@ def _source_memory(kernel, *, source_family: str = "FAMILY_SELF_REPORT"):
             source_actor_id="actor.xiaoman",
             source_family_id=source_family,
         ),
-        authorized_claim=observed_claim,
+        visibility_claim=observed_claim,
     )
     memory = kernel.create_memory(
         owner_id="actor.player",
@@ -87,7 +88,7 @@ def test_t09_record_memory_independence(kernel) -> None:
 
 def test_t10_contradiction_preservation(kernel) -> None:
     _, observation, memory_v1 = _source_memory(kernel)
-    opposite_claim = claim(predicate="SELF_IDENTIFIED_AS", object_value="NOT_XIAOMAN")
+    opposite_claim = claim(predicate="SELF_IDENTIFIED_AS", object_value="小满", polarity=Polarity.DENY)
     memory_v2 = kernel.create_memory(
         owner_id="actor.player",
         observation_ids=(observation.observation_id,),
@@ -141,7 +142,7 @@ def test_t12_anti_self_proof(kernel) -> None:
             source_family_id="FAMILY_DERIVED_ACK_PARENT",
             derived_from_acknowledgement_id="ACK_PARENT",
         ),
-        authorized_claim=manifested_claim,
+        visibility_claim=manifested_claim,
     )
     memory = kernel.create_memory(
         owner_id="actor.player",
@@ -195,7 +196,6 @@ def test_t14_l2_temporary_visitor(kernel) -> None:
     )
     acknowledgement = kernel.acknowledge_name_record(
         record.name_record_id,
-        outcome=AcknowledgementOutcome.ESTABLISHED,
         world_tick=2,
     )
     assert acknowledgement.outcome == AcknowledgementOutcome.ESTABLISHED
@@ -236,7 +236,7 @@ def test_t16_typed_conflict_requires_mitigation(kernel) -> None:
             mitigation=("PLAN_KEEP_EXISTING",),
         )
     )
-    kernel.acknowledge_name_record(first_record.name_record_id, outcome=AcknowledgementOutcome.ESTABLISHED, world_tick=2)
+    kernel.acknowledge_name_record(first_record.name_record_id, world_tick=2)
     before = kernel.state_digest()
     competing_claim = claim(subject="actor.xiaoman", predicate="EXCLUSIVE_OCCUPANT_OF", object_value="slot.front_hall")
     second_record = kernel.create_name_record(
@@ -250,6 +250,6 @@ def test_t16_typed_conflict_requires_mitigation(kernel) -> None:
         )
     )
     with pytest.raises(MemoryKernelError) as exc:
-        kernel.acknowledge_name_record(second_record.name_record_id, outcome=AcknowledgementOutcome.ESTABLISHED, world_tick=3)
+        kernel.acknowledge_name_record(second_record.name_record_id, world_tick=3)
     assert exc.value.code == MemoryErrorCode.CONFLICT_MITIGATION_REQUIRED
     assert kernel.state_digest() == before
