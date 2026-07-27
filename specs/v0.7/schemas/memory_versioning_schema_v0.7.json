@@ -1,0 +1,463 @@
+{
+  "$defs": {
+    "AccessState": {
+      "enum": [
+        "CLEAR",
+        "FADED",
+        "SUPPRESSED",
+        "FORGOTTEN",
+        "SEALED"
+      ]
+    },
+    "CanonicalEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "actor_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "caused_by_action_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "event_digest": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "event_id": {
+          "type": "string"
+        },
+        "event_type": {
+          "type": "string"
+        },
+        "location_id": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "object"
+        },
+        "schema_version": {
+          "const": "0.7"
+        },
+        "sequence": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "target_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "world_tick": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "event_id",
+        "sequence",
+        "world_tick",
+        "event_type",
+        "actor_ids",
+        "target_ids",
+        "location_id",
+        "payload",
+        "schema_version",
+        "event_digest"
+      ],
+      "type": "object"
+    },
+    "Claim": {
+      "additionalProperties": false,
+      "properties": {
+        "object_id_or_value": {},
+        "polarity": {
+          "enum": [
+            "AFFIRM",
+            "DENY",
+            "UNKNOWN"
+          ]
+        },
+        "predicate": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "qualifiers": {
+          "type": "object"
+        },
+        "recognition_scope": {
+          "enum": [
+            "PRIVATE",
+            "HALL_LOCAL",
+            "PUBLIC"
+          ]
+        },
+        "subject_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "time_scope": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "subject_id",
+        "predicate",
+        "object_id_or_value",
+        "time_scope",
+        "recognition_scope",
+        "polarity",
+        "qualifiers"
+      ],
+      "type": "object"
+    },
+    "ConflictType": {
+      "enum": [
+        "LOGICAL_EXCLUSION",
+        "PHYSICAL_EXCLUSIVITY",
+        "INSTITUTIONAL_EXCLUSIVITY",
+        "DECLARED_CAPACITY_COMPETITION"
+      ]
+    },
+    "MemoryStateSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "access_state": {
+          "$ref": "#/$defs/AccessState"
+        },
+        "clarity_milli": {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "emotion_residue": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "last_transition_event_id": {
+          "type": "string"
+        },
+        "last_transition_tick": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "memory_version_id": {
+          "type": "string"
+        },
+        "state_revision": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "version_state": {
+          "$ref": "#/$defs/VersionState"
+        }
+      },
+      "required": [
+        "memory_version_id",
+        "state_revision",
+        "access_state",
+        "version_state",
+        "clarity_milli",
+        "emotion_residue",
+        "last_transition_event_id",
+        "last_transition_tick"
+      ],
+      "type": "object"
+    },
+    "MemoryVersion": {
+      "additionalProperties": false,
+      "properties": {
+        "claim": {
+          "$ref": "#/$defs/Claim"
+        },
+        "created_tick": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "initial_clarity_milli": {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "initial_emotion_residue": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "memory_lineage_id": {
+          "type": "string"
+        },
+        "memory_version_id": {
+          "type": "string"
+        },
+        "observation_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "owner_id": {
+          "type": "string"
+        },
+        "parent_version_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rewrite_reason_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_kind": {
+          "$ref": "#/$defs/SourceKind"
+        },
+        "version_no": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "memory_lineage_id",
+        "memory_version_id",
+        "version_no",
+        "owner_id",
+        "parent_version_ids",
+        "observation_ids",
+        "claim",
+        "source_kind",
+        "initial_clarity_milli",
+        "initial_emotion_residue",
+        "created_tick"
+      ],
+      "type": "object"
+    },
+    "NameRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "claim": {
+          "$ref": "#/$defs/Claim"
+        },
+        "confirmed_by_player": {
+          "type": "boolean"
+        },
+        "consenting_actor_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "created_tick": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "effective_from_tick": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "mitigation_plan_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name_record_id": {
+          "type": "string"
+        },
+        "permission_level": {
+          "enum": [
+            "L1_WITNESS",
+            "L2_BELONGING",
+            "L3_LIMITED_CONTINUITY",
+            "L4_PUBLIC_INSTITUTION"
+          ]
+        },
+        "recognition_scope": {
+          "enum": [
+            "PRIVATE",
+            "HALL_LOCAL",
+            "PUBLIC"
+          ]
+        },
+        "record_status": {
+          "$ref": "#/$defs/RecordStatus"
+        },
+        "source_family_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "source_memory_version_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "source_observation_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "name_record_id",
+        "source_memory_version_ids",
+        "source_observation_ids",
+        "source_family_ids",
+        "claim",
+        "permission_level",
+        "record_status",
+        "confirmed_by_player",
+        "consenting_actor_ids",
+        "effective_from_tick",
+        "recognition_scope",
+        "mitigation_plan_ids",
+        "created_tick"
+      ],
+      "type": "object"
+    },
+    "Observation": {
+      "additionalProperties": false,
+      "properties": {
+        "acquired_tick": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "claim": {
+          "$ref": "#/$defs/Claim"
+        },
+        "confidence_milli": {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "derived_from_acknowledgement_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observation_id": {
+          "type": "string"
+        },
+        "observer_id": {
+          "type": "string"
+        },
+        "source_actor_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_event_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "source_evidence_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_family_id": {
+          "type": "string"
+        },
+        "source_kind": {
+          "$ref": "#/$defs/SourceKind"
+        },
+        "source_observation_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "world_version_seen": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "observation_id",
+        "observer_id",
+        "source_kind",
+        "source_event_ids",
+        "source_observation_ids",
+        "source_family_id",
+        "claim",
+        "confidence_milli",
+        "acquired_tick",
+        "world_version_seen"
+      ],
+      "type": "object"
+    },
+    "RecordStatus": {
+      "enum": [
+        "DRAFT",
+        "CONFIRMED",
+        "ACKNOWLEDGED",
+        "REJECTED",
+        "WITHDRAWN",
+        "SUPERSEDED"
+      ]
+    },
+    "SourceKind": {
+      "enum": [
+        "EXPERIENCED",
+        "HEARD",
+        "READ",
+        "INFERRED",
+        "DREAM",
+        "MANIFESTED"
+      ]
+    },
+    "VersionState": {
+      "enum": [
+        "ACTIVE",
+        "CONTRADICTED",
+        "REWRITTEN",
+        "SUPERSEDED"
+      ]
+    }
+  },
+  "$id": "https://wangsheng.local/schemas/memory-versioning-v0.7.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "canonical_event": {
+      "$ref": "#/$defs/CanonicalEvent"
+    },
+    "memory_state_snapshot": {
+      "$ref": "#/$defs/MemoryStateSnapshot"
+    },
+    "memory_version": {
+      "$ref": "#/$defs/MemoryVersion"
+    },
+    "name_record": {
+      "$ref": "#/$defs/NameRecord"
+    },
+    "observation": {
+      "$ref": "#/$defs/Observation"
+    },
+    "schema_version": {
+      "const": "0.7"
+    }
+  },
+  "title": "WangSheng Memory Versioning Kernel v0.7",
+  "type": "object"
+}

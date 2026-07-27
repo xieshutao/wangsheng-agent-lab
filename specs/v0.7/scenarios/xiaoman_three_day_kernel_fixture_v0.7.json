@@ -1,0 +1,231 @@
+{
+  "canonical_sorting": [
+    "world_tick",
+    "event_sequence",
+    "entity_id",
+    "version_no",
+    "object_id"
+  ],
+  "day1_events": [
+    {
+      "actor": "actor.xiaoman",
+      "id": "EV_D1_KNOCK_3",
+      "payload": {
+        "count": 3
+      },
+      "target": "object.front_door",
+      "type": "DOOR_KNOCKED"
+    },
+    {
+      "actor": "actor.xiaoman",
+      "id": "EV_D1_SELF_NAME",
+      "payload": {
+        "claim": "I call myself Xiaoman"
+      },
+      "target": "actor.player",
+      "type": "SPEECH"
+    },
+    {
+      "actor": "actor.xiaoman",
+      "id": "EV_D1_CRANE_TRANSFER",
+      "payload": {
+        "through": "door_gap",
+        "to": "location.front_hall"
+      },
+      "target": "object.paper_crane",
+      "type": "OBJECT_TRANSFERRED"
+    },
+    {
+      "actor": "actor.qingyan",
+      "id": "EV_D1_QINGYAN_UNKNOWN",
+      "payload": {
+        "claim": "I have no clear memory of this child"
+      },
+      "target": "actor.player",
+      "type": "SPEECH"
+    }
+  ],
+  "day2_expected_deltas": {
+    "CAND_D1_CRANE_CONNECTION": {
+      "crane_stable": true,
+      "unlock_audit": "OLD_NETWORK_MARK",
+      "xiaoman_presence_delta": 0
+    },
+    "CAND_D1_NAME_SELF_REPORT": {
+      "crane_stable": false,
+      "qingyan_false_familiarity_forbidden": true,
+      "xiaoman_presence_delta": 1
+    },
+    "CAND_D1_NONE": {
+      "all_unrecorded_memories_decay": true,
+      "crane_stable": false,
+      "xiaoman_presence_delta": -1
+    },
+    "CAND_D1_QINGYAN_UNKNOWN": {
+      "crane_stable": false,
+      "qingyan_explicit_unknown": true,
+      "xiaoman_presence_delta": 0
+    }
+  },
+  "day3_outcomes": {
+    "NAME_ONLY_HISTORY_UNRESOLVED": {
+      "connection": "NAME_RECOGNIZED_HISTORY_UNRESOLVED",
+      "manifestations": [
+        "front_door_name_only_marker",
+        "paper_crane_archived_for_audit"
+      ],
+      "permission": "L3_LIMITED_CONTINUITY",
+      "requires": [
+        "xiaoman_consents"
+      ]
+    },
+    "NEW_PERSON_USING_NAME": {
+      "connection": "CURRENT_PERSON_USES_NAME_XIAOMAN",
+      "manifestations": [
+        "front_door_new_name_strip",
+        "front_hall_temp_place"
+      ],
+      "must_not_inherit": [
+        "old_debts",
+        "old_crimes",
+        "automatic_old_kinship"
+      ],
+      "permission": "L3_LIMITED_CONTINUITY",
+      "requires": [
+        "xiaoman_consents"
+      ]
+    },
+    "OLD_RESIDENT_CONTINUATION": {
+      "connection": "CONTINUES_OLD_RESIDENT_CONNECTION",
+      "manifestations": [
+        "front_door_old_name_trace",
+        "qingyan_manifested_familiarity"
+      ],
+      "must_preserve": [
+        "ten_year_old_death_event",
+        "day1_knock_event"
+      ],
+      "permission": "L3_LIMITED_CONTINUITY",
+      "requires": [
+        "xiaoman_consents",
+        "body_continuity_supported",
+        "independent_source_threshold_met"
+      ]
+    },
+    "REFUSED": {
+      "connection": null,
+      "manifestations": [
+        "no_new_identity_connection"
+      ],
+      "must_preserve": [
+        "all_occurrence_events"
+      ],
+      "permission": null
+    }
+  },
+  "entities": {
+    "actors": [
+      "actor.player",
+      "actor.qingyan",
+      "actor.xiaoman"
+    ],
+    "institutions": [
+      "institution.wangsheng_hall"
+    ],
+    "locations": [
+      "location.front_hall"
+    ],
+    "objects": [
+      "object.front_door",
+      "object.paper_crane"
+    ]
+  },
+  "fixture_id": "V070_XIAOMAN_THREE_DAY_KERNEL",
+  "invariants": [
+    "D1 knock/self-report/crane-transfer/qingyan-unknown events are immutable in every branch",
+    "No NameRecord may assert that Xiaoman always lived in the hall on day 1",
+    "Manifested evidence cannot independently prove its parent acknowledgement",
+    "NameRecord persistence does not freeze actor memory clarity",
+    "All L3 outcomes require Xiaoman consent except REFUSED"
+  ],
+  "night1_candidates": [
+    {
+      "claim": {
+        "object_id_or_value": "小满",
+        "polarity": "AFFIRM",
+        "predicate": "SELF_IDENTIFIED_AS",
+        "qualifiers": {
+          "asserts_old_identity": false
+        },
+        "recognition_scope": "HALL_LOCAL",
+        "subject_id": "actor.xiaoman",
+        "time_scope": "D1_CURRENT"
+      },
+      "id": "CAND_D1_NAME_SELF_REPORT",
+      "permission": "L1_WITNESS"
+    },
+    {
+      "claim": {
+        "object_id_or_value": "institution.wangsheng_hall",
+        "polarity": "AFFIRM",
+        "predicate": "HAS_OLD_CONNECTION_TO",
+        "qualifiers": {
+          "proves_owner": false
+        },
+        "recognition_scope": "HALL_LOCAL",
+        "subject_id": "object.paper_crane",
+        "time_scope": "D1_OBSERVED"
+      },
+      "id": "CAND_D1_CRANE_CONNECTION",
+      "permission": "L1_WITNESS"
+    },
+    {
+      "claim": {
+        "object_id_or_value": "actor.xiaoman",
+        "polarity": "AFFIRM",
+        "predicate": "HAS_NO_CLEAR_MEMORY_OF",
+        "qualifiers": {
+          "proves_no_past": false
+        },
+        "recognition_scope": "HALL_LOCAL",
+        "subject_id": "actor.qingyan",
+        "time_scope": "D1_CURRENT"
+      },
+      "id": "CAND_D1_QINGYAN_UNKNOWN",
+      "permission": "L1_WITNESS"
+    },
+    {
+      "claim": null,
+      "id": "CAND_D1_NONE",
+      "permission": null
+    }
+  ],
+  "night2_candidate": {
+    "claim": {
+      "object_id_or_value": "institution.wangsheng_hall",
+      "polarity": "AFFIRM",
+      "predicate": "PROTECTED_VISITOR_OF",
+      "qualifiers": {
+        "temporary": true
+      },
+      "recognition_scope": "HALL_LOCAL",
+      "subject_id": "actor.xiaoman",
+      "time_scope": "FROM_D2_FORWARD"
+    },
+    "id": "CAND_D2_PROTECTED_VISITOR",
+    "permission": "L2_BELONGING",
+    "prerequisites": [
+      "xiaoman_consents",
+      "at_least_one_day1_witness_or_current_presence",
+      "no_unmitigated_physical_conflict"
+    ]
+  },
+  "primary_acceptance_matrices": {
+    "day3_outcomes": 4,
+    "night1_choices": 4,
+    "note": "Night-2 eligibility and refusal are tested as prerequisites, not multiplied into a single advertised branch count."
+  },
+  "schema_version": "0.7",
+  "scope": "HALL_LOCAL",
+  "seed": 7001
+}

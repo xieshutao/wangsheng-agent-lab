@@ -2,68 +2,63 @@
 
 Reliability-first framework for AI-controlled game NPCs.
 
-Version 0.4.3 is a trace-driven repair release built from the frozen v0.4.2 DeepSeek 20-Episode run. The official v0.4.2 result remains 7/20 (35%); v0.4.3 does not rewrite or rerun that evidence.
+## v0.7 Memory Versioning Kernel (P0–P5 deterministic freeze)
 
-The model remains an action proposer. World truth, permissions, hard constraints, action execution, report grounding, memory access and task completion remain deterministic.
+The v0.7 Memory Versioning Kernel implements a strict bounded, deterministic, append-only memory system for AI game NPCs. The kernel is validated entirely without LLM calls (P0–P5 deterministic only). Real-model acceptance (P6) is pending.
 
-## v0.4.3 milestone
+### Core architecture
 
-- model-facing `report` accepts stable `fact_ids` from `world.reportable_facts`
-- runtime still accepts legacy structured facts for deterministic regression only
-- `ask_through.topic` is a frozen enum: `identity`, `purpose`, `request`, `door_state`
-- topic-specific simulator evidence replaces the old identity-only response
-- `completion_progress` exposes non-secret remaining requirements and accepted fact IDs
-- conflict completion is derived from preserved claims instead of a hidden third field
-- recent observations are bounded to three detailed results with a deterministic older-history summary
-- loop detection uses semantic actions and evidence/world progress rather than free-text equality
-- failed Executor results include retryability and required-change guidance
-- malformed provider tool arguments retain a bounded diagnostic excerpt and parse position
-- five frozen holdout scenarios are separated from the original 20 regression scenarios
+- **Occurrence** — immutable append-only events with Canonical JSON SHA-256 digest
+- **Observation** — typed perception (OBSERVED / HEARD / INFERRED / MANIFESTED) with role-private isolation and knowledge-leak rejection
+- **Memory** — versioned belief records with lineage tracking, clarity/emotion state snapshots, and structured forgetting events
+- **NameRecord** — draft acknowledgement protocol with permission levels (WITNESS / BELONGING / LIMITED_CONTINUITY)
+- **Conflict** — four typed conflict classes (logical mutual exclusion, physical exclusive occupancy, institutional exclusive occupancy, declared capacity competition)
+- **Acknowledgement** — atomic WorldAcknowledgement + ConnectionVersion + ManifestationDelta transactions against an append-only authoritative Trace
+- **Replay** — full deterministic state reconstruction from Canonical JSON archives with SHA-256 integrity verification
 
-The eight tools remain:
+### T01–T20 contract results
 
-`move_to`, `observe`, `listen_at`, `ask_through`, `open`, `close`, `report`, `wait`
+| Test | Status | Description |
+|------|--------|-------------|
+| T01–T08 | PASS | Occurrence / Observation / Memory core (P2) |
+| T09–T16 | PASS | Forgetting / Records / Typed conflicts (P3) |
+| T17–T19 | PASS | Acknowledgement / Manifestation / Save-load-replay (P4) |
+| T20 | PASS | Same-world 10,000-transition bounded stress (P5) |
 
-## Deterministic verification
+### Verification
 
 ```bash
-python -m pip install -e ".[dev]"
-scripts/verify_v043.sh
+# Full deterministic suite
+PYTHONPATH=src python -m pytest -q
+# Expected: 221 passed
+
+# Memory-specific
+PYTHONPATH=src python -m pytest tests/memory -q
+# Expected: 62 passed
+
+# P5 verifier
+PYTHONPATH=src python scripts/verify_v070_p5.py
+# Expected: status = PASS
 ```
 
-Expected verification:
+### Golden Trace
 
-```text
-104 tests passed
-20/20 original deterministic scenarios
-5/5 frozen v0.4.3 holdout scenarios
-0 executed hard violations
-0 incomplete traces
-Golden Trace passed / records_match / digest_match
-```
+- File: `golden_traces/v070_xiaoman_three_day.jsonl`
+- Records: 16
+- SHA-256: `c9f5606f37b01a1dc5fe65e0171d66e00a9e447eed7cb728e072a9cabde3159d`
+- State digest: `f46dccab2257b789ea7ca05e11288348e6e33daf5f32d135ac30e039f7a516ee`
+- Occurrence digest: `13244a8b76a05e410d5c3d235394abf8c93c1c6a16f51a5c63e82b8884d31d1a`
 
-## Runtime boundary
+### Evidence limits
 
-```text
-ModelVisibleWorld
-+ reportable_facts
-+ current_affordances
-+ completion_progress
-+ compact history
-→ exactly one native tool call
-→ alias resolution
-→ Tool Schema / Gateway
-→ Executor
-→ structured ActionResult
-→ Evaluator
-```
-
-## Evidence limits
-
-v0.4.3 is not production-ready and is not yet a real-model result. It must first be applied to the exact frozen v0.4.2 commit and pass deterministic verification. Only then may a new one-shot cloud blind test be designed. Do not rerun v0.4.2 or compare scores before reviewing the v0.4.3 experiment protocol.
+v0.7 P0–P5 is a fully deterministic kernel freeze. It does not include:
+- Real-model (LLM) acceptance — P6 pending
+- UE5 integration
+- Complete NameRecord gameplay
+- Long-term multi-NPC narrative
+- Verified model with reliable long-term memory
 
 See:
-
-- `docs/V0.4.2_TRACE_AUDIT.md`
-- `docs/CLOUD_EPISODE_SPEC_V0.4.3.md`
-- `docs/HERMES_V0.4.3_APPLY_AND_VERIFY.md`
+- `docs/V0.7_KERNEL_FREEZE_REPORT.md`
+- `docs/STATUS_BASELINE.md`
+- `docs/REVIEW_STATUS.md`
