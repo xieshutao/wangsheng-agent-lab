@@ -1,0 +1,13 @@
+[
+  {"action_id":"a01","command":"listen_at_door","parameters":{}},
+  {"action_id":"a02","command":"inspect_paper_crane","parameters":{}},
+  {"action_id":"a03","command":"ask_qingyan","parameters":{}},
+  {"action_id":"a04","command":"advance_to_day2","parameters":{}},
+  {"action_id":"a05","command":"record_night1","parameters":{"choice_id":"CAND_D1_NAME_SELF_REPORT"}},
+  {"action_id":"a06","command":"review_day2_change","parameters":{}},
+  {"action_id":"a07","command":"advance_to_day3","parameters":{}},
+  {"action_id":"a08","command":"read_archive","parameters":{}},
+  {"action_id":"a09","command":"inspect_body_continuity","parameters":{}},
+  {"action_id":"a10","command":"ask_xiaoman_consent","parameters":{}},
+  {"action_id":"a11","command":"decide_day3","parameters":{"outcome_id":"OLD_RESIDENT_CONTINUATION"}}
+]

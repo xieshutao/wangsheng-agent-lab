@@ -1,0 +1,8 @@
+{
+  "session_id": "slice-example",
+  "action_id": "ue-000001",
+  "command": "record_night1",
+  "parameters": {
+    "choice_id": "CAND_D1_NAME_SELF_REPORT"
+  }
+}
