@@ -3,7 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from collections import defaultdict, deque
+import random
+from collections import OrderedDict, defaultdict, deque
 from dataclasses import replace
 from pathlib import Path
 from types import MappingProxyType
@@ -13,6 +14,7 @@ from .errors import MemoryErrorCode, MemoryKernelError
 from .models import (
     UNKNOWN,
     AccessState,
+    ArchiveReference,
     AcknowledgementOutcome,
     BranchResult,
     CanonicalEvent,
@@ -211,6 +213,16 @@ class MemoryVersioningKernel:
         self._manifestation_audit: deque[ManifestationDelta] = deque(
             maxlen=self.config.manifestation_audit_window
         )
+        self._actor_lineages: dict[str, deque[str]] = defaultdict(deque)
+        self._lineage_owner: dict[str, str] = {}
+        self._belief_query_cache: dict[str, OrderedDict[str, MemoryQueryResult]] = defaultdict(OrderedDict)
+        self._recent_archive_references: deque[ArchiveReference] = deque(
+            maxlen=self.config.recent_forgetting_events_cache
+        )
+        self._archive_reference_total = 0
+        self._archived_memory_versions = 0
+        self._archived_memory_lineages = 0
+        self._trace_sequences_by_object: dict[tuple[str, str], int] = {}
         self._history_trace: list[Mapping[str, Any]] = []
         self._id_counters: dict[str, int] = defaultdict(int)
 
@@ -222,15 +234,67 @@ class MemoryVersioningKernel:
         self._id_counters[prefix] += 1
         return f"{prefix}.v070.{self._id_counters[prefix]:08d}"
 
-    def _append_trace(self, kind: str, payload: Mapping[str, Any]) -> None:
+    def _append_trace(self, kind: str, payload: Mapping[str, Any]) -> int:
+        sequence = len(self._history_trace) + 1
         self._history_trace.append(
             MappingProxyType(
                 {
-                    "sequence": len(self._history_trace) + 1,
+                    "sequence": sequence,
                     "kind": kind,
                     "payload": primitive_value(payload),
                 }
             )
+        )
+        return sequence
+
+    def _remember_trace_object(self, object_kind: str, object_id: str, sequence: int) -> None:
+        self._trace_sequences_by_object[(object_kind, object_id)] = sequence
+
+    def _archive_reference(
+        self,
+        *,
+        object_kind: str,
+        object_id: str,
+        object_value: Any,
+        reason: str,
+        append_trace: bool = True,
+        source_trace_sequence: int | None = None,
+    ) -> ArchiveReference:
+        sequence = source_trace_sequence or self._trace_sequences_by_object.pop(
+            (object_kind, object_id), 0
+        )
+        if sequence <= 0:
+            raise self._error(
+                MemoryErrorCode.LIVE_STATE_BOUND_EXCEEDED,
+                "cannot archive a live object without its append-only Trace reference",
+                object_kind=object_kind,
+                object_id=object_id,
+            )
+        reference = ArchiveReference(
+            object_kind=object_kind,
+            object_id=object_id,
+            source_trace_sequence=sequence,
+            object_digest=_sha256(object_value),
+            archived_reason=reason,
+        )
+        self._recent_archive_references.append(reference)
+        self._archive_reference_total += 1
+        if object_kind == "MEMORY_VERSION":
+            self._archived_memory_versions += 1
+        elif object_kind == "MEMORY_LINEAGE":
+            self._archived_memory_lineages += 1
+        if append_trace:
+            self._append_trace("LIVE_INDEX_EVICTED", {"archive_reference": reference})
+        return reference
+
+    @staticmethod
+    def _archive_reference_from_data(data: Mapping[str, Any]) -> ArchiveReference:
+        return ArchiveReference(
+            object_kind=str(data["object_kind"]),
+            object_id=str(data["object_id"]),
+            source_trace_sequence=int(data["source_trace_sequence"]),
+            object_digest=str(data["object_digest"]),
+            archived_reason=str(data["archived_reason"]),
         )
 
     def _error(self, code: MemoryErrorCode, message: str, **details: Any) -> MemoryKernelError:
@@ -481,6 +545,127 @@ class MemoryVersioningKernel:
         next_version = max(self._memory_versions[item].version_no for item in known_versions) + 1
         return memory_lineage_id, next_version, parents
 
+    def _invalidate_belief_cache(self, memory_version_id: str) -> None:
+        for cache in self._belief_query_cache.values():
+            cache.pop(memory_version_id, None)
+
+    def _archive_live_memory_version(self, memory_version_id: str, *, reason: str) -> None:
+        version = self._memory_versions.pop(memory_version_id, None)
+        state = self._memory_states.pop(memory_version_id, None)
+        if version is None or state is None:
+            return
+        lineage_ids = self._lineage_versions.get(version.memory_lineage_id)
+        if lineage_ids is not None and memory_version_id in lineage_ids:
+            lineage_ids.remove(memory_version_id)
+        self._invalidate_belief_cache(memory_version_id)
+        self._archive_reference(
+            object_kind="MEMORY_VERSION",
+            object_id=memory_version_id,
+            object_value={"memory_version": version, "state": state},
+            reason=reason,
+        )
+
+    def _archive_live_memory_lineage(self, memory_lineage_id: str, *, reason: str) -> None:
+        owner_id = self._lineage_owner.get(memory_lineage_id)
+        version_ids = tuple(self._lineage_versions.get(memory_lineage_id, ()))
+        for memory_version_id in version_ids:
+            self._archive_live_memory_version(memory_version_id, reason=reason)
+        self._lineage_versions.pop(memory_lineage_id, None)
+        self._lineage_owner.pop(memory_lineage_id, None)
+        if owner_id is not None:
+            actor_lineages = self._actor_lineages.get(owner_id)
+            if actor_lineages is not None and memory_lineage_id in actor_lineages:
+                actor_lineages.remove(memory_lineage_id)
+            if actor_lineages is not None and not actor_lineages:
+                self._actor_lineages.pop(owner_id, None)
+        source_sequence = self._trace_sequences_by_object.pop(("MEMORY_LINEAGE", memory_lineage_id), 0)
+        if source_sequence <= 0 and version_ids:
+            source_sequence = next(
+                (
+                    reference.source_trace_sequence
+                    for reference in reversed(self._recent_archive_references)
+                    if reference.object_kind == "MEMORY_VERSION"
+                    and reference.object_id in version_ids
+                ),
+                0,
+            )
+        if source_sequence > 0:
+            self._archive_reference(
+                object_kind="MEMORY_LINEAGE",
+                object_id=memory_lineage_id,
+                object_value={"owner_id": owner_id, "version_ids": version_ids},
+                reason=reason,
+                source_trace_sequence=source_sequence,
+            )
+
+    def _enforce_memory_bounds(self, *, owner_id: str, memory_lineage_id: str) -> None:
+        lineage_ids = self._lineage_versions.get(memory_lineage_id, [])
+        while len(lineage_ids) > self.config.active_memory_versions_per_lineage:
+            self._archive_live_memory_version(
+                lineage_ids[0],
+                reason="ACTIVE_MEMORY_VERSIONS_PER_LINEAGE_BOUND",
+            )
+            lineage_ids = self._lineage_versions.get(memory_lineage_id, [])
+
+        actor_lineages = self._actor_lineages[owner_id]
+        while len(actor_lineages) > self.config.active_memory_lineages_per_actor:
+            oldest_lineage_id = actor_lineages[0]
+            if oldest_lineage_id == memory_lineage_id and len(actor_lineages) > 1:
+                actor_lineages.rotate(-1)
+                oldest_lineage_id = actor_lineages[0]
+            self._archive_live_memory_lineage(
+                oldest_lineage_id,
+                reason="ACTIVE_MEMORY_LINEAGES_PER_ACTOR_BOUND",
+            )
+            actor_lineages = self._actor_lineages.get(owner_id, deque())
+
+    def _archived_memory_version_from_trace(self, memory_version_id: str) -> MemoryVersion | None:
+        for raw_record in reversed(self._history_trace):
+            if raw_record["kind"] != "MEMORY_VERSION_CREATED":
+                continue
+            data = raw_record["payload"]["memory_version"]
+            if data["memory_version_id"] == memory_version_id:
+                return self._memory_version_from_data(data)
+        return None
+
+    def _archived_memory_state_from_trace(self, memory_version_id: str) -> MemoryStateSnapshot | None:
+        state: MemoryStateSnapshot | None = None
+        for raw_record in self._history_trace:
+            kind = raw_record["kind"]
+            payload = raw_record["payload"]
+            if kind == "MEMORY_VERSION_CREATED":
+                data = payload["state"]
+                if data["memory_version_id"] == memory_version_id:
+                    state = self._memory_state_from_data(data)
+            elif state is not None and kind == "MEMORY_VERSION_REWRITTEN":
+                if payload["parent_memory_version_id"] == memory_version_id:
+                    state = replace(
+                        state,
+                        state_revision=state.state_revision + 1,
+                        version_state=VersionState.REWRITTEN,
+                        last_transition_event_id=f"memory-rewritten-by:{payload['new_memory_version_id']}",
+                        last_transition_tick=self._archived_memory_version_from_trace(
+                            payload["new_memory_version_id"]
+                        ).created_tick,
+                    )
+            elif state is not None and kind == "FORGETTING_EVENT_APPLIED":
+                data = payload["new_state"]
+                if data["memory_version_id"] == memory_version_id:
+                    state = self._memory_state_from_data(data)
+            elif state is not None and kind == "MEMORY_CONTRADICTION_REGISTERED":
+                ids = tuple(payload["memory_version_ids"])
+                if memory_version_id in ids:
+                    index = ids.index(memory_version_id)
+                    detected_tick = int(payload["detected_tick"])
+                    state = replace(
+                        state,
+                        state_revision=state.state_revision + 1,
+                        version_state=VersionState.CONTRADICTED,
+                        last_transition_event_id=f"memory-contradiction:{detected_tick}:{index + 1}",
+                        last_transition_tick=detected_tick,
+                    )
+        return state
+
     def _create_memory_version(
         self,
         *,
@@ -557,10 +742,20 @@ class MemoryVersioningKernel:
             last_transition_event_id=f"memory-created:{memory_version_id}",
             last_transition_tick=created_tick,
         )
+        is_new_lineage = lineage_id not in self._lineage_owner
         self._memory_versions[memory_version_id] = version
         self._memory_states[memory_version_id] = state
         self._lineage_versions[lineage_id].append(memory_version_id)
-        self._append_trace("MEMORY_VERSION_CREATED", {"memory_version": version, "state": state})
+        if is_new_lineage:
+            self._lineage_owner[lineage_id] = owner_id
+            self._actor_lineages[owner_id].append(lineage_id)
+        trace_sequence = self._append_trace(
+            "MEMORY_VERSION_CREATED",
+            {"memory_version": version, "state": state},
+        )
+        self._remember_trace_object("MEMORY_VERSION", memory_version_id, trace_sequence)
+        if is_new_lineage:
+            self._remember_trace_object("MEMORY_LINEAGE", lineage_id, trace_sequence)
         return version
 
     def create_memory(
@@ -577,7 +772,7 @@ class MemoryVersioningKernel:
         parent_version_ids: Sequence[str] = (),
         rewrite_reason_code: str | None = None,
     ) -> MemoryVersion:
-        return self._create_memory_version(
+        version = self._create_memory_version(
             owner_id=owner_id,
             observation_ids=observation_ids,
             claim=claim,
@@ -590,6 +785,11 @@ class MemoryVersioningKernel:
             rewrite_reason_code=rewrite_reason_code,
             allow_derived_claim=False,
         )
+        self._enforce_memory_bounds(
+            owner_id=owner_id,
+            memory_lineage_id=version.memory_lineage_id,
+        )
+        return version
 
     def rewrite_memory(
         self,
@@ -653,10 +853,15 @@ class MemoryVersioningKernel:
                 last_transition_tick=created_tick,
             )
             self._memory_states[parent_id] = rewritten
+            self._invalidate_belief_cache(parent_id)
             self._append_trace(
                 "MEMORY_VERSION_REWRITTEN",
                 {"parent_memory_version_id": parent_id, "new_memory_version_id": version.memory_version_id},
             )
+        self._enforce_memory_bounds(
+            owner_id=first_parent.owner_id,
+            memory_lineage_id=memory_lineage_id,
+        )
         return version
 
     def transition_memory(
@@ -741,6 +946,7 @@ class MemoryVersioningKernel:
             world_tick=world_tick,
         )
         self._memory_states[memory_version_id] = new_state
+        self._invalidate_belief_cache(memory_version_id)
         self._forgetting_events.append(forgetting_event)
         self._append_trace(
             "FORGETTING_EVENT_APPLIED",
@@ -749,42 +955,56 @@ class MemoryVersioningKernel:
         return new_state
 
     def get_memory_version(self, memory_version_id: str) -> MemoryVersion:
-        try:
-            return self._memory_versions[memory_version_id]
-        except KeyError as exc:
+        version = self._memory_versions.get(memory_version_id)
+        if version is None:
+            version = self._archived_memory_version_from_trace(memory_version_id)
+        if version is None:
             raise self._error(
                 MemoryErrorCode.MEMORY_UNKNOWN_SOURCE,
                 "memory version does not exist",
                 memory_version_id=memory_version_id,
-            ) from exc
+            )
+        return version
 
     def get_memory_state(self, memory_version_id: str) -> MemoryStateSnapshot:
-        try:
-            return self._memory_states[memory_version_id]
-        except KeyError as exc:
+        state = self._memory_states.get(memory_version_id)
+        if state is None:
+            state = self._archived_memory_state_from_trace(memory_version_id)
+        if state is None:
             raise self._error(
                 MemoryErrorCode.MEMORY_UNKNOWN_SOURCE,
                 "memory state does not exist",
                 memory_version_id=memory_version_id,
-            ) from exc
+            )
+        return state
 
     def list_forgetting_events(self) -> tuple[ForgettingEvent, ...]:
         return tuple(self._forgetting_events)
 
     def query_memory(self, memory_version_id: str) -> MemoryQueryResult:
         version = self.get_memory_version(memory_version_id)
+        cache = self._belief_query_cache[version.owner_id]
+        cached = cache.get(memory_version_id)
+        if cached is not None:
+            cache.move_to_end(memory_version_id)
+            return cached
         state = self.get_memory_state(memory_version_id)
         accessible = state.access_state in (AccessState.CLEAR, AccessState.FADED)
         residues = state.emotion_residue
         if state.access_state == AccessState.FORGOTTEN:
             residues = tuple(item for item in residues if item.access_independent)
-        return MemoryQueryResult(
+        result = MemoryQueryResult(
             memory_version_id=memory_version_id,
             access_state=state.access_state,
             version_state=state.version_state,
             claim=version.claim if accessible else None,
             emotion_residue=residues,
         )
+        cache[memory_version_id] = result
+        cache.move_to_end(memory_version_id)
+        while len(cache) > self.config.belief_query_cache_per_actor:
+            cache.popitem(last=False)
+        return result
 
     def register_contradiction(
         self,
@@ -942,6 +1162,112 @@ class MemoryVersioningKernel:
                 time_scope=claim.time_scope,
             )
 
+    def _archived_name_record_from_trace(self, name_record_id: str) -> NameRecord | None:
+        record: NameRecord | None = None
+        for raw_record in self._history_trace:
+            kind = raw_record["kind"]
+            payload = raw_record["payload"]
+            if kind == "NAME_RECORD_CREATED":
+                data = payload["name_record"]
+                if data["name_record_id"] == name_record_id:
+                    record = self._name_record_from_data(data)
+            elif kind == "WORLD_ACKNOWLEDGEMENT_COMMITTED":
+                acknowledgement_data = payload["acknowledgement"]
+                if acknowledgement_data["name_record_id"] == name_record_id and record is not None:
+                    record = replace(record, record_status=RecordStatus.ACKNOWLEDGED)
+        return record
+
+    def _archived_acknowledgement_from_trace(
+        self, acknowledgement_id: str
+    ) -> WorldAcknowledgement | None:
+        for raw_record in reversed(self._history_trace):
+            if raw_record["kind"] != "WORLD_ACKNOWLEDGEMENT_COMMITTED":
+                continue
+            data = raw_record["payload"]["acknowledgement"]
+            if data["acknowledgement_id"] == acknowledgement_id:
+                return self._acknowledgement_from_data(data)
+        return None
+
+    def _cache_acknowledgement(
+        self,
+        acknowledgement: WorldAcknowledgement,
+        *,
+        archive_evicted: bool,
+    ) -> WorldAcknowledgement | None:
+        evicted = (
+            self._acknowledgements[0]
+            if self._acknowledgements.maxlen is not None
+            and len(self._acknowledgements) >= self._acknowledgements.maxlen
+            else None
+        )
+        self._acknowledgements.append(acknowledgement)
+        self._acknowledgements_by_id[acknowledgement.acknowledgement_id] = acknowledgement
+        if evicted is not None:
+            self._acknowledgements_by_id.pop(evicted.acknowledgement_id, None)
+            if archive_evicted:
+                self._archive_reference(
+                    object_kind="WORLD_ACKNOWLEDGEMENT",
+                    object_id=evicted.acknowledgement_id,
+                    object_value=evicted,
+                    reason="RECENT_ACKNOWLEDGEMENT_CACHE_BOUND",
+                )
+        return evicted
+
+    def _compact_record_connection_indexes(self) -> None:
+        limit = self.config.recent_acknowledgement_cache
+        active_ids = set(self._active_connection_version_ids)
+        inactive = [
+            item for item in self._connection_versions
+            if item.connection_version_id not in active_ids
+        ]
+        while len(inactive) > limit:
+            old = inactive.pop(0)
+            if old in self._connection_versions:
+                self._connection_versions.remove(old)
+            self._connection_versions_by_id.pop(old.connection_version_id, None)
+            self._archive_reference(
+                object_kind="CONNECTION_VERSION",
+                object_id=old.connection_version_id,
+                object_value=old,
+                reason="INACTIVE_CONNECTION_HISTORY_BOUND",
+            )
+
+        protected_record_ids = {
+            self._connection_versions_by_id[item].based_on_name_record_id
+            for item in self._active_connection_version_ids
+            if item in self._connection_versions_by_id
+        }
+        protected_record_ids.update(
+            item.name_record_id
+            for item in self._name_records
+            if item.record_status in (RecordStatus.DRAFT, RecordStatus.CONFIRMED)
+        )
+        archival_candidates = [
+            item for item in self._name_records
+            if item.name_record_id not in protected_record_ids
+        ]
+        while len(archival_candidates) > limit:
+            old = archival_candidates.pop(0)
+            if old in self._name_records:
+                self._name_records.remove(old)
+            self._name_records_by_id.pop(old.name_record_id, None)
+            self._archive_reference(
+                object_kind="NAME_RECORD",
+                object_id=old.name_record_id,
+                object_value=old,
+                reason="ACKNOWLEDGED_NAME_RECORD_HISTORY_BOUND",
+            )
+
+        while len(self._conflicts) > limit:
+            old = self._conflicts.pop(0)
+            self._conflicts_by_id.pop(old.conflict_id, None)
+            self._archive_reference(
+                object_kind="MEMORY_CONFLICT",
+                object_id=old.conflict_id,
+                object_value=old,
+                reason="RECENT_CONFLICT_HISTORY_BOUND",
+            )
+
     def _acknowledgement_is_same_or_descendant(
         self,
         candidate_acknowledgement_id: str,
@@ -958,8 +1284,12 @@ class MemoryVersioningKernel:
             visited.add(acknowledgement_id)
             acknowledgement = self._acknowledgements_by_id.get(acknowledgement_id)
             if acknowledgement is None:
+                acknowledgement = self._archived_acknowledgement_from_trace(acknowledgement_id)
+            if acknowledgement is None:
                 continue
             record = self._name_records_by_id.get(acknowledgement.name_record_id)
+            if record is None:
+                record = self._archived_name_record_from_trace(acknowledgement.name_record_id)
             if record is None:
                 continue
             for parent_id in record.parent_acknowledgement_ids:
@@ -1064,18 +1394,21 @@ class MemoryVersioningKernel:
         )
         self._name_records.append(record)
         self._name_records_by_id[record.name_record_id] = record
-        self._append_trace("NAME_RECORD_CREATED", {"name_record": record})
+        trace_sequence = self._append_trace("NAME_RECORD_CREATED", {"name_record": record})
+        self._remember_trace_object("NAME_RECORD", record.name_record_id, trace_sequence)
         return record
 
     def get_name_record(self, name_record_id: str) -> NameRecord:
-        try:
-            return self._name_records_by_id[name_record_id]
-        except KeyError as exc:
+        record = self._name_records_by_id.get(name_record_id)
+        if record is None:
+            record = self._archived_name_record_from_trace(name_record_id)
+        if record is None:
             raise self._error(
                 MemoryErrorCode.MEMORY_UNKNOWN_SOURCE,
                 "NameRecord does not exist",
                 name_record_id=name_record_id,
-            ) from exc
+            )
+        return record
 
     @staticmethod
     def _physical_resource_key(claim: Claim) -> str | None:
@@ -1130,7 +1463,7 @@ class MemoryVersioningKernel:
         detected_tick: int,
     ) -> tuple[tuple[MemoryConflict, ConnectionVersion], ...]:
         result: list[tuple[MemoryConflict, ConnectionVersion]] = []
-        next_index = len(self._conflicts) + 1
+        next_index = self._id_counters.get("conflict", 0) + 1
         capacity_key = self._capacity_resource_key(record.claim)
         capacity_connections: list[ConnectionVersion] = []
         for connection_id in self._active_connection_version_ids:
@@ -1365,9 +1698,8 @@ class MemoryVersioningKernel:
         self._manifestation_state = staged_manifestation_state
         for delta in manifestation_deltas:
             self._manifestation_audit.append(delta)
-        self._acknowledgements.append(acknowledgement)
-        self._acknowledgements_by_id[acknowledgement.acknowledgement_id] = acknowledgement
-        self._append_trace(
+        self._cache_acknowledgement(acknowledgement, archive_evicted=False)
+        trace_sequence = self._append_trace(
             "WORLD_ACKNOWLEDGEMENT_COMMITTED",
             {
                 "acknowledgement": acknowledgement,
@@ -1377,6 +1709,30 @@ class MemoryVersioningKernel:
                 "manifestation_state": self._manifestation_state,
             },
         )
+        self._remember_trace_object(
+            "WORLD_ACKNOWLEDGEMENT", acknowledgement.acknowledgement_id, trace_sequence
+        )
+        self._remember_trace_object(
+            "CONNECTION_VERSION", connection.connection_version_id, trace_sequence
+        )
+        for conflict in conflict_records:
+            self._remember_trace_object("MEMORY_CONFLICT", conflict.conflict_id, trace_sequence)
+        # If the bounded deque evicted an acknowledgement, it is no longer in
+        # the lookup cache. Its full value remains in the acknowledgement Trace
+        # record and is represented by an archive reference.
+        live_ack_ids = {item.acknowledgement_id for item in self._acknowledgements}
+        for key in tuple(self._trace_sequences_by_object):
+            if key[0] != "WORLD_ACKNOWLEDGEMENT" or key[1] in live_ack_ids:
+                continue
+            archived = self._archived_acknowledgement_from_trace(key[1])
+            if archived is not None:
+                self._archive_reference(
+                    object_kind="WORLD_ACKNOWLEDGEMENT",
+                    object_id=key[1],
+                    object_value=archived,
+                    reason="RECENT_ACKNOWLEDGEMENT_CACHE_BOUND",
+                )
+        self._compact_record_connection_indexes()
         return acknowledgement
 
     def active_connection_claims(self) -> tuple[Claim, ...]:
@@ -1465,6 +1821,10 @@ class MemoryVersioningKernel:
             "lineage_versions": {
                 key: tuple(self._lineage_versions[key]) for key in sorted(self._lineage_versions)
             },
+            "lineage_owner": dict(sorted(self._lineage_owner.items())),
+            "actor_lineages": {
+                key: tuple(self._actor_lineages[key]) for key in sorted(self._actor_lineages)
+            },
             "forgetting_events": tuple(self._forgetting_events),
             "name_records": tuple(self._name_records),
             "conflicts": tuple(self._conflicts),
@@ -1473,6 +1833,10 @@ class MemoryVersioningKernel:
             "recent_acknowledgements": tuple(self._acknowledgements),
             "manifestation_state": self._manifestation_state,
             "manifestation_audit": tuple(self._manifestation_audit),
+            "recent_archive_references": tuple(self._recent_archive_references),
+            "archive_reference_total": self._archive_reference_total,
+            "archived_memory_versions": self._archived_memory_versions,
+            "archived_memory_lineages": self._archived_memory_lineages,
             "id_counters": dict(sorted(self._id_counters.items())),
             "history_trace_records": len(self._history_trace),
         }
@@ -1743,9 +2107,19 @@ class MemoryVersioningKernel:
             elif kind == "MEMORY_VERSION_CREATED":
                 version = cls._memory_version_from_data(payload["memory_version"])
                 state = cls._memory_state_from_data(payload["state"])
+                is_new_lineage = version.memory_lineage_id not in kernel._lineage_owner
                 kernel._memory_versions[version.memory_version_id] = version
                 kernel._memory_states[state.memory_version_id] = state
                 kernel._lineage_versions[version.memory_lineage_id].append(version.memory_version_id)
+                if is_new_lineage:
+                    kernel._lineage_owner[version.memory_lineage_id] = version.owner_id
+                    kernel._actor_lineages[version.owner_id].append(version.memory_lineage_id)
+                    kernel._remember_trace_object(
+                        "MEMORY_LINEAGE", version.memory_lineage_id, expected_sequence
+                    )
+                kernel._remember_trace_object(
+                    "MEMORY_VERSION", version.memory_version_id, expected_sequence
+                )
             elif kind == "MEMORY_VERSION_REWRITTEN":
                 parent_id = str(payload["parent_memory_version_id"])
                 new_id = str(payload["new_memory_version_id"])
@@ -1779,6 +2153,7 @@ class MemoryVersioningKernel:
                 record = cls._name_record_from_data(payload["name_record"])
                 kernel._name_records.append(record)
                 kernel._name_records_by_id[record.name_record_id] = record
+                kernel._remember_trace_object("NAME_RECORD", record.name_record_id, expected_sequence)
             elif kind == "WORLD_ACKNOWLEDGEMENT_COMMITTED":
                 acknowledgement = cls._acknowledgement_from_data(payload["acknowledgement"])
                 connection = cls._connection_from_data(payload["connection"])
@@ -1812,8 +2187,54 @@ class MemoryVersioningKernel:
                     kernel._manifestation_audit.append(delta)
                 if "manifestation_state" in payload:
                     kernel._manifestation_state = dict(payload["manifestation_state"])
-                kernel._acknowledgements.append(acknowledgement)
-                kernel._acknowledgements_by_id[acknowledgement.acknowledgement_id] = acknowledgement
+                kernel._cache_acknowledgement(acknowledgement, archive_evicted=False)
+                kernel._remember_trace_object(
+                    "WORLD_ACKNOWLEDGEMENT", acknowledgement.acknowledgement_id, expected_sequence
+                )
+                kernel._remember_trace_object(
+                    "CONNECTION_VERSION", connection.connection_version_id, expected_sequence
+                )
+                for conflict in conflicts:
+                    kernel._remember_trace_object("MEMORY_CONFLICT", conflict.conflict_id, expected_sequence)
+            elif kind == "LIVE_INDEX_EVICTED":
+                reference = cls._archive_reference_from_data(payload["archive_reference"])
+                kernel._recent_archive_references.append(reference)
+                kernel._archive_reference_total += 1
+                if reference.object_kind == "MEMORY_VERSION":
+                    version = kernel._memory_versions.pop(reference.object_id, None)
+                    kernel._memory_states.pop(reference.object_id, None)
+                    if version is not None:
+                        lineage_ids = kernel._lineage_versions.get(version.memory_lineage_id)
+                        if lineage_ids is not None and reference.object_id in lineage_ids:
+                            lineage_ids.remove(reference.object_id)
+                    kernel._archived_memory_versions += 1
+                elif reference.object_kind == "MEMORY_LINEAGE":
+                    owner_id = kernel._lineage_owner.pop(reference.object_id, None)
+                    kernel._lineage_versions.pop(reference.object_id, None)
+                    if owner_id is not None:
+                        actor_lineages = kernel._actor_lineages.get(owner_id)
+                        if actor_lineages is not None and reference.object_id in actor_lineages:
+                            actor_lineages.remove(reference.object_id)
+                        if actor_lineages is not None and not actor_lineages:
+                            kernel._actor_lineages.pop(owner_id, None)
+                    kernel._archived_memory_lineages += 1
+                elif reference.object_kind == "WORLD_ACKNOWLEDGEMENT":
+                    kernel._acknowledgements_by_id.pop(reference.object_id, None)
+                elif reference.object_kind == "CONNECTION_VERSION":
+                    item = kernel._connection_versions_by_id.pop(reference.object_id, None)
+                    if item is not None and item in kernel._connection_versions:
+                        kernel._connection_versions.remove(item)
+                elif reference.object_kind == "NAME_RECORD":
+                    item = kernel._name_records_by_id.pop(reference.object_id, None)
+                    if item is not None and item in kernel._name_records:
+                        kernel._name_records.remove(item)
+                elif reference.object_kind == "MEMORY_CONFLICT":
+                    item = kernel._conflicts_by_id.pop(reference.object_id, None)
+                    if item is not None and item in kernel._conflicts:
+                        kernel._conflicts.remove(item)
+                kernel._trace_sequences_by_object.pop(
+                    (reference.object_kind, reference.object_id), None
+                )
             elif kind == "SYSTEM_PROJECTION_COMMITTED":
                 kernel._manifestation_state = dict(payload["manifestation_state"])
             else:
@@ -2253,4 +2674,256 @@ class MemoryVersioningKernel:
         )
 
     def run_same_world_stress(self, *, transitions: int, seed: int) -> StressSummary:
-        self._missing()
+        if transitions <= 0:
+            raise ValueError("transitions must be positive")
+        rng = random.Random(seed)
+        owner_id = "actor.stress_witness"
+        aliases = ("STRESS_ALIAS_A", "STRESS_ALIAS_B")
+        observations: dict[str, Observation] = {}
+        claims: dict[str, Claim] = {}
+        for index, alias in enumerate(aliases, start=1):
+            claim = Claim(
+                subject_id="actor.stress_subject",
+                predicate="SELF_IDENTIFIED_AS",
+                object_id_or_value=alias,
+                time_scope="STRESS_FORWARD",
+                recognition_scope=RecognitionScope.HALL_LOCAL,
+                polarity=Polarity.AFFIRM,
+                qualifiers={"stress_alias_index": index},
+            )
+            event = self.commit_event(
+                world_tick=0,
+                event_type="STRESS_ALIAS_OBSERVED",
+                actor_ids=("actor.stress_subject",),
+                target_ids=(owner_id,),
+                location_id="location.stress_hall",
+                payload={"alias": alias, "seed": seed},
+            )
+            observation = self.record_observation(
+                ObservationDraft(
+                    observer_id=owner_id,
+                    source_kind=SourceKind.EXPERIENCED,
+                    source_event_ids=(event.event_id,),
+                    source_observation_ids=(),
+                    source_actor_id=None,
+                    source_evidence_id=event.event_id,
+                    source_family_id=f"FAMILY_STRESS_{alias}",
+                    claim=claim,
+                    confidence_milli=1000,
+                    acquired_tick=0,
+                    world_version_seen=event.sequence,
+                ),
+                visibility_claim=claim,
+            )
+            claims[alias] = claim
+            observations[alias] = observation
+
+        latest_by_alias: dict[str, str] = {}
+        all_memory_ids: list[str] = []
+        for alias in aliases:
+            version = self.create_memory(
+                owner_id=owner_id,
+                observation_ids=(observations[alias].observation_id,),
+                claim=claims[alias],
+                source_kind=SourceKind.EXPERIENCED,
+                initial_clarity_milli=900,
+                initial_emotion_residue=(),
+                created_tick=0,
+            )
+            latest_by_alias[alias] = version.memory_version_id
+            all_memory_ids.append(version.memory_version_id)
+
+        pending_record_id: str | None = None
+        pending_alias: str | None = None
+        memory_step = 0
+        acknowledgement_count = 0
+        max_active_lineages = 0
+        max_versions_per_lineage = 0
+        max_forgetting = 0
+        max_acknowledgements = 0
+        max_query_cache = 0
+        max_manifestation_audit = 0
+        max_live_name_records = 0
+        max_live_connections = 0
+        max_archive_refs = 0
+        lineage_cycles = 0
+        partial_commits = 0
+        digest_mismatches = 0
+
+        def update_maxima() -> None:
+            nonlocal max_active_lineages, max_versions_per_lineage
+            nonlocal max_forgetting, max_acknowledgements, max_query_cache
+            nonlocal max_manifestation_audit, max_live_name_records
+            nonlocal max_live_connections, max_archive_refs
+            max_active_lineages = max(
+                max_active_lineages,
+                max((len(items) for items in self._actor_lineages.values()), default=0),
+            )
+            max_versions_per_lineage = max(
+                max_versions_per_lineage,
+                max((len(items) for items in self._lineage_versions.values()), default=0),
+            )
+            max_forgetting = max(max_forgetting, len(self._forgetting_events))
+            max_acknowledgements = max(max_acknowledgements, len(self._acknowledgements))
+            max_query_cache = max(
+                max_query_cache,
+                max((len(items) for items in self._belief_query_cache.values()), default=0),
+            )
+            max_manifestation_audit = max(
+                max_manifestation_audit, len(self._manifestation_audit)
+            )
+            max_live_name_records = max(max_live_name_records, len(self._name_records))
+            max_live_connections = max(max_live_connections, len(self._connection_versions))
+            max_archive_refs = max(max_archive_refs, len(self._recent_archive_references))
+
+        for transition_index in range(transitions):
+            world_tick = transition_index + 1
+            operation = transition_index % 4
+            if operation == 0:
+                alias = aliases[memory_step % len(aliases)]
+                memory_step += 1
+                parent_id = latest_by_alias[alias]
+                parent = self._memory_versions.get(parent_id)
+                should_rewrite = parent is not None and rng.randrange(100) < 67
+                if should_rewrite:
+                    version = self.rewrite_memory(
+                        memory_lineage_id=parent.memory_lineage_id,
+                        parent_version_ids=(parent.memory_version_id,),
+                        observation_ids=(observations[alias].observation_id,),
+                        claim=claims[alias],
+                        source_kind=SourceKind.EXPERIENCED,
+                        initial_clarity_milli=850 + rng.randrange(151),
+                        initial_emotion_residue=(),
+                        created_tick=world_tick,
+                        rewrite_reason_code="STRESS_REHEARSAL_REWRITE",
+                    )
+                else:
+                    version = self.create_memory(
+                        owner_id=owner_id,
+                        observation_ids=(observations[alias].observation_id,),
+                        claim=claims[alias],
+                        source_kind=SourceKind.EXPERIENCED,
+                        initial_clarity_milli=850 + rng.randrange(151),
+                        initial_emotion_residue=(),
+                        created_tick=world_tick,
+                    )
+                latest_by_alias[alias] = version.memory_version_id
+                all_memory_ids.append(version.memory_version_id)
+            elif operation == 1:
+                alias = aliases[rng.randrange(len(aliases))]
+                memory_id = latest_by_alias[alias]
+                self.transition_memory(
+                    memory_id,
+                    mode=ForgettingMode.FACT_ONLY,
+                    reason_code="STRESS_NIGHTLY_DECAY",
+                    decay_per_night_milli=1 + rng.randrange(7),
+                    explicit_penalty_milli=rng.randrange(3),
+                    explicit_rehearsal_bonus_milli=rng.randrange(5),
+                    world_tick=world_tick,
+                )
+            elif operation == 2:
+                pending_alias = aliases[acknowledgement_count % len(aliases)]
+                memory_id = latest_by_alias[pending_alias]
+                memory = self.get_memory_version(memory_id)
+                observation = observations[pending_alias]
+                record = self.create_name_record(
+                    NameRecordDraft(
+                        source_memory_version_ids=(memory.memory_version_id,),
+                        source_observation_ids=(observation.observation_id,),
+                        source_family_ids=(observation.source_family_id,),
+                        claim=memory.claim,
+                        permission_level=PermissionLevel.L1_WITNESS,
+                        confirmed_by_player=True,
+                        consenting_actor_ids=(),
+                        effective_from_tick=world_tick,
+                        recognition_scope=RecognitionScope.HALL_LOCAL,
+                        mitigation_plan_ids=("PLAN_PROSPECTIVE_REPLACEMENT",),
+                        created_tick=world_tick,
+                    )
+                )
+                pending_record_id = record.name_record_id
+            else:
+                if pending_record_id is None or pending_alias is None:
+                    raise self._error(
+                        MemoryErrorCode.ACK_PARTIAL_COMMIT_FORBIDDEN,
+                        "stress schedule lost its pending NameRecord",
+                        transition_index=transition_index,
+                    )
+                before_trace = len(self._history_trace)
+                acknowledgement = self.acknowledge_name_record(
+                    pending_record_id,
+                    world_tick=world_tick,
+                    manifestation_changes={
+                        "stress_alias": pending_alias,
+                        "stress_revision": acknowledgement_count + 1,
+                    },
+                    manifestation_rule_id="RULE_V070_SAME_WORLD_STRESS",
+                )
+                acknowledgement_count += 1
+                if len(self._history_trace) <= before_trace:
+                    partial_commits += 1
+                if acknowledgement.created_connection_version_ids[0] not in self._connection_versions_by_id:
+                    partial_commits += 1
+                pending_record_id = None
+                pending_alias = None
+
+            # Exercise the bounded derived-query cache without changing the
+            # authoritative state. Occasionally read an archived memory through
+            # its Trace reference as well.
+            self.query_memory(latest_by_alias[aliases[transition_index % 2]])
+            if transition_index > 0 and transition_index % 113 == 0:
+                self.query_memory(all_memory_ids[max(0, transition_index // 113 - 1)])
+
+            for lineage_id, version_ids in self._lineage_versions.items():
+                seen: set[str] = set()
+                for version_id in version_ids:
+                    if version_id in seen:
+                        lineage_cycles += 1
+                    seen.add(version_id)
+                    version = self._memory_versions[version_id]
+                    if version.memory_lineage_id != lineage_id:
+                        lineage_cycles += 1
+                    if any(parent_id == version_id for parent_id in version.parent_version_ids):
+                        lineage_cycles += 1
+
+            update_maxima()
+            if (transition_index + 1) % 2500 == 0 or transition_index + 1 == transitions:
+                expected = self.state_digest()
+                try:
+                    restored = self.load_state(self.save_state())
+                    replayed = self.replay_digest()
+                except MemoryKernelError:
+                    digest_mismatches += 1
+                else:
+                    if restored.state_digest() != expected or replayed != expected:
+                        digest_mismatches += 1
+
+        if pending_record_id is not None:
+            partial_commits += 1
+        final_state_digest = self.state_digest()
+        try:
+            final_replay_digest = self.replay_digest()
+        except MemoryKernelError:
+            final_replay_digest = ""
+            digest_mismatches += 1
+
+        return StressSummary(
+            transitions=transitions,
+            max_active_lineages_per_actor=max_active_lineages,
+            max_active_versions_per_lineage=max_versions_per_lineage,
+            max_recent_forgetting_events=max_forgetting,
+            max_recent_acknowledgements=max_acknowledgements,
+            max_belief_query_cache_per_actor=max_query_cache,
+            max_manifestation_audit_window=max_manifestation_audit,
+            lineage_cycles=lineage_cycles,
+            partial_commits=partial_commits,
+            digest_mismatches=digest_mismatches,
+            history_trace_records=len(self._history_trace),
+            max_live_name_records=max_live_name_records,
+            max_live_connection_versions=max_live_connections,
+            max_recent_archive_references=max_archive_refs,
+            archived_memory_versions=self._archived_memory_versions,
+            archived_memory_lineages=self._archived_memory_lineages,
+            final_state_digest=final_state_digest,
+            final_replay_digest=final_replay_digest,
+        )

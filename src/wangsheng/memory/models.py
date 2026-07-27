@@ -395,6 +395,17 @@ class WorldAcknowledgement:
         object.__setattr__(self, "audit_reasons", tuple(self.audit_reasons))
 
 
+
+
+@dataclass(frozen=True, slots=True)
+class ArchiveReference:
+    object_kind: str
+    object_id: str
+    source_trace_sequence: int
+    object_digest: str
+    archived_reason: str
+
+
 @dataclass(frozen=True, slots=True)
 class KernelConfig:
     active_memory_lineages_per_actor: int = 256
@@ -444,3 +455,10 @@ class StressSummary:
     partial_commits: int
     digest_mismatches: int
     history_trace_records: int
+    max_live_name_records: int = 0
+    max_live_connection_versions: int = 0
+    max_recent_archive_references: int = 0
+    archived_memory_versions: int = 0
+    archived_memory_lineages: int = 0
+    final_state_digest: str = ""
+    final_replay_digest: str = ""
