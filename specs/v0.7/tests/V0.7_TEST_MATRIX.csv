@@ -1,0 +1,21 @@
+﻿test_id,area,setup,expected,gate
+T01,Occurrence append-only,Attempt to update/delete committed CanonicalEvent,Operation rejected; event digest unchanged,MUST
+T02,Observation isolation,Qingyan sees crane but not Xiaoman body,Observation contains only visible fields; hidden truth remains UNKNOWN,MUST
+T03,Heard provenance,Player hears Xiaoman self-name,"Creates fact 'Xiaoman said X', not canonical fact 'identity is X'",MUST
+T04,Multi-version memory,Two actors observe same event from different positions,Distinct MemoryVersion claims and shared event provenance,MUST
+T05,Knowledge leak rejection,Create memory with unobserved hidden payload,Rejected with MEMORY_KNOWLEDGE_LEAK,MUST
+T06,Fact-only forgetting,Decay memory below threshold with preserved residue,Fact inaccessible; emotion still queryable without details,MUST
+T07,Full forgetting,Apply FACT_AND_EMOTION,Fact and residue inaccessible; history remains in Trace,MUST
+T08,Rewrite lineage,Replace old explanation with manifested version,New version appended; old marked REWRITTEN; no overwrite,MUST
+T09,Record-memory independence,Record a claim then decay source actor memory,NameRecord remains; source memory may become FORGOTTEN,MUST
+T10,Contradiction preservation,Create mutually exclusive active memories,Both retained; contradiction marked; no event mutation,MUST
+T11,Source-family dedupe,Use transcript plus two copies of same crane inscription,Counts as one family; duplicate support rejected,MUST
+T12,Anti-self-proof,Use manifested room trace to prove parent old-resident record,Rejected with EVIDENCE_SELF_PROVING,MUST
+T13,L1 permission boundary,Try to record permanent resident identity on night 1,Rejected with RECORD_PERMISSION_EXCEEDED,MUST
+T14,L2 temporary visitor,Meet prerequisites and confirm protected visitor,Connection effective prospectively; occurrence unchanged,MUST
+T15,L3 consent/evidence,Try old-resident continuation without consent or body support,Rejected with RECORD_CONSENT_REQUIRED or evidence error,MUST
+T16,Typed conflict mitigation,Create physical exclusivity conflict without plan,Rejected with CONFLICT_MITIGATION_REQUIRED; no partial commit,MUST
+T17,Day-1 branch matrix,Run 4 night-1 choices,Each yields specified day-2 deltas and identical day-1 occurrence digest,MUST
+T18,Day-3 outcome matrix,Run 4 final outcomes from valid setup,Distinct connection/manifestation states; all past events preserved,MUST
+T19,Save-load-replay,Save at every night; load and replay each branch,State and canonical digest exactly match,MUST
+T20,Same-world bounds stress,"10,000 memory/record/forget/ack transitions",Active indexes within config; 0 lineage cycles/partial commits/digest mismatch,MUST
